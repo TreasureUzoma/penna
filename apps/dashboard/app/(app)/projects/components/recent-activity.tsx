@@ -60,7 +60,7 @@ export function RecentActivity({ activity }: RecentActivityProps) {
                 </div>
               </div>
               <div className="flex-1 space-y-1 min-w-0">
-                <p className="text-sm font-medium leading-none truncate">
+                <p className="text-sm font-medium leading-tight truncate">
                   <span className="font-semibold">"{item.subject}"</span>{" "}
                   sent from {item.projectName}
                 </p>

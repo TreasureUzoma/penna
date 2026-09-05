@@ -46,7 +46,7 @@ export default function ProjectLayout({
         // a long page (e.g. a big subscriber table) scrolls beneath it.
         <div className="sticky top-0 z-10 shrink-0 bg-background border-b border-border px-8 py-4 flex items-center justify-between gap-4">
           <ProjectSwitcher />
-          <h1 className="text-md font-semibold tracking-tight">{title}</h1>
+          <h1 className="md:text-md font-semibold tracking-tight">{title}</h1>
           <Button asChild size="sm">
             <Link href={`/projects/${slug}/posts/new`}>
               <Plus className="w-4 h-4 mr-2" />

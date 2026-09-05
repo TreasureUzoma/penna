@@ -38,7 +38,7 @@ export function ProjectSwitcher() {
           variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="justify-between max-w-[138px]"
+          className="justify-between max-w-[136px]"
         >
           {selectedProject ? (
             <span className="flex items-center truncate">
@@ -47,10 +47,10 @@ export function ProjectSwitcher() {
           ) : (
             "Select project..."
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="ml-3 w-[200px] p-0">
         <Command>
           <CommandInput placeholder="Search project..." />
           <CommandList>

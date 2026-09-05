@@ -70,7 +70,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                   </div>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">
+                  <p className="text-sm font-medium leading-tight">
                     {activity.type === "subscriber" ? (
                       <>
                         <span className="font-semibold">
