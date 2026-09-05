@@ -24,6 +24,11 @@ import {
   AvatarImage,
 } from "@workspace/ui/components/avatar";
 import { cn } from "@workspace/ui/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 import { useGetProfile } from "@/hooks/use-auth";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { useSelectedLayoutSegments } from "next/navigation";
@@ -177,12 +182,12 @@ export default function AppSidebar({
 
       {/* Navigation Items */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navItems.map((item) => (
-          <motion.div key={item.href} whileHover={{ x: 4 }}>
+        {navItems.map((item) => {
+          const link = (
             <Link
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative group",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
                 isActive(item.href)
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -201,14 +206,28 @@ export default function AppSidebar({
                   )}
                 </>
               )}
-              {isCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                  {item.label}
-                </div>
-              )}
             </Link>
-          </motion.div>
-        ))}
+          );
+
+          return (
+            <motion.div key={item.href} whileHover={{ x: 4 }}>
+              {isCollapsed ? (
+                // A portal-rendered tooltip instead of an absolutely
+                // positioned div — that div sat outside the collapsed
+                // (w-16) sidebar's bounds, and since it was still a
+                // descendant of this scrolling `<nav>`, its layout box
+                // made the nav horizontally scrollable even though the
+                // tooltip itself was invisible until hover.
+                <Tooltip>
+                  <TooltipTrigger asChild>{link}</TooltipTrigger>
+                  <TooltipContent side="right">{item.label}</TooltipContent>
+                </Tooltip>
+              ) : (
+                link
+              )}
+            </motion.div>
+          );
+        })}
       </nav>
 
       {/* User Section */}
