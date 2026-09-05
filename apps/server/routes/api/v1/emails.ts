@@ -48,7 +48,7 @@ emailsRoute.post(
 
       // Send newsletter
       const result = await sendEmailNewsletter(
-        project.slug,
+        { id: project.id, slug: project.slug },
         recipientEmails,
         subject,
         html,
@@ -115,7 +115,7 @@ emailsRoute.post(
 
       // Send test email
       const result = await sendEmailNewsletter(
-        project.slug,
+        { id: project.id, slug: project.slug },
         [testEmail],
         subject,
         html

@@ -15,6 +15,8 @@ The email service allows you to send newsletters from dynamic email addresses ba
 - **internal.ts** - Internal transactional emails (welcome, password reset, etc.)
 - **sns-verify.ts** - Verifies incoming SNS messages are genuinely from AWS
 - **ses-events.ts** - Handles bounce/complaint notifications (see below)
+- **branding.ts** - Appends the "Powered by Penna" footer and the mandatory unsubscribe link
+- **../../lib/list-unsubscribe.ts** - Builds the one-click `List-Unsubscribe` header/link
 
 ## Setup
 
@@ -158,6 +160,33 @@ const testResponse = await api.post(`/emails/${projectId}/test`, {
 - Can only send to verified email addresses
 - Limited to 200 emails per 24 hours
 - Request production access to remove limits
+
+## One-Click Unsubscribe (List-Unsubscribe)
+
+Every newsletter send (`sendNewsletterEmail` in `ses.ts`) automatically:
+
+1. Adds a `List-Unsubscribe` + `List-Unsubscribe-Post` header pair (RFC
+   8058), signed per-recipient with `UNSUBSCRIBE_SECRET` — this is what
+   makes Gmail/Yahoo/Outlook show a native "Unsubscribe" button next to the
+   sender name, and is required for Gmail/Yahoo bulk-sender compliance
+   (enforced hard above ~5,000 msgs/day to Gmail, but weighed by spam
+   filters well below that too).
+2. Appends a visible "Unsubscribe" link to the email body, for clients that
+   don't surface the header as a button.
+
+Both point at `GET/POST /api/v1/unsubscribe/one-click/:token`, which
+unsubscribes immediately — no confirmation email round-trip, unlike the
+"type your email into a public form" flow the rest of `unsubscribe.ts`
+handles. The token embedded in a send never expires (it's tied to one
+specific already-delivered email, which may sit in an inbox for months).
+
+Uses the SES **v2** client (`@aws-sdk/client-sesv2`), not v1 — v1's simple
+`SendEmailCommand` has no way to attach custom headers. System/
+transactional email (`sendSystemEmail`) isn't bulk mail, so it stays on v1.
+
+Requires `API_URL` (this server's own public base URL) to be set correctly
+in production — it's what the unsubscribe link in a *sent* email resolves
+to, so `http://localhost:3005` only works for local testing.
 
 ## Bounce & Complaint Handling
 

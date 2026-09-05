@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { sendEmailNewsletter } from "../mail/external";
 import { decryptDataSubtle } from "@/lib/encrypt";
+import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { envConfig } from "@/config";
 import { dbLite, schema } from "./db-lite";
 
@@ -8,7 +9,7 @@ export type PrepareEmailSendResult =
   | { status: "cancelled" | "skipped" | "failed"; reason: string }
   | {
       status: "ready";
-      project: { slug: string };
+      project: { id: string; slug: string };
       subject: string;
       html: string;
       recipientEmails: string[];
@@ -71,10 +72,16 @@ export async function prepareEmailSend(
     return { status: "skipped", reason: "No subscribed subscribers" };
   }
 
-  const html = await decryptDataSubtle(
+  // The dashboard's post editor stores the raw Markdown a user typed, not
+  // HTML — render it the same way the external API send path does
+  // (`routes/api/v1/external/projects.ts`), otherwise subscribers get
+  // literal "**bold**"/"# heading" markdown syntax in their inbox instead
+  // of formatted email.
+  const rawBody = await decryptDataSubtle(
     email.body,
     envConfig.ENCRYPTION_KEY || ""
   );
+  const html = renderNewsletterMarkdown(rawBody);
 
   const [owner] = await dbLite
     .select({ subscriptionType: schema.users.subscriptionType })
@@ -90,7 +97,7 @@ export async function prepareEmailSend(
 
   return {
     status: "ready",
-    project: { slug: project.slug },
+    project: { id: project.id, slug: project.slug },
     subject: email.subject,
     html,
     recipientEmails,
@@ -111,7 +118,7 @@ export interface SendEmailChunkResult {
  * to recipients this same chunk already reached.
  */
 export async function sendEmailChunk(
-  project: { slug: string },
+  project: { id: string; slug: string },
   subject: string,
   html: string,
   recipientEmails: string[],
@@ -121,7 +128,7 @@ export async function sendEmailChunk(
 
   try {
     const result = await sendEmailNewsletter(
-      project.slug,
+      project,
       recipientEmails,
       subject,
       html,

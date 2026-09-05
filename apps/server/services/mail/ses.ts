@@ -1,5 +1,11 @@
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import {
+  SESv2Client,
+  SendEmailCommand as SendEmailV2Command,
+} from "@aws-sdk/client-sesv2";
 import { envConfig } from "@/config";
+import { buildListUnsubscribeHeaders } from "@/lib/list-unsubscribe";
+import { appendUnsubscribeFooter } from "./branding";
 
 const sesClient = new SESClient({
   region: envConfig.AWS_REGION,
@@ -9,7 +15,24 @@ const sesClient = new SESClient({
   },
 });
 
+/**
+ * Newsletter sends specifically use SES v2 instead of v1 above — v1's
+ * simple `SendEmailCommand` has no way to attach custom headers, and a
+ * `List-Unsubscribe` header (RFC 8058) is required for Gmail/Yahoo bulk-
+ * sender compliance (see lib/list-unsubscribe.ts). System/transactional
+ * email (`sendSystemEmail` below) isn't bulk/marketing mail, so it stays
+ * on the simpler v1 client.
+ */
+const sesV2Client = new SESv2Client({
+  region: envConfig.AWS_REGION,
+  credentials: {
+    accessKeyId: envConfig.AWS_ACCESS_KEY_ID,
+    secretAccessKey: envConfig.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
 export interface SendNewsletterOptions {
+  projectId: string;
   projectSlug: string;
   recipientEmail: string;
   subject: string;
@@ -18,7 +41,7 @@ export interface SendNewsletterOptions {
 }
 
 export interface SendBulkNewsletterOptions {
-  projectSlug: string;
+  project: { id: string; slug: string };
   recipientEmails: string[];
   subject: string;
   html: string;
@@ -32,29 +55,48 @@ export const sendNewsletterEmail = async (
   options: SendNewsletterOptions
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
   try {
-    const { projectSlug, recipientEmail, subject, html, replyTo } = options;
+    const { projectId, projectSlug, recipientEmail, subject, html, replyTo } =
+      options;
 
-    const command = new SendEmailCommand({
-      Source: `newsletter@${projectSlug}.${envConfig.NEWSLETTER_DOMAIN}`,
+    // Per-recipient: the token embedded in both the visible footer link and
+    // the List-Unsubscribe header is signed for this exact (project, email)
+    // pair, so it can't be reused to unsubscribe someone else.
+    const { unsubscribeUrl, header } = await buildListUnsubscribeHeaders(
+      projectId,
+      recipientEmail
+    );
+    const htmlWithFooter = appendUnsubscribeFooter(html, unsubscribeUrl);
+
+    const command = new SendEmailV2Command({
+      FromEmailAddress: `newsletter@${projectSlug}.${envConfig.NEWSLETTER_DOMAIN}`,
       Destination: {
         ToAddresses: [recipientEmail],
       },
-      Message: {
-        Subject: {
-          Data: subject,
-          Charset: "UTF-8",
-        },
-        Body: {
-          Html: {
-            Data: html,
+      Content: {
+        Simple: {
+          Subject: {
+            Data: subject,
             Charset: "UTF-8",
           },
+          Body: {
+            Html: {
+              Data: htmlWithFooter,
+              Charset: "UTF-8",
+            },
+          },
+          Headers: [
+            { Name: "List-Unsubscribe", Value: header },
+            {
+              Name: "List-Unsubscribe-Post",
+              Value: "List-Unsubscribe=One-Click",
+            },
+          ],
         },
       },
       ReplyToAddresses: replyTo ? [replyTo] : undefined,
     });
 
-    const response = await sesClient.send(command);
+    const response = await sesV2Client.send(command);
 
     return {
       success: true,
@@ -84,7 +126,7 @@ export const sendBulkNewsletterEmails = async (
   failed: number;
   errors?: Array<{ email: string; error: string }>;
 }> => {
-  const { projectSlug, recipientEmails, subject, html, replyTo } = options;
+  const { project, recipientEmails, subject, html, replyTo } = options;
   const results = {
     sent: 0,
     failed: 0,
@@ -97,7 +139,8 @@ export const sendBulkNewsletterEmails = async (
   for (const email of recipientEmails) {
     try {
       const result = await sendNewsletterEmail({
-        projectSlug,
+        projectId: project.id,
+        projectSlug: project.slug,
         recipientEmail: email,
         subject,
         html,

@@ -30,6 +30,11 @@ const envSchema = z.object({
   SES_NOTIFICATIONS_TOPIC_ARN: z.string().optional(),
   // Used to build links (e.g. "upgrade your plan") in system emails.
   DASHBOARD_SITE: z.string().default("http://localhost:3001"),
+  // This server's own public base URL — distinct from APP_URL (the web
+  // frontend) and DASHBOARD_SITE. Needed to build links that must resolve
+  // back to this API itself, e.g. the one-click unsubscribe URL embedded
+  // in newsletter sends (see lib/list-unsubscribe.ts).
+  API_URL: z.string().default("http://localhost:3005"),
   PADDLE_API_KEY: z.string(),
   PADDLE_ENVIRONMENT: z.enum(["sandbox", "production"]).default("sandbox"),
   // Required to verify Paddle webhook signatures — from Paddle Dashboard >

@@ -15,3 +15,23 @@ export const applyBranding = (html: string, removeBranding: boolean): string => 
 
   return `${html}${footer}`;
 };
+
+/**
+ * Appends a visible "Unsubscribe" link to outgoing newsletter HTML.
+ * Unlike `applyBranding`, this one is never optional/removable — it's a
+ * legal requirement (CAN-SPAM, GDPR) and the fallback for mail clients
+ * that don't surface the `List-Unsubscribe` header as a native button
+ * (see lib/list-unsubscribe.ts, which builds the matching header pair).
+ */
+export const appendUnsubscribeFooter = (
+  html: string,
+  unsubscribeUrl: string
+): string => {
+  const footer = `
+    <div style="margin-top:12px;padding-top:12px;text-align:center;font-family:sans-serif;font-size:12px;color:#9ca3af;">
+      <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Unsubscribe</a>
+    </div>
+  `;
+
+  return `${html}${footer}`;
+};

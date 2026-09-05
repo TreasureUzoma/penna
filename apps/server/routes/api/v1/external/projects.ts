@@ -204,7 +204,7 @@ externalProjectRoutes.post(
       const htmlContent = renderNewsletterMarkdown(content);
 
       const result = await sendEmailNewsletter(
-        projectData.slug,
+        { id: projectData.id, slug: projectData.slug },
         recipients,
         subject,
         htmlContent,

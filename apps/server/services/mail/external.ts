@@ -2,7 +2,7 @@ import { sendNewsletterEmail, sendBulkNewsletterEmails } from "./ses";
 import { applyBranding } from "./branding";
 
 export const sendEmailNewsletter = async (
-  projectSlug: string,
+  project: { id: string; slug: string },
   recipientEmails: string[],
   subject: string,
   html: string,
@@ -17,7 +17,8 @@ export const sendEmailNewsletter = async (
 
   if (recipientEmails.length === 1 && recipientEmails[0]) {
     const result = await sendNewsletterEmail({
-      projectSlug,
+      projectId: project.id,
+      projectSlug: project.slug,
       recipientEmail: recipientEmails[0],
       subject,
       html: brandedHtml,
@@ -33,7 +34,7 @@ export const sendEmailNewsletter = async (
 
   // Send to multiple recipients
   const result = await sendBulkNewsletterEmails({
-    projectSlug,
+    project,
     recipientEmails,
     subject,
     html: brandedHtml,
