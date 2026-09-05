@@ -2,12 +2,12 @@ import { meta } from "@workspace/constants/meta";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "terms of service - lettera",
+  title: "terms of service - penna",
 };
 
 const sections = [
   {
-    title: "using lettera",
+    title: "using penna",
     body: `by creating an account or using ${meta.name}, you agree to these
       terms. you must be able to form a binding contract to use the
       service, and you're responsible for keeping your account and api

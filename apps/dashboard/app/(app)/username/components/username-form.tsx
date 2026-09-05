@@ -51,7 +51,7 @@ export function UsernameForm() {
                 <Input placeholder="username" {...field} />
               </FormControl>
               <FormDescription>
-                This will be used for your project emails (e.g. username@nnewsletter.lettera.dev).
+                This will be used for your project emails (e.g. username@nnewsletter.penna.dev).
               </FormDescription>
               <FormMessage />
             </FormItem>

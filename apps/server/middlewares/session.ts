@@ -44,7 +44,7 @@ export const withAuth: MiddlewareHandler = async (c, next) => {
     const accessToken = await getSignedCookie(
       c,
       envConfig.JWT_ACCESS_SECRET!,
-      "letteraAccessToken"
+      "pennaAccessToken"
     );
 
     if (accessToken) {
@@ -67,7 +67,7 @@ export const withAuth: MiddlewareHandler = async (c, next) => {
     const refreshToken = await getSignedCookie(
       c,
       envConfig.JWT_REFRESH_SECRET,
-      "letteraRefreshToken"
+      "pennaRefreshToken"
     );
     if (!refreshToken)
       return c.json({ message: "Unauthorized", success: false }, 401);
@@ -124,7 +124,7 @@ export const withAuth: MiddlewareHandler = async (c, next) => {
     // Set new cookies
     await setSignedCookie(
       c,
-      "letteraAccessToken",
+      "pennaAccessToken",
       newAccess,
       envConfig.JWT_ACCESS_SECRET,
       {
@@ -138,7 +138,7 @@ export const withAuth: MiddlewareHandler = async (c, next) => {
 
     await setSignedCookie(
       c,
-      "letteraRefreshToken",
+      "pennaRefreshToken",
       newRefresh,
       envConfig.JWT_REFRESH_SECRET,
       {

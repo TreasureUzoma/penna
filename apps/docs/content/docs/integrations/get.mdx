@@ -20,8 +20,8 @@ This endpoint uses both the Public Key and Private Key for authentication.
 
 **Headers:**
 
-- `x-lettera-public-key: <YOUR_PUBLIC_KEY>`
-- `x-lettera-private-key: <YOUR_PRIVATE_KEY>`
+- `x-penna-public-key: <YOUR_PUBLIC_KEY>`
+- `x-penna-private-key: <YOUR_PRIVATE_KEY>`
 
 ## Response
 
@@ -59,9 +59,9 @@ This endpoint uses both the Public Key and Private Key for authentication.
 ### cURL
 
 ```bash
-curl -X GET "https://api.lettera.dev/api/v1/external/projects/subscribers?page=1&limit=10" \
-  -H "x-lettera-public-key: letr_your_public_key" \
-  -H "x-lettera-private-key: letr_private_your_private_key"
+curl -X GET "https://api.penna.dev/api/v1/external/projects/subscribers?page=1&limit=10" \
+  -H "x-penna-public-key: penn_your_public_key" \
+  -H "x-penna-private-key: pk_your_private_key"
 ```
 
 ### Node.js (Axios)
@@ -72,11 +72,11 @@ const axios = require("axios");
 async function getSubscribers() {
   try {
     const response = await axios.get(
-      "https://api.lettera.dev/api/v1/external/projects/subscribers",
+      "https://api.penna.dev/api/v1/external/projects/subscribers",
       {
         headers: {
-          "x-lettera-public-key": "letr_your_public_key",
-          "x-lettera-private-key": "letr_private_your_private_key",
+          "x-penna-public-key": "penn_your_public_key",
+          "x-penna-private-key": "pk_your_private_key",
         },
       }
     );
@@ -94,10 +94,10 @@ getSubscribers();
 ```python
 import requests
 
-url = "https://api.lettera.dev/api/v1/external/projects/subscribers"
+url = "https://api.penna.dev/api/v1/external/projects/subscribers"
 headers = {
-    "x-lettera-public-key": "letr_your_public_key",
-    "x-lettera-private-key": "letr_private_your_private_key"
+    "x-penna-public-key": "penn_your_public_key",
+    "x-penna-private-key": "pk_your_private_key"
 }
 
 response = requests.get(url, headers=headers)

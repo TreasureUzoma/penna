@@ -1,4 +1,4 @@
-# Project Lettera Backend
+# Project Penna Backend
 
 This project serves as the robust backend for a platform designed to manage projects, user subscriptions, and email campaigns. It provides a comprehensive set of APIs for user authentication, project administration, role-based access control, secure API key management, and the creation/delivery of email newsletters.
 
@@ -53,7 +53,7 @@ To get this project up and running locally, follow these steps:
 1.  **Clone the repository**:
 
     ```bash
-    git clone https://github.com/treasureuzoma/lettera
+    git clone https://github.com/treasureuzoma/penna
     pnpm dev
     ```
 
@@ -130,8 +130,8 @@ The backend exposes a RESTful API. Below are some high-level examples of how you
 ### External API (for Integrations)
 
 - **Add Subscriber**: `POST /api/v1/external/projects/subscriber/new`
-  - Requires `x-lettera-public-key` header.
-  - Optionally `x-lettera-private-key` for private key authenticated actions.
+  - Requires `x-penna-public-key` header.
+  - Optionally `x-penna-private-key` for private key authenticated actions.
   - Body: `{ email, name? }`
 
 ## Contributing

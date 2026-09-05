@@ -70,7 +70,7 @@ v1.route(
 );
 
 // Paddle webhook — public, verified via Paddle's own signature instead of
-// a session (Paddle's servers can't carry a Lettera session cookie)
+// a session (Paddle's servers can't carry a Penna session cookie)
 v1.route(
   "/webhooks/paddle",
   paddleWebhookRoute.use(rateLimiter(60 * 60 * 1000, 100)),

@@ -2,11 +2,11 @@ import { codeToHtml } from "shiki";
 
 export const CodeExample = async () => {
   const codeString = `const response = await fetch(
-  'https://api.lettera.dev/api/v1/external/projects/subscribers',
+  'https://api.penna.dev/api/v1/external/projects/subscribers',
   {
     headers: {
-      'x-lettera-public-key': 'letr_your_public_key',
-      'x-lettera-private-key': 'letr_your_private_key',
+      'x-penna-public-key': 'penn_your_public_key',
+      'x-penna-private-key': 'pk_your_private_key',
     },
   }
 );
@@ -14,12 +14,12 @@ export const CodeExample = async () => {
 const subscribers = await response.json();
 
 await fetch(
-  'https://api.lettera.dev/api/v1/external/projects/newsletters/send',
+  'https://api.penna.dev/api/v1/external/projects/newsletters/send',
   {
     method: 'POST',
     headers: {
-      'x-lettera-public-key': 'letr_your_public_key',
-      'x-lettera-private-key': 'letr_your_private_key',
+      'x-penna-public-key': 'penn_your_public_key',
+      'x-penna-private-key': 'pk_your_private_key',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({

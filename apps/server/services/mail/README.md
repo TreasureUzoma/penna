@@ -1,12 +1,12 @@
 # Email Service Documentation
 
-This directory contains email services for Lettera, powered by AWS SES (Simple Email Service).
+This directory contains email services for Penna, powered by AWS SES (Simple Email Service).
 
 ## Overview
 
 The email service allows you to send newsletters from dynamic email addresses based on project slugs:
-- Format: `newsletter@{projectSlug}.lettera.dev`
-- Example: `newsletter@my-newsletter.lettera.dev`
+- Format: `newsletter@{projectSlug}.penna.dev`
+- Example: `newsletter@my-newsletter.penna.dev`
 
 ## Files
 
@@ -27,7 +27,7 @@ The email service allows you to send newsletters from dynamic email addresses ba
 1. **Verify your domain in AWS SES**
    - Go to AWS SES Console → Verified identities
    - Click "Create identity" → Select "Domain"
-   - Enter `lettera.dev`
+   - Enter `penna.dev`
    - Add the DNS records provided by AWS to your domain registrar
    - Wait for verification (usually 24 hours)
 
@@ -41,7 +41,7 @@ The email service allows you to send newsletters from dynamic email addresses ba
    AWS_REGION=us-east-1
    AWS_ACCESS_KEY_ID=your_access_key
    AWS_SECRET_ACCESS_KEY=your_secret_key
-   NEWSLETTER_DOMAIN=newsletter.lettera.dev
+   NEWSLETTER_DOMAIN=newsletter.penna.dev
    ```
 
 ### 2. Environment Variables
@@ -51,7 +51,7 @@ The email service allows you to send newsletters from dynamic email addresses ba
 AWS_REGION=us-east-1                          # AWS region (default: us-east-1)
 AWS_ACCESS_KEY_ID=xxx                         # Your AWS access key
 AWS_SECRET_ACCESS_KEY=xxx                     # Your AWS secret key
-NEWSLETTER_DOMAIN=newsletter.lettera.dev      # Domain for newsletter emails
+NEWSLETTER_DOMAIN=newsletter.penna.dev      # Domain for newsletter emails
 ```
 
 ## API Endpoints

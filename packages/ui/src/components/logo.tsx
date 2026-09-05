@@ -8,7 +8,7 @@ const Logo = ({ className }: { className?: string }) => {
         className
       )}
     >
-      lettera
+      penna
     </span>
   );
 };

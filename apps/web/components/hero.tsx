@@ -10,7 +10,7 @@ export const Hero = () => {
             enjoy
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            lettera is the newsletter platform built for developers. send emails
+            penna is the newsletter platform built for developers. send emails
             from your code. manage subscribers without leaving your terminal.
             scale without fighting the tool.
           </p>

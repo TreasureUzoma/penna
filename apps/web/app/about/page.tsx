@@ -2,7 +2,7 @@ import { meta } from "@workspace/constants/meta";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "about - lettera",
+  title: "about - penna",
 };
 
 export default function AboutPage() {

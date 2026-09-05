@@ -2,7 +2,7 @@
 REM Start all dev servers in parallel for Windows
 REM Usage: dev-local.cmd
 
-echo Starting Lettera dev servers...
+echo Starting Penna dev servers...
 echo.
 
 REM Check if concurrently is installed globally

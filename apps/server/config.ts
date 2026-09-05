@@ -13,14 +13,14 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3005),
   ENCRYPTION_KEY: z.string(),
   UNSUBSCRIBE_SECRET: z.string(),
-  NEWSLETTER_DOMAIN: z.string().default("newsletter.lettera.dev"),
+  NEWSLETTER_DOMAIN: z.string().default("newsletter.penna.dev"),
   AWS_REGION: z.string().default("us-east-1"),
   AWS_ACCESS_KEY_ID: z.string(),
   AWS_SECRET_ACCESS_KEY: z.string(),
   // Sender for system/transactional email (limit warnings, etc.) — distinct
   // from NEWSLETTER_DOMAIN, which is per-project outbound newsletter mail.
   // Must be a verified SES identity.
-  SYSTEM_EMAIL_FROM: z.string().default("notifications@lettera.dev"),
+  SYSTEM_EMAIL_FROM: z.string().default("notifications@penna.dev"),
   // Used to build links (e.g. "upgrade your plan") in system emails.
   DASHBOARD_SITE: z.string().default("http://localhost:3001"),
   PADDLE_API_KEY: z.string(),

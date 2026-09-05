@@ -4,7 +4,7 @@ import { handlePaddleWebhook } from "@/services/paddle";
 /**
  * Public — deliberately NOT behind session auth (mounted before
  * `v1.use("*", withAuth)` in index.ts). Paddle's servers call this
- * directly and can't carry a Lettera session cookie; authenticity is
+ * directly and can't carry a Penna session cookie; authenticity is
  * verified via Paddle's own webhook signature instead (see
  * `handlePaddleWebhook`), which fails closed if `PADDLE_WEBHOOK_SECRET`
  * isn't configured.

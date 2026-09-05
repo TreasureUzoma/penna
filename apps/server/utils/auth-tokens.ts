@@ -53,7 +53,7 @@ export const setAuthCookies = async (
 ): Promise<void> => {
   await setSignedCookie(
     c,
-    "letteraAccessToken",
+    "pennaAccessToken",
     accessToken,
     envConfig.JWT_ACCESS_SECRET,
     {
@@ -67,7 +67,7 @@ export const setAuthCookies = async (
 
   await setSignedCookie(
     c,
-    "letteraRefreshToken",
+    "pennaRefreshToken",
     refreshToken,
     envConfig.JWT_REFRESH_SECRET,
     {
@@ -83,7 +83,7 @@ export const setAuthCookies = async (
 export const clearAuthCookies = async (c: Context): Promise<void> => {
   await setSignedCookie(
     c,
-    "letteraAccessToken",
+    "pennaAccessToken",
     "",
     envConfig.JWT_ACCESS_SECRET,
     {
@@ -97,7 +97,7 @@ export const clearAuthCookies = async (c: Context): Promise<void> => {
 
   await setSignedCookie(
     c,
-    "letteraRefreshToken",
+    "pennaRefreshToken",
     "",
     envConfig.JWT_REFRESH_SECRET,
     {

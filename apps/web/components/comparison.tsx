@@ -2,42 +2,42 @@ import { Check, X } from "lucide-react";
 
 export const Comparison = () => {
   const features = [
-    { name: "open source", lettera: true, buttondown: false, mailchimp: false },
+    { name: "open source", penna: true, buttondown: false, mailchimp: false },
     {
       name: "self-hostable",
-      lettera: true,
+      penna: true,
       buttondown: false,
       mailchimp: false,
     },
     {
       name: "API-first design",
-      lettera: true,
+      penna: true,
       buttondown: false,
       mailchimp: false,
     },
     {
       name: "transparent pricing",
-      lettera: true,
+      penna: true,
       buttondown: true,
       mailchimp: false,
     },
     {
       name: "markdown editor",
-      lettera: true,
+      penna: true,
       buttondown: true,
       mailchimp: false,
     },
     {
       name: "subscriber management",
-      lettera: true,
+      penna: true,
       buttondown: true,
       mailchimp: true,
     },
-    { name: "segmentation", lettera: true, buttondown: true, mailchimp: true },
-    { name: "webhooks", lettera: true, buttondown: false, mailchimp: true },
+    { name: "segmentation", penna: true, buttondown: true, mailchimp: true },
+    { name: "webhooks", penna: true, buttondown: false, mailchimp: true },
     {
       name: "custom domain",
-      lettera: true,
+      penna: true,
       buttondown: false,
       mailchimp: true,
     },
@@ -55,7 +55,7 @@ export const Comparison = () => {
       <div className="max-w-4xl w-full space-y-8">
         <div className="space-y-2">
           <h2 className="text-3xl md:text-4xl font-bold">
-            why switch to lettera?
+            why switch to penna?
           </h2>
           <p className="text-lg text-muted-foreground">
             built for developers. by developers.
@@ -67,7 +67,7 @@ export const Comparison = () => {
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left py-3 px-4 font-semibold">feature</th>
-                <th className="text-center py-3 px-4 font-semibold">lettera</th>
+                <th className="text-center py-3 px-4 font-semibold">penna</th>
                 <th className="text-center py-3 px-4 font-semibold text-muted-foreground">
                   buttondown
                 </th>
@@ -86,7 +86,7 @@ export const Comparison = () => {
                 >
                   <td className="py-3 px-4">{feature.name}</td>
                   <td className="py-3 px-4 text-center">
-                    <FeatureIcon value={feature.lettera} />
+                    <FeatureIcon value={feature.penna} />
                   </td>
                   <td className="py-3 px-4 text-center">
                     <FeatureIcon value={feature.buttondown} />

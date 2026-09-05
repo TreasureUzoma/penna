@@ -205,7 +205,7 @@ authRoute.post("/logout", async (c) => {
   const refreshToken = await getSignedCookie(
     c,
     envConfig.JWT_REFRESH_SECRET,
-    "letteraRefreshToken"
+    "pennaRefreshToken"
   );
 
   if (refreshToken) {

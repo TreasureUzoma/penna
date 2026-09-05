@@ -166,7 +166,7 @@ export default function AppTopNav() {
                     profileData?.avatarUrl ||
                     `https://avatar.idolo.dev/${profileData?.email}`
                   }
-                  alt="lettera-user"
+                  alt="penna-user"
                 />
                 <AvatarFallback>L</AvatarFallback>
               </Avatar>

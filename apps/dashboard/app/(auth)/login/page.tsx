@@ -5,7 +5,7 @@ import { Alert, AlertTitle } from "@workspace/ui/components/alert";
 import { AlertCircleIcon } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Login - Lettera",
+  title: "Login - Penna",
 };
 
 export default async function LoginPage({

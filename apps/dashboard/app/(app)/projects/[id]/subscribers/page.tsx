@@ -288,7 +288,7 @@ export default function ProjectSubscribersPage() {
                       Programmatic Access
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Integrate Lettera directly into your website or
+                      Integrate Penna directly into your website or
                       application using our simple REST API.
                     </p>
                   </div>

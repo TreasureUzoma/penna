@@ -1,7 +1,7 @@
 # Start all dev servers in parallel
 # Usage: .\dev-local.ps1
 
-Write-Host "Starting Lettera dev servers..." -ForegroundColor Green
+Write-Host "Starting Penna dev servers..." -ForegroundColor Green
 Write-Host ""
 
 # Check if concurrently is installed

@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { AuthForm } from "../components/auth-form";
 
 export const metadata: Metadata = {
-  title: "Forgot Password - Lettera",
+  title: "Forgot Password - Penna",
 };
 
 export default function ForgotPasswordPage() {

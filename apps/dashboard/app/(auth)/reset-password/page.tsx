@@ -4,7 +4,7 @@ import { Alert, AlertTitle } from "@workspace/ui/components/alert";
 import { AlertCircleIcon } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Reset Password - Lettera",
+  title: "Reset Password - Penna",
 };
 
 export default async function ResetPasswordPage({

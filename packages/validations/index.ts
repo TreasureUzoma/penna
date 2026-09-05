@@ -21,7 +21,7 @@ export const BANNED_USERNAMES = [
   "external",
   "help",
   "legal",
-  "lettera",
+  "penna",
   "login",
   "logout",
   "payments",

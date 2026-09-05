@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "contact - lettera",
+  title: "contact - penna",
 };
 
 export default function ContactPage() {

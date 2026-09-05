@@ -191,7 +191,7 @@ export function SettingsTab({ project }: SettingsTabProps) {
             </span>
           </CardTitle>
           <CardDescription>
-            Remove the "Powered by Lettera" footer from your outgoing
+            Remove the "Powered by Penna" footer from your outgoing
             emails. Requires the project owner to be on a paid plan.
           </CardDescription>
         </CardHeader>
@@ -206,9 +206,9 @@ export function SettingsTab({ project }: SettingsTabProps) {
               )}
               onClick={() => toggleBranding(false)}
             >
-              <div className="font-medium">Show Lettera branding</div>
+              <div className="font-medium">Show Penna branding</div>
               <p className="text-sm text-muted-foreground">
-                Default — a small footer credits Lettera on every email.
+                Default — a small footer credits Penna on every email.
               </p>
             </div>
 

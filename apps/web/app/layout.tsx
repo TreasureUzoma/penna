@@ -18,7 +18,7 @@ const fontMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "lettera - opensoure alternative to buttondown",
+  title: "penna - opensoure alternative to buttondown",
 };
 
 export default function RootLayout({

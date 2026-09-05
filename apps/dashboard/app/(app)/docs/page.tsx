@@ -16,7 +16,7 @@ export default function DocsPage() {
     {
       title: "Getting Started",
       description:
-        "Learn the basics of Lettera and how to set up your first project.",
+        "Learn the basics of Penna and how to set up your first project.",
       icon: Zap,
       link: "#",
     },
@@ -29,7 +29,7 @@ export default function DocsPage() {
     {
       title: "SDKs & Libraries",
       description:
-        "Integrate Lettera into your app using our official libraries.",
+        "Integrate Penna into your app using our official libraries.",
       icon: Code,
       link: "#",
     },
@@ -59,7 +59,7 @@ export default function DocsPage() {
         <h1 className="text-4xl font-bold tracking-tight">Documentation</h1>
         <p className="text-muted-foreground text-lg max-w-2xl text-balance">
           Everything you need to build, manage, and scale your newsletters with
-          Lettera.
+          Penna.
         </p>
       </div>
 
@@ -95,7 +95,7 @@ export default function DocsPage() {
         <div className="flex flex-col md:flex-row items-center gap-8">
           <div className="p-5 bg-background rounded-2xl shadow-sm border">
             <pre className="text-xs font-mono">
-              <code>{`curl -X POST https://api.lettera.dev/v1/subscribers \\
+              <code>{`curl -X POST https://api.penna.dev/v1/subscribers \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
     "email": "customer@example.com",

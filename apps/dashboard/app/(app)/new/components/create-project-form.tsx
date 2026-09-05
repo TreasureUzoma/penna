@@ -92,7 +92,7 @@ export function CreateProjectForm() {
                 <p className="text-[0.8rem] text-muted-foreground">
                   Newsletter email:{" "}
                   <span className="font-medium text-foreground">
-                    {field.value}@newsletter.lettera.dev
+                    {field.value}@newsletter.penna.dev
                   </span>
                 </p>
               )}

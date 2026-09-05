@@ -5,20 +5,20 @@ description: "Learn how to add new subscribers to your project programmatically.
 
 # Create Subscriber
 
-Lettera provides a simple REST API to integrate newsletter functionality directly into your application. This guide will show you how to authenticate and add subscribers programmatically.
+Penna provides a simple REST API to integrate newsletter functionality directly into your application. This guide will show you how to authenticate and add subscribers programmatically.
 
 ## Authentication
 
 All API requests must be authenticated using your project's Public Key. You can find this key in your project settings dashboard.
 
-Include the key in the `x-lettera-public-key` header of your requests.
+Include the key in the `x-penna-public-key` header of your requests.
 
 ```bash
-x-lettera-public-key: letr_your_public_key_here
+x-penna-public-key: penn_your_public_key_here
 ```
 
 > [!WARNING]
-> Your Public Key is exposed to anyone who visits your website. While it creates a seamless integration, we recommend proxying these requests through your own backend API if you want to control rate limits or add additional spam protection layers before calling Lettera.
+> Your Public Key is exposed to anyone who visits your website. While it creates a seamless integration, we recommend proxying these requests through your own backend API if you want to control rate limits or add additional spam protection layers before calling Penna.
 
 ## Endpoints
 
@@ -31,7 +31,7 @@ Adds a new subscriber to your project.
 **Headers:**
 
 - `Content-Type: application/json`
-- `x-lettera-public-key: <YOUR_PUBLIC_KEY>`
+- `x-penna-public-key: <YOUR_PUBLIC_KEY>`
 
 **Body:**
 
@@ -60,12 +60,12 @@ export function NewsletterForm() {
 
     try {
       const res = await fetch(
-        "https://api.lettera.dev/api/v1/external/projects/subscriber/new",
+        "https://api.penna.dev/api/v1/external/projects/subscriber/new",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-lettera-public-key": "letr_abc1234567890", // Replace with your public key
+            "x-penna-public-key": "penn_abc1234567890", // Replace with your public key
           },
           body: JSON.stringify({ email }),
         }
@@ -123,12 +123,12 @@ export function NewsletterForm() {
 
     try {
       const response = await fetch(
-        "https://api.lettera.dev/api/v1/external/projects/subscriber/new",
+        "https://api.penna.dev/api/v1/external/projects/subscriber/new",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-lettera-public-key": "letr_abc1234567890",
+            "x-penna-public-key": "penn_abc1234567890",
           },
           body: JSON.stringify({ email }),
         }
@@ -149,9 +149,9 @@ export function NewsletterForm() {
 ### cURL
 
 ```bash
-curl -X POST https://api.lettera.dev/api/v1/external/projects/subscriber/new \
+curl -X POST https://api.penna.dev/api/v1/external/projects/subscriber/new \
   -H "Content-Type: application/json" \
-  -H "x-lettera-public-key: letr_abc1234567890" \
+  -H "x-penna-public-key: penn_abc1234567890" \
   -d '{"email": "test@example.com"}'
 ```
 
@@ -160,10 +160,10 @@ curl -X POST https://api.lettera.dev/api/v1/external/projects/subscriber/new \
 ```python
 import requests
 
-url = "https://api.lettera.dev/api/v1/external/projects/subscriber/new"
+url = "https://api.penna.dev/api/v1/external/projects/subscriber/new"
 headers = {
     "Content-Type": "application/json",
-    "x-lettera-public-key": "letr_abc1234567890"
+    "x-penna-public-key": "penn_abc1234567890"
 }
 data = {
     "email": "test@example.com"

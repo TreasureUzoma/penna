@@ -16,7 +16,7 @@ const subscriptionsPaddleRoute = new Hono<AppBindings>();
  * Create checkout session for subscription. The Paddle webhook itself lives
  * at a separate, public route (`routes/api/v1/webhooks/paddle.ts`, mounted
  * before session auth in index.ts) since Paddle's servers can't carry a
- * Lettera session cookie.
+ * Penna session cookie.
  */
 subscriptionsPaddleRoute.post(
   "/checkout",

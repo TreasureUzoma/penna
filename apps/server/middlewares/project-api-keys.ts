@@ -6,14 +6,14 @@ import { eq, and } from "drizzle-orm";
 import type { MiddlewareHandler } from "hono";
 
 export const projectApiKey: MiddlewareHandler = async (c, next) => {
-  const publicKey = c.req.header("x-lettera-public-key");
-  const privateKey = c.req.header("x-lettera-private-key");
+  const publicKey = c.req.header("x-penna-public-key");
+  const privateKey = c.req.header("x-penna-private-key");
 
   if (!publicKey) {
     return c.json(
       {
         success: false,
-        message: `Unauthorized: Missing x-lettera-public-key header. See ${envConfig.APP_URL}/docs/auth for setup instructions.`,
+        message: `Unauthorized: Missing x-penna-public-key header. See ${envConfig.APP_URL}/docs/auth for setup instructions.`,
         data: null,
       },
       401
@@ -22,7 +22,7 @@ export const projectApiKey: MiddlewareHandler = async (c, next) => {
 
   const isPublicKeyValid =
     typeof publicKey === "string" &&
-    publicKey.startsWith("letr_") &&
+    publicKey.startsWith("penn_") &&
     publicKey.length >= 16 &&
     publicKey.length <= 40;
 

@@ -1,7 +1,7 @@
 export const meta = {
-  name: "lettera",
+  name: "penna",
   socials: {
-    github: "https://github.com/treasureuzoma/lettera",
+    github: "https://github.com/treasureuzoma/penna",
   },
   developer: {
     name: "treasure uzoma",

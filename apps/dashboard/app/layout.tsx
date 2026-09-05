@@ -19,9 +19,9 @@ export const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lettera – Simplest newsletter tool you'd ever use.",
+  title: "Penna – Simplest newsletter tool you'd ever use.",
   description:
-    "Lettera makes newsletters effortless for developers. Write, send, and grow your audience with a minimal workflow.",
+    "Penna makes newsletters effortless for developers. Write, send, and grow your audience with a minimal workflow.",
 };
 
 export default function RootLayout({

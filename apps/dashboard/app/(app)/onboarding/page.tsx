@@ -49,7 +49,7 @@ export default function OnboardingPage() {
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight">
-            Welcome to Lettera
+            Welcome to Penna
           </h1>
         </div>
         <p className="text-muted-foreground text-lg">

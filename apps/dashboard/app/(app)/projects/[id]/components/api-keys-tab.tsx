@@ -69,7 +69,7 @@ export function ApiKeysTab({ projectId }: { projectId: string }) {
           <div className="space-y-1">
             <CardTitle>API Keys</CardTitle>
             <CardDescription>
-              Manage your API keys for accessing the Lettera API.
+              Manage your API keys for accessing the Penna API.
             </CardDescription>
           </div>
           <Button onClick={handleCreate} disabled={isCreating}>

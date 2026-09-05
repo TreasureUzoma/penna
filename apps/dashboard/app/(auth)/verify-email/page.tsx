@@ -4,7 +4,7 @@ import { Alert, AlertTitle } from "@workspace/ui/components/alert";
 import { AlertCircleIcon } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Verify your Email - Lettera",
+  title: "Verify your Email - Penna",
 };
 
 export default async function VerifyEmailPage({

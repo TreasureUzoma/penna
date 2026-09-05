@@ -72,7 +72,7 @@ export const createProject = async (
 };
 
 /**
- * Whether a project is allowed to remove Lettera branding from outgoing
+ * Whether a project is allowed to remove Penna branding from outgoing
  * emails. Gated on the project owner's plan (not just whoever happens to be
  * toggling the setting), and re-checked server-side on every send rather
  * than trusted from the stored config, in case the owner downgrades later.
@@ -112,7 +112,7 @@ export const updateProject = async (
             data: null,
             success: false,
             message:
-              "Removing Lettera branding is a Pro feature. Upgrade the project owner's plan to enable it.",
+              "Removing Penna branding is a Pro feature. Upgrade the project owner's plan to enable it.",
           };
         }
       }

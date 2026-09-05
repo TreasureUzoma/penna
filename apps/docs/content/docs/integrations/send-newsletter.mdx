@@ -16,8 +16,8 @@ This endpoint uses both the Public Key and Private Key for authentication.
 **Headers:**
 
 - `Content-Type: application/json`
-- `x-lettera-public-key: <YOUR_PUBLIC_KEY>`
-- `x-lettera-private-key: <YOUR_PRIVATE_KEY>`
+- `x-penna-public-key: <YOUR_PUBLIC_KEY>`
+- `x-penna-private-key: <YOUR_PRIVATE_KEY>`
 
 > [!WARNING]
 > Never expose your Private Key on the client. This endpoint should only be called from your own backend.
@@ -90,10 +90,10 @@ Before sending, the subject and content are checked for spam, phishing, scam, ha
 ### cURL
 
 ```bash
-curl -X POST https://api.lettera.dev/api/v1/external/projects/newsletters/send \
+curl -X POST https://api.penna.dev/api/v1/external/projects/newsletters/send \
   -H "Content-Type: application/json" \
-  -H "x-lettera-public-key: letr_your_public_key" \
-  -H "x-lettera-private-key: letr_private_your_private_key" \
+  -H "x-penna-public-key: penn_your_public_key" \
+  -H "x-penna-private-key: pk_your_private_key" \
   -d '{
     "subject": "Our August Update",
     "content": "# Hello!\n\nHere is what is new this month...",
@@ -109,7 +109,7 @@ const axios = require("axios");
 async function sendNewsletter() {
   try {
     const response = await axios.post(
-      "https://api.lettera.dev/api/v1/external/projects/newsletters/send",
+      "https://api.penna.dev/api/v1/external/projects/newsletters/send",
       {
         subject: "Our August Update",
         content: "# Hello!\n\nHere is what is new this month...",
@@ -117,8 +117,8 @@ async function sendNewsletter() {
       },
       {
         headers: {
-          "x-lettera-public-key": "letr_your_public_key",
-          "x-lettera-private-key": "letr_private_your_private_key",
+          "x-penna-public-key": "penn_your_public_key",
+          "x-penna-private-key": "pk_your_private_key",
         },
       }
     );
@@ -136,11 +136,11 @@ sendNewsletter();
 ```python
 import requests
 
-url = "https://api.lettera.dev/api/v1/external/projects/newsletters/send"
+url = "https://api.penna.dev/api/v1/external/projects/newsletters/send"
 headers = {
     "Content-Type": "application/json",
-    "x-lettera-public-key": "letr_your_public_key",
-    "x-lettera-private-key": "letr_private_your_private_key",
+    "x-penna-public-key": "penn_your_public_key",
+    "x-penna-private-key": "pk_your_private_key",
 }
 data = {
     "subject": "Our August Update",

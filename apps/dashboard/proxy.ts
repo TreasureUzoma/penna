@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ACCESS_COOKIE = "letteraAccessToken";
-const REFRESH_COOKIE = "letteraRefreshToken";
+const ACCESS_COOKIE = "pennaAccessToken";
+const REFRESH_COOKIE = "pennaRefreshToken";
 const API_URL = process.env.API_URL || "http://localhost:3005";
 
 // Everything under (app) — requires a session, redirects to /login otherwise.

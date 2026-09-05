@@ -55,7 +55,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Welcome to Lettera! 🎉</DialogTitle>
+          <DialogTitle className="text-2xl">Welcome to Penna! 🎉</DialogTitle>
           <DialogDescription className="text-base">
             We're excited to have you here! Follow these steps to get your
             newsletter up and running in minutes.
