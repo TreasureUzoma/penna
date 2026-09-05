@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { plans } from "@workspace/constants/plans";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -20,6 +20,14 @@ import api from "@workspace/axios";
 import { toast } from "sonner";
 
 export default function SubscribePage(): React.ReactNode {
+  return (
+    <Suspense fallback={null}>
+      <SubscribePageContent />
+    </Suspense>
+  );
+}
+
+function SubscribePageContent(): React.ReactNode {
   const searchParams = useSearchParams();
   const router = useRouter();
   const planSlug = searchParams.get("plan");
