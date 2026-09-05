@@ -21,6 +21,13 @@ const envSchema = z.object({
   // from NEWSLETTER_DOMAIN, which is per-project outbound newsletter mail.
   // Must be a verified SES identity.
   SYSTEM_EMAIL_FROM: z.string().default("notifications@penna.dev"),
+  // ARN of the SNS topic AWS SES publishes bounce/complaint notifications
+  // to — see apps/server/services/mail/README.md for setup. The
+  // /webhooks/ses route rejects every message outright if this isn't set,
+  // and rejects any message whose own TopicArn doesn't match it —
+  // signature verification alone only proves "this came from *some* SNS
+  // topic", not that it's ours.
+  SES_NOTIFICATIONS_TOPIC_ARN: z.string().optional(),
   // Used to build links (e.g. "upgrade your plan") in system emails.
   DASHBOARD_SITE: z.string().default("http://localhost:3001"),
   PADDLE_API_KEY: z.string(),

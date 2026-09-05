@@ -13,6 +13,8 @@ The email service allows you to send newsletters from dynamic email addresses ba
 - **ses.ts** - AWS SES integration and low-level email sending functions
 - **external.ts** - High-level newsletter sending API
 - **internal.ts** - Internal transactional emails (welcome, password reset, etc.)
+- **sns-verify.ts** - Verifies incoming SNS messages are genuinely from AWS
+- **ses-events.ts** - Handles bounce/complaint notifications (see below)
 
 ## Setup
 
@@ -157,24 +159,48 @@ const testResponse = await api.post(`/emails/${projectId}/test`, {
 - Limited to 200 emails per 24 hours
 - Request production access to remove limits
 
+## Bounce & Complaint Handling
+
+Required for AWS production access ("a process in place for handling
+bounce and complaint notifications") and for actually keeping your bounce/
+complaint rate under the thresholds above — sending to dead or complaining
+addresses forever will get your account throttled or suspended.
+
+The `/api/v1/webhooks/ses` route receives bounce/complaint events from SES
+via SNS and automatically marks the affected subscriber `bounced` (on a
+permanent bounce) or `unsubscribed` (on a complaint) so they're excluded
+from future sends. One-time setup:
+
+1. **Create an SNS topic** (same AWS region as your SES identity), e.g.
+   `penna-ses-notifications`. Note its ARN.
+2. **Set `SES_NOTIFICATIONS_TOPIC_ARN`** in your environment to that ARN,
+   and deploy — the webhook fails closed until this is set.
+3. **Subscribe your webhook to the topic**: SNS topic → Create subscription
+   → Protocol: HTTPS → Endpoint: `https://<your-api-domain>/api/v1/webhooks/ses`.
+   SNS will POST a `SubscriptionConfirmation` message, which the route
+   auto-confirms (it visits the `SubscribeURL` for you) as long as step 2
+   is already deployed.
+4. **Point SES at the topic**: Verified identities → `penna.dev` →
+   Notifications tab → set both "Bounce feedback" and "Complaint feedback"
+   to "Amazon SNS topic" → select the topic from step 1.
+
+Transient bounces (mailbox full, greylisting, etc.) are left alone —
+only `Permanent` bounces and complaints suppress the subscriber.
+
 ## Best Practices
 
 1. **Always send test emails first**
    - Use the `/test` endpoint before sending to all subscribers
 
-2. **Monitor bounce and complaint rates**
-   - High rates can get your account suspended
-   - Remove bounced emails from your list
-
-3. **Include unsubscribe links**
+2. **Include unsubscribe links**
    - Required by law (CAN-SPAM, GDPR)
    - Use the unsubscribe endpoint
 
-4. **Use proper HTML**
+3. **Use proper HTML**
    - Test emails in different clients
    - Keep file size under 10MB
 
-5. **Respect rate limits**
+4. **Respect rate limits**
    - AWS SES has sending rate limits
    - The service adds delays between bulk sends
 

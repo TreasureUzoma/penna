@@ -9,6 +9,7 @@ import projectsRoute from "./routes/api/v1/projects";
 import subscriptionRoutes from "./routes/api/v1/subscriptions";
 import subscriptionsPaddleRoute from "./routes/api/v1/subscriptions-paddle";
 import paddleWebhookRoute from "./routes/api/v1/webhooks/paddle";
+import sesWebhookRoute from "./routes/api/v1/webhooks/ses";
 import unsubscribeRoutes from "./routes/api/v1/unsubscribe";
 import externalProjectRoutes from "./routes/api/v1/external/projects";
 import profileRoutes from "./routes/api/v1/profiles";
@@ -74,6 +75,15 @@ v1.route(
 v1.route(
   "/webhooks/paddle",
   paddleWebhookRoute.use(rateLimiter(60 * 60 * 1000, 100)),
+);
+
+// SES bounce/complaint webhook (via SNS) — public, verified via SNS's own
+// message signature + topic ARN check instead of a session. Limit is much
+// higher than other webhooks since a rocky send can legitimately generate
+// a burst of bounce notifications in a short window.
+v1.route(
+  "/webhooks/ses",
+  sesWebhookRoute.use(rateLimiter(60 * 60 * 1000, 2000)),
 );
 
 // Everything else requires authentication
