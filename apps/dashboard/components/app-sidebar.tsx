@@ -141,7 +141,7 @@ export default function AppSidebar({
       )}
     >
       {/* Logo Section */}
-      <div className="p-4 flex items-center justify-between">
+      <div className="px-4 py-3.5 flex items-center justify-between">
         {!isCollapsed && (
           <Link href="/projects" className="flex items-center gap-2">
             <Logo />
