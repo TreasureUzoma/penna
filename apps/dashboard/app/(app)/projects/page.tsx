@@ -80,7 +80,7 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen px-8 py-12 flex-col gap-8 flex">
       {/* Header Section — includes the "New Project" button */}
-      <ProjectHeader email={profile?.email} />
+      <ProjectHeader email={profile?.name} />
 
       {/* Stats Section — full width */}
       {isStatsLoading ? (

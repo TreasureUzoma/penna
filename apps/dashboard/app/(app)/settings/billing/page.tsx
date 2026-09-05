@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -31,7 +31,6 @@ import { toast } from "sonner";
  */
 function usePaddleTransactionCheckout() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [paddle, setPaddle] = useState<Paddle | null>(null);
 
@@ -43,15 +42,23 @@ function usePaddleTransactionCheckout() {
     initializePaddle({
       token: clientToken,
       environment: env as "sandbox" | "production",
+      // Without this, the overlay shows its own "payment successful"
+      // screen and just sits there — nothing tells it to close or
+      // navigate anywhere. This makes Paddle.js itself redirect the top
+      // window once checkout completes.
+      checkout: {
+        settings: {
+          successUrl: `${window.location.origin}/settings/billing?success=true`,
+        },
+      },
       eventCallback: (event) => {
         if (event.name === "checkout.completed") {
           toast.success("Payment successful — updating your plan…");
           queryClient.invalidateQueries({ queryKey: ["session"] });
-          router.replace("/settings/billing");
         }
       },
     }).then((p) => p && setPaddle(p));
-  }, [router, queryClient]);
+  }, [queryClient]);
 
   useEffect(() => {
     const transactionId = searchParams.get("_ptxn");

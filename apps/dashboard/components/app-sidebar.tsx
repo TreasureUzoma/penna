@@ -63,6 +63,21 @@ export default function AppSidebar({
   const projectSlug = isProjectRoute ? segments[1] : null;
 
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // Click-outside-to-close. Needed now that the menu is click-toggled
+  // rather than hover-toggled (see the onClick below for why) — hover had
+  // this for free via onMouseLeave.
+  React.useEffect(() => {
+    if (!isUserMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!userMenuRef.current?.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isUserMenuOpen]);
 
   // Close the mobile drawer whenever the route changes.
   React.useEffect(() => {
@@ -232,11 +247,7 @@ export default function AppSidebar({
 
       {/* User Section */}
       <div className="p-3 space-y-3">
-        <div
-          className="relative"
-          onMouseEnter={() => setIsUserMenuOpen(true)}
-          onMouseLeave={() => setIsUserMenuOpen(false)}
-        >
+        <div className="relative" ref={userMenuRef}>
           {profileLoading ? (
             <div className="flex items-center gap-3 px-3">
               <Skeleton className="w-8 h-8 rounded-lg flex-shrink-0" />
