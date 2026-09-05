@@ -29,20 +29,19 @@ export function ProjectSwitcher() {
   const { data: projects, isLoading } = useProjects();
 
   const selectedProject = projects?.find(
-    (project) => project.slug === params.id
+    (project) => project.slug === params.id,
   );
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between"
+          className="justify-between max-w-[150px]"
         >
           {selectedProject ? (
-            <span className="flex items-center gap-2 truncate">
-              <Folder className="h-4 w-4 shrink-0" />
+            <span className="flex items-center gap-1 truncate">
               <span className="truncate">{selectedProject.name}</span>
             </span>
           ) : (
@@ -66,14 +65,13 @@ export function ProjectSwitcher() {
                   }}
                   className="text-sm"
                 >
-                  <Folder className="mr-2 h-4 w-4" />
                   {project.name}
                   <Check
                     className={cn(
                       "ml-auto h-4 w-4",
                       selectedProject?.id === project.id
                         ? "opacity-100"
-                        : "opacity-0"
+                        : "opacity-0",
                     )}
                   />
                 </CommandItem>
