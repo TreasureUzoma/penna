@@ -6,10 +6,10 @@ import { ModeToggle } from "./theme-toggle";
 
 export const Footer = () => {
   return (
-    <footer className="w-full border-t py-6 px-4 md:px-[5rem] text-sm font-medium">
+    <footer className="w-full border-t p-2 px-4 md:px-[5rem] text-sm font-medium">
       <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="space-x-4 flex items-center">
-          <Link href="#" className="font-semibold text-primary">
+          <Link href="/" className="font-semibold text-primary">
             <Logo />
           </Link>
         </div>

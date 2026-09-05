@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
-import { PenLine, Send, Share2 } from "lucide-react";
+import { CheckCircle2, PenLine, Send, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -16,20 +16,24 @@ export function ProjectCTA({ project, stats }: ProjectCTAProps) {
   const params = useParams();
   const slug = params.id as string;
 
-  // Logic for context-aware CTA
-  let cta = {
-    title: "Write your first post",
-    description:
-      "You're all set up! Share your first newsletter with your subscribers.",
-    buttonText: "Create Post",
-    icon: PenLine,
-    href: `/projects/${slug}/posts/new`,
-  };
-
   const lastSent = stats?.lastPostSent ? new Date(stats.lastPostSent) : null;
-  const isInactive =
-    !lastSent ||
+  const hasNeverSent = !lastSent;
+  const isStale =
+    !!lastSent &&
     new Date().getTime() - lastSent.getTime() > 14 * 24 * 60 * 60 * 1000;
+
+  // Context-aware CTA — ordered by priority. Falls through to `null`
+  // ("everything's fine, nothing to nudge") when the project has
+  // subscribers and has posted recently: previously there was no such
+  // case, so a healthy, active project fell through to the same "Write
+  // your first post" object used for a genuinely brand-new one.
+  let cta: {
+    title: string;
+    description: string;
+    buttonText: string;
+    icon: typeof PenLine;
+    href: string;
+  } | null = null;
 
   if (stats?.totalSubscribers === 0) {
     cta = {
@@ -40,7 +44,16 @@ export function ProjectCTA({ project, stats }: ProjectCTAProps) {
       icon: Share2,
       href: `/projects/${slug}/settings`,
     };
-  } else if (isInactive) {
+  } else if (hasNeverSent) {
+    cta = {
+      title: "Write your first post",
+      description:
+        "You're all set up! Share your first newsletter with your subscribers.",
+      buttonText: "Create Post",
+      icon: PenLine,
+      href: `/projects/${slug}/posts/new`,
+    };
+  } else if (isStale) {
     cta = {
       title: "Send your next newsletter",
       description:
@@ -49,6 +62,32 @@ export function ProjectCTA({ project, stats }: ProjectCTAProps) {
       icon: Send,
       href: `/projects/${slug}/posts/new`,
     };
+  }
+
+  if (!cta) {
+    return (
+      <Card>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="p-3 w-fit rounded-lg bg-neutral-200 dark:bg-neutral-800">
+              <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold">You're all caught up</h3>
+              <p className="text-neutral-400 text-sm leading-relaxed">
+                Recently active with subscribers on board — nothing needs
+                your attention right now.
+              </p>
+            </div>
+          </div>
+          <div className="mt-8">
+            <Button className="w-full" variant="outline" asChild>
+              <Link href={`/projects/${slug}/posts`}>View Posts</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

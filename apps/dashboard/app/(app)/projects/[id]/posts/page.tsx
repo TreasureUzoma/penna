@@ -30,9 +30,50 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { Loader2, Plus, Trash2, Mail, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Mail, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+
+/**
+ * `email.status` only distinguishes "draft" vs "published" in the DB — a
+ * post scheduled for later is already "published" the moment it's
+ * scheduled (see `handleSchedule` in posts/[postId]/page.tsx), so showing
+ * the raw status would label a not-yet-sent post as "published". Derive
+ * the third state (Scheduled) from `sentAt` instead of adding a DB column.
+ */
+function getDisplayStatus(email: { status: string; sentAt: string }) {
+  if (email.status !== "published") {
+    return {
+      label: "Draft",
+      className: "bg-secondary text-secondary-foreground",
+    };
+  }
+
+  const isFuture = new Date(email.sentAt).getTime() > Date.now();
+  if (isFuture) {
+    return {
+      label: "Scheduled",
+      className:
+        "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+    };
+  }
+
+  return {
+    label: "Sent",
+    className:
+      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  };
+}
+
+// Matches the same lock condition on the post edit page itself — once a
+// post has actually gone out, that page is read-only, so link to it as
+// "View" rather than "Edit".
+function isAlreadySent(email: { status: string; sentAt: string }) {
+  return (
+    email.status === "published" &&
+    new Date(email.sentAt).getTime() <= Date.now()
+  );
+}
 
 export default function ProjectPostsPage() {
   const params = useParams();
@@ -51,12 +92,9 @@ export default function ProjectPostsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Posts</h2>
-          <p className="text-muted-foreground">
-            Create and manage your newsletters and posts.
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          Create and manage your newsletters and posts.
+        </p>
         <Button asChild>
           <Link href={`/projects/${projectId}/posts/new`}>
             <Plus className="w-4 h-4 mr-2" />
@@ -91,13 +129,9 @@ export default function ProjectPostsPage() {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          email.status === "published"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-secondary text-secondary-foreground"
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getDisplayStatus(email).className}`}
                       >
-                        {email.status}
+                        {getDisplayStatus(email).label}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -108,8 +142,13 @@ export default function ProjectPostsPage() {
                         <Button variant="ghost" size="icon" asChild>
                           <Link
                             href={`/projects/${projectId}/posts/${email.id}`}
+                            title={isAlreadySent(email) ? "View" : "Edit"}
                           >
-                            <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                            {isAlreadySent(email) ? (
+                              <Eye className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                            ) : (
+                              <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                            )}
                           </Link>
                         </Button>
                         <AlertDialog>

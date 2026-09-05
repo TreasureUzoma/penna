@@ -106,6 +106,12 @@ export interface ProjectAnalytics {
     openRate: number;
     clickRate: number;
   } | null;
+  statusBreakdown: {
+    subscribed: number;
+    unsubscribed: number;
+    bounced: number;
+    pending: number;
+  };
 }
 
 export function useProjectAnalytics(id: string, days: number = 30) {

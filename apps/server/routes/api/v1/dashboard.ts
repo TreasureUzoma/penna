@@ -1,10 +1,15 @@
-import { getDashboardOverview } from "@/services/dashboard";
+import {
+  getAccountAnalytics,
+  getDashboardOverview,
+  getRecentActivity,
+} from "@/services/dashboard";
 import type { AppBindings, AuthType } from "@/types";
 import { routeStatus } from "@/lib/utils";
 import { validationErrorResponse } from "@/utils/validation-error-response";
 import { zValidator } from "@hono/zod-validator";
 import { dashboardOverviewSchema } from "@workspace/validations";
 import { Hono } from "hono";
+import { z } from "zod";
 
 const dashboardRoute = new Hono<AppBindings>();
 
@@ -57,6 +62,40 @@ dashboardRoute.get(
       },
       200
     );
+  }
+);
+
+// Recent activity across all of the user's projects (most recently sent posts)
+dashboardRoute.get("/activity", async (c) => {
+  const cookieUser = c.get("user") as AuthType;
+  const serviceData = await getRecentActivity(cookieUser.id);
+
+  return c.json(
+    {
+      success: serviceData.success,
+      message: serviceData.message,
+      data: { activity: serviceData.data },
+    },
+    routeStatus(serviceData)
+  );
+});
+
+// Account-wide analytics — combined subscriber growth + top projects
+dashboardRoute.get(
+  "/analytics",
+  zValidator(
+    "query",
+    z.object({ days: z.coerce.number().min(1).max(365).default(30) }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
+    }
+  ),
+  async (c) => {
+    const cookieUser = c.get("user") as AuthType;
+    const { days } = c.req.valid("query");
+
+    const serviceData = await getAccountAnalytics(cookieUser.id, days);
+    return c.json(serviceData, routeStatus(serviceData));
   }
 );
 

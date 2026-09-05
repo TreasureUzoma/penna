@@ -6,9 +6,8 @@ import { useEmail, useUpdateEmail } from "@/hooks/use-emails";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { MarkdownSplitEditor } from "@/components/markdown-split-editor";
-import { Loader2, ArrowLeft, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import {
   Popover,
@@ -98,78 +97,88 @@ export default function EditPostPage(): React.JSX.Element {
     );
   }
 
+  // A post is only truly "sent" once its status is published AND its
+  // sentAt has actually passed — before that it's still scheduled (not yet
+  // delivered), and editing it should keep working normally since
+  // `prepareEmailSend` reads content fresh right before it fires. Once it
+  // has gone out, subscribers already have the old content in their inbox
+  // — editing here would silently rewrite the record without resending or
+  // notifying anyone, so it's locked to read-only instead.
+  const isAlreadySent =
+    email?.status === "published" &&
+    new Date(email.sentAt).getTime() <= Date.now();
+
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] -m-8 p-8 gap-6">
+    <div className="flex flex-col h-[calc(100vh-4rem)] -m-8 px-8 py-4 gap-4">
       <div className="flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link href={`/projects/${projectId}/posts`}>
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Edit Post</h2>
-            <p className="text-muted-foreground">Refine your content</p>
-          </div>
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            {isAlreadySent ? "View Post" : "Edit Post"}
+          </h2>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             onClick={() => router.push(`/projects/${projectId}/posts`)}
           >
-            Cancel
+            {isAlreadySent ? "Back" : "Cancel"}
           </Button>
-          <Popover open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" disabled={isUpdating}>
-                <CalendarIcon className="w-4 h-4 mr-2" />
-                Schedule
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80" align="end">
-              <div className="grid gap-4">
-                <div className="space-y-2">
-                  <h4 className="font-medium leading-none">Schedule Post</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Choose a date and time to publish this post.
-                  </p>
-                </div>
-                <div className="grid gap-2">
-                  <Input
-                    type="datetime-local"
-                    value={scheduledDate}
-                    onChange={(e) => setScheduledDate(e.target.value)}
-                  />
-                  <Button
-                    onClick={handleSchedule}
-                    disabled={isUpdating || !scheduledDate}
-                  >
-                    {isUpdating && (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    )}
-                    Confirm Schedule
+          {!isAlreadySent && (
+            <>
+              <Popover open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" disabled={isUpdating}>
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    Schedule
                   </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-          <Button onClick={handleSave} disabled={isUpdating}>
-            {isUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            <Save className="w-4 h-4 mr-2" />
-            Save Draft
-          </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium leading-none">Schedule Post</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Choose a date and time to publish this post.
+                      </p>
+                    </div>
+                    <div className="grid gap-2">
+                      <Input
+                        type="datetime-local"
+                        value={scheduledDate}
+                        onChange={(e) => setScheduledDate(e.target.value)}
+                      />
+                      <Button
+                        onClick={handleSchedule}
+                        disabled={isUpdating || !scheduledDate}
+                      >
+                        {isUpdating && (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        )}
+                        Confirm Schedule
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Button onClick={handleSave} disabled={isUpdating}>
+                {isUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Save className="w-4 h-4 mr-2" />
+                Save Draft
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-0 shadow-none bg-transparent">
-        <CardContent className="p-0 h-full flex flex-col gap-4">
-          <div className="shrink-0 bg-background border rounded-lg p-4 space-y-1">
+        <CardContent className="p-0 h-full flex flex-col gap-3">
+          <div className="shrink-0 bg-background border rounded-lg p-3 space-y-0.5">
             <label className="text-sm font-medium">Subject Line</label>
             <Input
               placeholder="Enter an engaging subject line..."
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="text-lg font-medium border-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50 h-auto"
+              disabled={isAlreadySent}
+              className="text-lg font-medium border-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50 h-auto disabled:opacity-100"
             />
           </div>
 
@@ -177,6 +186,7 @@ export default function EditPostPage(): React.JSX.Element {
             <MarkdownSplitEditor
               value={content}
               onChange={setContent}
+              readOnly={isAlreadySent}
               className="h-full shadow-sm"
             />
           </div>

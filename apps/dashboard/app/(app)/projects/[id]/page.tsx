@@ -44,14 +44,9 @@ export default function ProjectOverviewPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="flex items-center justify-between shrink-0">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight">Overview</h2>
-          <p className="text-muted-foreground">
-            A snapshot of your newsletter's health and activity.
-          </p>
-        </div>
-      </div>
+      <p className="text-muted-foreground">
+        A snapshot of your newsletter's health and activity.
+      </p>
 
       {isAnalyticsLoading ? (
         <KPICardsSkeleton />

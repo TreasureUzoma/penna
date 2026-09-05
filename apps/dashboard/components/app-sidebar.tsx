@@ -29,7 +29,7 @@ import { Skeleton } from "@workspace/ui/components/skeleton";
 import { useSelectedLayoutSegments } from "next/navigation";
 import api from "@workspace/axios";
 import { toast } from "sonner";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface NavItem {
   label: string;
@@ -70,6 +70,11 @@ export default function AppSidebar({
       label: "Projects",
       href: "/projects",
       icon: <LayoutDashboard className="w-4 h-4" />,
+    },
+    {
+      label: "Analytics",
+      href: "/analytics",
+      icon: <BarChart3 className="w-4 h-4" />,
     },
     {
       label: "Settings",
@@ -132,7 +137,7 @@ export default function AppSidebar({
         // Desktop: back in normal flex flow — width alone pushes the
         // content over, no separate margin to keep in sync.
         "md:static md:inset-auto md:translate-x-0 md:z-auto",
-        isCollapsed ? "md:w-16" : "md:w-64"
+        isCollapsed ? "md:w-16" : "md:w-64",
       )}
     >
       {/* Logo Section */}
@@ -161,7 +166,7 @@ export default function AppSidebar({
             <ChevronDown
               className={cn(
                 "w-4 h-4 transition-transform duration-300",
-                isCollapsed ? "rotate-90" : "-rotate-90"
+                isCollapsed ? "rotate-90" : "-rotate-90",
               )}
             />
           </Button>
@@ -180,13 +185,15 @@ export default function AppSidebar({
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative group",
                 isActive(item.href)
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
               )}
             >
               <div className="flex-shrink-0">{item.icon}</div>
               {!isCollapsed && (
                 <>
-                  <span className="text-sm font-medium flex-1">{item.label}</span>
+                  <span className="text-sm font-medium flex-1">
+                    {item.label}
+                  </span>
                   {item.badge && (
                     <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
                       {item.badge}
@@ -203,8 +210,6 @@ export default function AppSidebar({
           </motion.div>
         ))}
       </nav>
-
-      <Separator />
 
       {/* User Section */}
       <div className="p-3 space-y-3">
@@ -227,10 +232,7 @@ export default function AppSidebar({
                 <Avatar className="w-8 h-8 flex-shrink-0">
                   <AvatarImage
                     className="rounded-lg"
-                    src={
-                      profileData?.avatarUrl ||
-                      `https://avatar.idolo.dev/${profileData?.email}`
-                    }
+                    src={`https://avatar.idolo.dev/${profileData?.email}`}
                     alt="user-avatar"
                   />
                   <AvatarFallback>L</AvatarFallback>
@@ -257,7 +259,7 @@ export default function AppSidebar({
                     transition={{ duration: 0.15 }}
                     className={cn(
                       "absolute bottom-full left-0 right-0 mb-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50",
-                      isCollapsed && "left-auto right-auto w-48"
+                      isCollapsed && "left-auto right-auto w-48",
                     )}
                   >
                     <Link
@@ -270,18 +272,20 @@ export default function AppSidebar({
                     </Link>
                     <Separator className="my-1" />
                     <p
-                     
                       className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-destructive/10 transition-colors text-destructive"
                       onClick={async () => {
                         try {
-                        await api.post("/auth/logout")
-                        toast.success("Signout Successful")
-                        router.push("/login")
+                          await api.post("/auth/logout");
+                          toast.success("Signout Successful");
+                          router.push("/login");
+                        } catch (error) {
+                          toast.error(
+                            error instanceof Error
+                              ? error.message
+                              : "Failed to Logout",
+                          );
                         }
-                        catch (error) {
-                          toast.error(error instanceof Error ? error.message : "Failed to Logout")
-                        }
-                        setIsUserMenuOpen(false)
+                        setIsUserMenuOpen(false);
                       }}
                     >
                       <LogOut className="w-4 h-4" />

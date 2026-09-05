@@ -9,7 +9,18 @@ import {
 import type { ServiceResponse } from "@workspace/types";
 import type { DashboardOverview } from "@workspace/validations";
 import { paginate } from "@/utils/pagination";
-import { and, asc, count, desc, eq, inArray, sql, sum } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  lte,
+  sql,
+  sum,
+} from "drizzle-orm";
 
 export const getDashboardOverview = async (
   userId: string,
@@ -126,6 +137,169 @@ export const getDashboardOverview = async (
         err instanceof Error
           ? err.message
           : "Something went wrong fetching dashboard overview",
+      data: null,
+    };
+  }
+};
+
+/**
+ * The most recently *actually sent* posts across every project the user
+ * belongs to — scheduled-but-not-yet-sent posts are excluded (they're not
+ * "activity" yet), matching the same published-and-sentAt-has-passed check
+ * used to lock post editing (see the dashboard's posts/[postId] page).
+ */
+export const getRecentActivity = async (
+  userId: string,
+  limit = 5
+): Promise<ServiceResponse> => {
+  try {
+    const userProjects = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+      .where(eq(projectMembers.userId, userId));
+
+    const projectIds = userProjects.map((p) => p.id);
+
+    if (projectIds.length === 0) {
+      return {
+        success: true,
+        message: "No recent activity",
+        data: [],
+      };
+    }
+
+    const recentPosts = await db
+      .select({
+        id: emails.id,
+        subject: emails.subject,
+        sentAt: emails.sentAt,
+        projectId: emails.projectId,
+        projectName: projects.name,
+        projectSlug: projects.slug,
+      })
+      .from(emails)
+      .innerJoin(projects, eq(emails.projectId, projects.id))
+      .where(
+        and(
+          inArray(emails.projectId, projectIds),
+          eq(emails.status, "published"),
+          lte(emails.sentAt, new Date())
+        )
+      )
+      .orderBy(desc(emails.sentAt))
+      .limit(limit);
+
+    return {
+      success: true,
+      message: "Recent activity fetched successfully",
+      data: recentPosts,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong fetching recent activity",
+      data: null,
+    };
+  }
+};
+
+/**
+ * Account-wide analytics — combined subscriber growth across every project
+ * the user belongs to, plus a ranking of their top projects by active
+ * subscriber count. Distinct from `getProjectAnalytics` (services/
+ * analytics.ts), which is scoped to one project.
+ */
+export const getAccountAnalytics = async (
+  userId: string,
+  days: number = 30
+): Promise<ServiceResponse> => {
+  try {
+    const userProjects = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+      .where(eq(projectMembers.userId, userId));
+
+    const projectIds = userProjects.map((p) => p.id);
+
+    if (projectIds.length === 0) {
+      return {
+        success: true,
+        message: "No analytics yet",
+        data: { chartData: [], topProjects: [] },
+      };
+    }
+
+    const now = new Date();
+    const timeframeDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    // Combined daily new-subscriber counts across every project.
+    const dailyGrowth = await db
+      .select({
+        date: sql<string>`date_trunc('day', ${subscribers.createdAt})`,
+        count: sql<number>`count(${subscribers.id})::int`,
+      })
+      .from(subscribers)
+      .where(
+        and(
+          inArray(subscribers.projectId, projectIds),
+          gte(subscribers.createdAt, timeframeDate)
+        )
+      )
+      .groupBy(sql`1`)
+      .orderBy(sql`1 asc`);
+
+    // Fill gaps so the chart shows a continuous line, not just days with signups.
+    const chartStartDate = new Date(timeframeDate);
+    chartStartDate.setHours(0, 0, 0, 0);
+    const chartData = [];
+    for (let i = 0; i <= days; i++) {
+      const d = new Date(chartStartDate.getTime() + i * 24 * 60 * 60 * 1000);
+      const dateStr = d.toISOString().split("T")[0];
+      const existing = dailyGrowth.find(
+        (row) => new Date(row.date).toISOString().split("T")[0] === dateStr
+      );
+      chartData.push({ date: dateStr, count: existing ? existing.count : 0 });
+    }
+
+    // Top projects by active subscriber count.
+    const topProjects = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        slug: projects.slug,
+        subscriberCount: count(subscribers.id),
+      })
+      .from(projects)
+      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+      .leftJoin(
+        subscribers,
+        and(
+          eq(subscribers.projectId, projects.id),
+          eq(subscribers.status, "subscribed")
+        )
+      )
+      .where(eq(projectMembers.userId, userId))
+      .groupBy(projects.id)
+      .orderBy(desc(count(subscribers.id)))
+      .limit(5);
+
+    return {
+      success: true,
+      message: "Account analytics fetched successfully",
+      data: { chartData, topProjects },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong fetching account analytics",
       data: null,
     };
   }

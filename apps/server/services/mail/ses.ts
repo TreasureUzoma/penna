@@ -68,7 +68,11 @@ export const sendNewsletterEmail = async (
     const htmlWithFooter = appendUnsubscribeFooter(html, unsubscribeUrl);
 
     const command = new SendEmailV2Command({
-      FromEmailAddress: `newsletter@${projectSlug}.${envConfig.NEWSLETTER_DOMAIN}`,
+      // {slug}@newsletter.penna.dev — not newsletter@{slug}.newsletter.penna.dev.
+      // The onboarding UI (create-project-form.tsx, username-form.tsx) has
+      // always shown subscribers this short, non-repetitive form; this was
+      // the one place still sending from the longer one.
+      FromEmailAddress: `${projectSlug}@${envConfig.NEWSLETTER_DOMAIN}`,
       Destination: {
         ToAddresses: [recipientEmail],
       },
@@ -183,7 +187,7 @@ export interface SendSystemEmailOptions {
 /**
  * Send a transactional/system email (limit warnings, account notices,
  * etc.) from `SYSTEM_EMAIL_FROM`, as opposed to `sendNewsletterEmail`,
- * which sends from a project's own `newsletter@{slug}.{domain}` identity.
+ * which sends from a project's own `{slug}@{NEWSLETTER_DOMAIN}` identity.
  */
 export const sendSystemEmail = async (
   options: SendSystemEmailOptions

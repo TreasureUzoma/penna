@@ -13,6 +13,7 @@ import {
   generateAndCreateProjectApiKey,
   deleteProjectApiKey,
   transferProjectOwnership,
+  canRemoveBranding,
 } from "@/services/projects";
 import {
   getSubscribers,
@@ -188,11 +189,20 @@ projectsRoute.get(
     const { slug } = c.req.valid("param");
     const serviceData = await getProjectBySlug(slug);
 
-    if (!serviceData.success) {
+    if (!serviceData.success || !serviceData.data) {
       return c.json(serviceData, 404);
     }
 
-    return c.json({ project: serviceData.data }, 200);
+    // Computed server-side (mirrors the check `updateProject` re-runs on
+    // every branding-toggle write) so the dashboard can grey out "Remove
+    // branding" for free-plan owners instead of letting them click it and
+    // hit a 400 — see settings-tab.tsx.
+    const removableBranding = await canRemoveBranding(serviceData.data.id);
+
+    return c.json(
+      { project: { ...serviceData.data, canRemoveBranding: removableBranding } },
+      200
+    );
   }
 );
 

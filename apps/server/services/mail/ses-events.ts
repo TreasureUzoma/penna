@@ -27,16 +27,16 @@ interface SesNotification {
 
 /**
  * Pulls the project slug back out of a newsletter Source address built by
- * `sendNewsletterEmail` (`newsletter@{slug}.{NEWSLETTER_DOMAIN}`). Returns
- * null for system/transactional sends (`SYSTEM_EMAIL_FROM`), which aren't
- * tied to any project's subscriber list.
+ * `sendNewsletterEmail` (`{slug}@{NEWSLETTER_DOMAIN}`). Returns null for
+ * system/transactional sends (`SYSTEM_EMAIL_FROM`), which aren't tied to
+ * any project's subscriber list.
  */
 const projectSlugFromSource = (source: string): string | null => {
-  const suffix = `.${envConfig.NEWSLETTER_DOMAIN}`;
-  if (!source.startsWith("newsletter@") || !source.endsWith(suffix)) {
+  const suffix = `@${envConfig.NEWSLETTER_DOMAIN}`;
+  if (!source.endsWith(suffix)) {
     return null;
   }
-  const slug = source.slice("newsletter@".length, source.length - suffix.length);
+  const slug = source.slice(0, source.length - suffix.length);
   return slug || null;
 };
 

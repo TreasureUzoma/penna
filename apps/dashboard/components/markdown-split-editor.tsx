@@ -20,12 +20,15 @@ interface MarkdownSplitEditorProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  /** Hides the toolbar and disables the textarea — for a post that's already been sent. */
+  readOnly?: boolean;
 }
 
 export function MarkdownSplitEditor({
   value,
   onChange,
   className,
+  readOnly = false,
 }: MarkdownSplitEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,32 +38,32 @@ export function MarkdownSplitEditor({
       // Code blocks
       .replace(
         /```([\s\S]*?)```/g,
-        '<pre class="bg-muted p-4 rounded-md my-4 overflow-x-auto"><code>$1</code></pre>'
+        '<pre class="bg-muted p-4 rounded-md my-4 overflow-x-auto"><code>$1</code></pre>',
       )
       // Inline code
       .replace(
         /`([^`]+)`/g,
-        '<code class="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">$1</code>'
+        '<code class="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">$1</code>',
       )
       // Images
       .replace(
         /!\[(.*?)\]\((.*?)\)/g,
-        '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 border" />'
+        '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 border" />',
       )
       // Links
       .replace(
         /\[(.*?)\]\((.*?)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-4 hover:opacity-80">$1</a>'
+        '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-4 hover:opacity-80">$1</a>',
       )
       // Headers
       .replace(/^# (.*$)/gm, '<h1 class="text-3xl font-bold mt-6 mb-4">$1</h1>')
       .replace(
         /^## (.*$)/gm,
-        '<h2 class="text-2xl font-semibold mt-5 mb-3">$1</h2>'
+        '<h2 class="text-2xl font-semibold mt-5 mb-3">$1</h2>',
       )
       .replace(
         /^### (.*$)/gm,
-        '<h3 class="text-xl font-medium mt-4 mb-2">$1</h3>'
+        '<h3 class="text-xl font-medium mt-4 mb-2">$1</h3>',
       )
       // Bold
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -69,7 +72,7 @@ export function MarkdownSplitEditor({
       // Blockquote
       .replace(
         /^> (.*$)/gm,
-        '<blockquote class="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground">$1</blockquote>'
+        '<blockquote class="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground">$1</blockquote>',
       )
       // Unordered Lists (simple support)
       .replace(/^\- (.*$)/gm, '<li class="ml-4 list-disc">$1</li>')
@@ -118,90 +121,92 @@ export function MarkdownSplitEditor({
     <div
       className={cn(
         "flex flex-col border rounded-md overflow-hidden bg-background h-full",
-        className
+        className,
       )}
     >
       {/* Toolbar */}
-      <div className="flex items-center gap-1 p-2 border-b bg-muted/30">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => insertText("# ")}
-          title="Heading 1"
-        >
-          <Heading1 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => insertText("## ")}
-          title="Heading 2"
-        >
-          <Heading2 className="h-4 w-4" />
-        </Button>
-        <div className="w-px h-4 bg-border mx-1" />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => insertText("**", "**")}
-          title="Bold"
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => insertText("*", "*")}
-          title="Italic"
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <div className="w-px h-4 bg-border mx-1" />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => insertText("- ")}
-          title="List"
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => insertText("> ")}
-          title="Quote"
-        >
-          <Quote className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => insertText("```\n", "\n```")}
-          title="Code Block"
-        >
-          <Code className="h-4 w-4" />
-        </Button>
-        <div className="w-px h-4 bg-border mx-1" />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => insertText("[", "](url)")}
-          title="Link"
-        >
-          <LinkIcon className="h-4 w-4" />
-        </Button>
-        <div className="relative">
-          <Button variant="ghost" size="icon" className="relative">
-            <ImageIcon className="h-4 w-4" />
-            <input
-              type="file"
-              accept="image/*"
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              onChange={handleImageUpload}
-            />
+      {!readOnly && (
+        <div className="flex items-center gap-1 p-2 border-b bg-muted/30">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("# ")}
+            title="Heading 1"
+          >
+            <Heading1 className="h-4 w-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("## ")}
+            title="Heading 2"
+          >
+            <Heading2 className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("**", "**")}
+            title="Bold"
+          >
+            <Bold className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("*", "*")}
+            title="Italic"
+          >
+            <Italic className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("- ")}
+            title="List"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("> ")}
+            title="Quote"
+          >
+            <Quote className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("```\n", "\n```")}
+            title="Code Block"
+          >
+            <Code className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("[", "](url)")}
+            title="Link"
+          >
+            <LinkIcon className="h-4 w-4" />
+          </Button>
+          <div className="relative">
+            <Button variant="ghost" size="icon" className="relative">
+              <ImageIcon className="h-4 w-4" />
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                onChange={handleImageUpload}
+              />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Editor Area */}
       <div className="flex flex-1 min-h-0">
@@ -211,7 +216,8 @@ export function MarkdownSplitEditor({
             ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="flex-1 w-full h-full resize-none border-0 rounded-none focus-visible:ring-0 p-4 font-mono text-sm leading-relaxed"
+            disabled={readOnly}
+            className="flex-1 w-full h-full resize-none border-0 rounded-none focus-visible:ring-0 p-4 font-mono text-sm leading-relaxed disabled:opacity-100 disabled:cursor-not-allowed"
             placeholder="Type your markdown here..."
           />
         </div>

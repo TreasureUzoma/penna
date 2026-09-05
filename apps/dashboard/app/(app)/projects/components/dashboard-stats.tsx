@@ -18,9 +18,17 @@ interface DashboardStatsProps {
     totalRevenue: number;
     totalPosts: number;
   };
+  /**
+   * Fixed 2x2 grid instead of the viewport-responsive default — for
+   * placing this inside a narrower column, where `lg:grid-cols-4` would
+   * otherwise still trigger at large viewports regardless of how narrow
+   * the actual parent column is (Tailwind breakpoints key off viewport
+   * width, not container width).
+   */
+  compact?: boolean;
 }
 
-export function DashboardStats({ stats }: DashboardStatsProps) {
+export function DashboardStats({ stats, compact = false }: DashboardStatsProps) {
   const dashboardStats = [
     {
       title: "Total Projects",
@@ -42,7 +50,11 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div
+      className={
+        compact ? "grid gap-4 grid-cols-2" : "grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+      }
+    >
       {dashboardStats.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

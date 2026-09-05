@@ -43,7 +43,7 @@ export function LatestPost({ post }: LatestPostProps) {
   }
 
   return (
-    <Card className="shadow-sm border-neutral-200">
+    <Card>
       <CardHeader>
         <CardTitle className="text-lg font-semibold">
           Latest Post Performance

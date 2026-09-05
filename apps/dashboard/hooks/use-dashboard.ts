@@ -54,6 +54,51 @@ export function useDashboardProjects(
   });
 }
 
+export interface RecentActivityItem {
+  id: string;
+  subject: string;
+  sentAt: string;
+  projectId: string;
+  projectName: string;
+  projectSlug: string;
+}
+
+export function useDashboardActivity() {
+  return useQuery({
+    queryKey: ["dashboard-activity"],
+    queryFn: async () => {
+      const res = await api.get<
+        ServiceResponse<{ activity: RecentActivityItem[] }>
+      >(`/dashboard/activity`);
+      return res.data.data;
+    },
+  });
+}
+
+export interface TopProject {
+  id: string;
+  name: string;
+  slug: string;
+  subscriberCount: number;
+}
+
+interface AccountAnalytics {
+  chartData: Array<{ date: string; count: number }>;
+  topProjects: TopProject[];
+}
+
+export function useDashboardAnalytics(days: number) {
+  return useQuery({
+    queryKey: ["dashboard-analytics", days],
+    queryFn: async () => {
+      const res = await api.get<ServiceResponse<AccountAnalytics>>(
+        `/dashboard/analytics?days=${days}`
+      );
+      return res.data.data;
+    },
+  });
+}
+
 // Keep the old hook for backward compatibility if needed elsewhere
 export function useDashboardOverview(params: DashboardOverview) {
   return useQuery({

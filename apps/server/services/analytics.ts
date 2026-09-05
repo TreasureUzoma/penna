@@ -1,7 +1,7 @@
 import { db } from "@workspace/db";
 import { emails, subscribers } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
-import { and, count, desc, eq, gte, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 
 export const getProjectAnalytics = async (
   projectId: string,
@@ -48,12 +48,19 @@ export const getProjectAnalytics = async (
       );
     const growth30d = subStats30d?.count ?? 0;
 
-    // 3. Last post sent
+    // 3. Last post sent — excludes posts scheduled for the future, which
+    // are "published" but haven't actually gone out yet (see the same
+    // published-and-sentAt-has-passed check in dashboard/services.ts's
+    // getRecentActivity and the posts/[postId] edit-lock).
     const [lastEmail] = await db
       .select()
       .from(emails)
       .where(
-        and(eq(emails.projectId, projectId), eq(emails.status, "published"))
+        and(
+          eq(emails.projectId, projectId),
+          eq(emails.status, "published"),
+          lte(emails.sentAt, now)
+        )
       )
       .orderBy(desc(emails.sentAt))
       .limit(1);
@@ -114,7 +121,11 @@ export const getProjectAnalytics = async (
       })
       .from(emails)
       .where(
-        and(eq(emails.projectId, projectId), eq(emails.status, "published"))
+        and(
+          eq(emails.projectId, projectId),
+          eq(emails.status, "published"),
+          lte(emails.sentAt, now)
+        )
       )
       .orderBy(desc(emails.sentAt))
       .limit(5);
@@ -127,6 +138,25 @@ export const getProjectAnalytics = async (
           new Date(a.createdAt as any).getTime()
       )
       .slice(0, 10);
+
+    // 6. Subscriber status breakdown — bounced/unsubscribed counts are
+    // real now that the SES bounce/complaint webhook (services/mail/
+    // ses-events.ts) actually suppresses subscribers on delivery failure.
+    const statusRows = await db
+      .select({ status: subscribers.status, count: count() })
+      .from(subscribers)
+      .where(eq(subscribers.projectId, projectId))
+      .groupBy(subscribers.status);
+
+    const statusBreakdown = {
+      subscribed: 0,
+      unsubscribed: 0,
+      bounced: 0,
+      pending: 0,
+    };
+    for (const row of statusRows) {
+      statusBreakdown[row.status] = row.count;
+    }
 
     return {
       success: true,
@@ -141,6 +171,7 @@ export const getProjectAnalytics = async (
         },
         chartData: filledData,
         activity,
+        statusBreakdown,
         lastPost: lastEmail
           ? {
               id: lastEmail.id,

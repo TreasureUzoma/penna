@@ -6,9 +6,8 @@ import { useCreateEmail } from "@/hooks/use-emails";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { MarkdownSplitEditor } from "@/components/markdown-split-editor";
-import { Loader2, ArrowLeft, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import {
   Popover,
@@ -82,18 +81,10 @@ export default function NewPostPage(): React.JSX.Element {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] -m-8 p-8 gap-6">
+    <div className="flex flex-col h-[calc(100vh-4rem)] -m-8 px-8 py-4 gap-4">
       <div className="flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link href={`/projects/${projectId}/posts`}>
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Create Post</h2>
-            <p className="text-muted-foreground">Draft your new campaign</p>
-          </div>
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Create Post</h2>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -145,8 +136,8 @@ export default function NewPostPage(): React.JSX.Element {
       </div>
 
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-0 shadow-none bg-transparent">
-        <CardContent className="p-0 h-full flex flex-col gap-4">
-          <div className="shrink-0 bg-background border rounded-lg p-4 space-y-1">
+        <CardContent className="p-0 h-full flex flex-col gap-3">
+          <div className="shrink-0 bg-background border rounded-lg p-3 space-y-0.5">
             <label className="text-sm font-medium">Subject Line</label>
             <Input
               placeholder="Enter an engaging subject line..."

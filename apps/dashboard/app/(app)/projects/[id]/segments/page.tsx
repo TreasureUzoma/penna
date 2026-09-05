@@ -223,12 +223,9 @@ export default function ProjectSegmentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Segments</h2>
-          <p className="text-muted-foreground">
-            Group subscribers together to target them with specific emails.
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          Group subscribers together to target them with specific emails.
+        </p>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>

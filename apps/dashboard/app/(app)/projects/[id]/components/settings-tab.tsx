@@ -25,6 +25,7 @@ import { Input } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
 import { Globe, Loader2, Lock, Sparkles, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
+import Link from "next/link";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +50,8 @@ interface SettingsTabProps {
     isPublic: boolean;
     isPrivateAt: string | null;
     config?: { removeBranding?: boolean } | null;
+    /** Computed server-side from the project owner's plan — see routes/api/v1/projects.ts's `/slug/:slug`. */
+    canRemoveBranding: boolean;
   };
 }
 
@@ -72,6 +75,10 @@ export function SettingsTab({ project }: SettingsTabProps) {
   }
 
   function toggleBranding(removeBranding: boolean) {
+    // "Show branding" (false) is always allowed — only removing it is
+    // gated. Guard client-side too so a disabled card can't still fire a
+    // request that we already know the server will 400 on.
+    if (removeBranding && !project.canRemoveBranding) return;
     updateProject({ removeBranding });
   }
 
@@ -214,18 +221,41 @@ export function SettingsTab({ project }: SettingsTabProps) {
 
             <div
               className={cn(
-                "cursor-pointer border rounded-lg p-4 flex flex-col gap-2 transition-all hover:border-primary/50",
-                project.config?.removeBranding
+                "border rounded-lg p-4 flex flex-col gap-2 transition-all",
+                !project.canRemoveBranding
+                  ? "opacity-60 cursor-not-allowed bg-muted/30"
+                  : "cursor-pointer hover:border-primary/50",
+                project.config?.removeBranding && project.canRemoveBranding
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
                   : "bg-card"
               )}
               onClick={() => toggleBranding(true)}
+              aria-disabled={!project.canRemoveBranding}
             >
-              <div className="font-medium">Remove branding</div>
-              <p className="text-sm text-muted-foreground">
-                No footer. Requires a Pro (or higher) plan on this
-                project's owner account.
-              </p>
+              <div className="font-medium flex items-center gap-1.5">
+                {!project.canRemoveBranding && (
+                  <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+                Remove branding
+              </div>
+              {project.canRemoveBranding ? (
+                <p className="text-sm text-muted-foreground">
+                  No footer. Requires a Pro (or higher) plan on this
+                  project's owner account.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Requires a Pro plan.{" "}
+                  <Link
+                    href="/settings/billing"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-primary underline underline-offset-4 hover:opacity-80"
+                  >
+                    Upgrade to unlock
+                  </Link>
+                  .
+                </p>
+              )}
             </div>
           </div>
           {isUpdating && (

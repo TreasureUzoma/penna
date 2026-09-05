@@ -102,7 +102,14 @@ export const updateProject = async (
     if (data.slug !== undefined) updateValues.slug = data.slug;
     if (data.description !== undefined)
       updateValues.description = data.description;
-    if (data.isPublic !== undefined) updateValues.isPublic = data.isPublic;
+    // There's no `isPublic` column — visibility is stored as `isPrivateAt`
+    // (null = public, a timestamp = made private at that time), matching
+    // what the dashboard already reads (`isPublic: !project.isPrivateAt`
+    // in settings-tab.tsx). Writing `isPublic` directly here was a no-op:
+    // it isn't a real column, so the visibility toggle never persisted.
+    if (data.isPublic !== undefined) {
+      updateValues.isPrivateAt = data.isPublic ? null : new Date();
+    }
 
     if (data.removeBranding !== undefined) {
       if (data.removeBranding) {

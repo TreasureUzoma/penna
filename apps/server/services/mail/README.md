@@ -5,8 +5,8 @@ This directory contains email services for Penna, powered by AWS SES (Simple Ema
 ## Overview
 
 The email service allows you to send newsletters from dynamic email addresses based on project slugs:
-- Format: `newsletter@{projectSlug}.penna.dev`
-- Example: `newsletter@my-newsletter.penna.dev`
+- Format: `{projectSlug}@newsletter.penna.dev`
+- Example: `my-newsletter@newsletter.penna.dev`
 
 ## Files
 
