@@ -1,5 +1,8 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -14,8 +17,52 @@ import { Badge } from "@workspace/ui/components/badge";
 import { plans } from "@workspace/constants/plans";
 import { useGetProfile } from "@/hooks/use-auth";
 import { SettingsLayout } from "../components/settings-layout";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-export default function BillingSettingsPage() {
+/**
+ * Paddle's transaction API doesn't return a hosted checkout page — it
+ * returns `${successUrl}?_ptxn=<transactionId>` (see
+ * `createCheckoutSession` in apps/server/services/paddle.ts). Nothing
+ * actually opens a checkout until a page with Paddle.js on it reads that
+ * `_ptxn` param and calls `Paddle.Checkout.open({ transactionId })` — this
+ * is that page. Without this, visiting the returned URL just lands here
+ * with the query param sitting there unused.
+ */
+function usePaddleTransactionCheckout() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [paddle, setPaddle] = useState<Paddle | null>(null);
+
+  useEffect(() => {
+    const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+    const env = process.env.NEXT_PUBLIC_PADDLE_ENV;
+    if (!clientToken || !env) return;
+
+    initializePaddle({
+      token: clientToken,
+      environment: env as "sandbox" | "production",
+      eventCallback: (event) => {
+        if (event.name === "checkout.completed") {
+          toast.success("Payment successful — updating your plan…");
+          queryClient.invalidateQueries({ queryKey: ["session"] });
+          router.replace("/settings/billing");
+        }
+      },
+    }).then((p) => p && setPaddle(p));
+  }, [router, queryClient]);
+
+  useEffect(() => {
+    const transactionId = searchParams.get("_ptxn");
+    if (!paddle || !transactionId) return;
+
+    paddle.Checkout.open({ transactionId });
+  }, [paddle, searchParams]);
+}
+
+function BillingSettingsPageContent() {
+  usePaddleTransactionCheckout();
   const { data: profile } = useGetProfile();
   const currentPlanSlug = profile?.plan || "hobby";
   /* eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain */
@@ -146,5 +193,13 @@ export default function BillingSettingsPage() {
         )}
       </div>
     </SettingsLayout>
+  );
+}
+
+export default function BillingSettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <BillingSettingsPageContent />
+    </Suspense>
   );
 }
