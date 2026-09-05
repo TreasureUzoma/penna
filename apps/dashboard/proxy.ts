@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ACCESS_COOKIE = "pennaAccessToken";
 const REFRESH_COOKIE = "pennaRefreshToken";
-const API_URL = process.env.API_URL || "http://localhost:3005";
+const API_URL = process.env.API_URL || "https://api.penna.dev";
 
 // Everything under (app) — requires a session, redirects to /login otherwise.
 const PROTECTED_PREFIXES = [
@@ -30,7 +30,7 @@ function hasSessionCookie(request: NextRequest) {
 
 function matches(pathname: string, prefixes: string[]) {
   return prefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
