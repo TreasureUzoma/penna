@@ -82,11 +82,11 @@ export default function NewPostPage(): React.JSX.Element {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] -m-8 px-8 py-4 gap-4">
-      <div className="flex items-center justify-between shrink-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Create Post</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             onClick={() => router.push(`/projects/${projectId}/posts`)}

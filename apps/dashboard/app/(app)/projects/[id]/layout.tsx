@@ -44,18 +44,18 @@ export default function ProjectLayout({
         // Sticky to the scrolling container in app-shell.tsx (the
         // `overflow-y-auto` main pane), not the window — stays put while
         // a long page (e.g. a big subscriber table) scrolls beneath it.
-        <div className="sticky top-0 z-10 shrink-0 bg-background border-b border-border px-8 py-4 flex items-center justify-between gap-4">
+        <div className="sticky top-0 z-10 shrink-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
           <ProjectSwitcher />
           <h1 className="md:text-md font-semibold tracking-tight">{title}</h1>
           <Button asChild size="sm">
             <Link href={`/projects/${slug}/posts/new`}>
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 mr-1" />
               New Post
             </Link>
           </Button>
         </div>
       )}
-      <div className="flex-1 p-8 pt-6">{children}</div>
+      <div className="flex-1 p-8">{children}</div>
     </div>
   );
 }

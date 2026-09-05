@@ -92,11 +92,6 @@ export default function AppSidebar({
       icon: <LayoutDashboard className="w-4 h-4" />,
     },
     {
-      label: "Analytics",
-      href: "/analytics",
-      icon: <BarChart3 className="w-4 h-4" />,
-    },
-    {
       label: "Settings",
       href: "/settings",
       icon: <Settings className="w-4 h-4" />,

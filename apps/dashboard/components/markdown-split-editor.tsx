@@ -126,7 +126,7 @@ export function MarkdownSplitEditor({
     >
       {/* Toolbar */}
       {!readOnly && (
-        <div className="flex items-center gap-1 p-2 border-b bg-muted/30">
+        <div className="flex items-center gap-1 p-2 border-b bg-muted/30 overflow-x-auto">
           <Button
             variant="ghost"
             size="icon"
@@ -208,10 +208,12 @@ export function MarkdownSplitEditor({
         </div>
       )}
 
-      {/* Editor Area */}
-      <div className="flex flex-1 min-h-0">
+      {/* Editor Area — side-by-side split on md+; stacked (write above
+          preview) on mobile, since two half-width panes are unusably
+          narrow on a phone. */}
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
         {/* Input */}
-        <div className="w-1/2 border-r h-full flex flex-col">
+        <div className="w-full md:w-1/2 h-64 md:h-full border-b md:border-b-0 md:border-r flex flex-col shrink-0 md:shrink">
           <Textarea
             ref={textareaRef}
             value={value}
@@ -223,7 +225,7 @@ export function MarkdownSplitEditor({
         </div>
 
         {/* Preview */}
-        <div className="w-1/2 h-full overflow-y-auto p-6 prose dark:prose-invert max-w-none">
+        <div className="w-full md:w-1/2 h-64 md:h-full overflow-y-auto p-6 prose dark:prose-invert max-w-none">
           {value ? (
             <div dangerouslySetInnerHTML={{ __html: parseMarkdown(value) }} />
           ) : (
