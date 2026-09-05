@@ -145,7 +145,15 @@ export default function AppSidebar({
   return (
     <aside
       className={cn(
-        "h-screen bg-background border-r border-border flex flex-col transition-all duration-300 ease-out",
+        // dvh, not vh — iOS Chrome/Safari size 100vh against the viewport
+        // with the address bar hidden, so a `fixed` element pinned to
+        // top:0 with height:100vh extends past the bottom of what's
+        // actually visible whenever that bar is showing (the normal
+        // state). The user section at the bottom of this flex column
+        // ends up rendered off-screen — pinch-zooming out is what
+        // revealed it, by shrinking the page relative to the visual
+        // viewport. dvh tracks the real, current visible height instead.
+        "h-dvh bg-background border-r border-border flex flex-col transition-all duration-300 ease-out",
         // Mobile: fixed off-canvas drawer, slides in over the content.
         "fixed inset-y-0 left-0 z-50 w-72 -translate-x-full",
         isOpen && "translate-x-0",
