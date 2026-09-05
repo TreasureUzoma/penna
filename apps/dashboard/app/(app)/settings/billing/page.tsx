@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -31,8 +31,34 @@ import { toast } from "sonner";
  */
 function usePaddleTransactionCheckout() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [paddle, setPaddle] = useState<Paddle | null>(null);
+
+  // Paddle's own successUrl redirect fires as soon as the client-side
+  // checkout completes — it doesn't wait for the transaction/subscription
+  // webhook to actually land and update the plan in our DB, which can lag
+  // by a few seconds. Without this, the page loads, fetches the still-old
+  // plan once, and the user has to manually refresh later once the
+  // webhook has caught up. Poll for a short window instead so it updates
+  // on its own, then strip `success` from the URL so this doesn't repeat
+  // on a later unrelated visit/refresh of this page.
+  useEffect(() => {
+    if (searchParams.get("success") !== "true") return;
+
+    let attempts = 0;
+    const maxAttempts = 6;
+    const interval = setInterval(() => {
+      attempts += 1;
+      queryClient.refetchQueries({ queryKey: ["session"] });
+      if (attempts >= maxAttempts) clearInterval(interval);
+    }, 1500);
+
+    router.replace("/settings/billing");
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
@@ -88,7 +114,7 @@ function BillingSettingsPageContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg">
               <div className="space-y-1">
                 <p className="font-semibold text-lg capitalize">
                   {currentPlan.name} Plan
@@ -99,14 +125,13 @@ function BillingSettingsPageContent() {
                     : "Billed monthly"}
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 {currentPlan.price !== 0 && (
-                  <Button variant="outline">Manage Subscription</Button>
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Manage Subscription
+                  </Button>
                 )}
-                <Button
-                  variant="outline"
-                  asChild
-                >
+                <Button variant="outline" className="w-full sm:w-auto" asChild>
                   <a href="/settings/billing/invoices">View Invoices</a>
                 </Button>
               </div>

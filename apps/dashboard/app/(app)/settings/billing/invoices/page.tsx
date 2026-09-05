@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useGetInvoices } from "@/hooks/use-invoices";
 import { getStatusColor, formatAmount } from "@/lib/invoice-utils";
 import { Skeleton } from "@workspace/ui/components/skeleton";
+import Link from "next/link";
 
 export default function InvoicesPage(): React.ReactNode {
   const { data: invoices = [], isLoading, error } = useGetInvoices();
@@ -34,13 +35,13 @@ export default function InvoicesPage(): React.ReactNode {
             {[1, 2, 3].map((i) => (
               <Card key={i}>
                 <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-2 flex-1">
                       <Skeleton className="h-4 w-32" />
                       <Skeleton className="h-3 w-24" />
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right space-y-2">
+                    <div className="flex items-center justify-between gap-4 sm:justify-end">
+                      <div className="space-y-2">
                         <Skeleton className="h-4 w-20" />
                         <Skeleton className="h-3 w-16" />
                       </div>
@@ -95,7 +96,7 @@ export default function InvoicesPage(): React.ReactNode {
             {invoices.map((invoice) => (
               <Card key={invoice.serial}>
                 <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-1">
                       <p className="font-medium">
                         Invoice #{invoice.reference}
@@ -105,14 +106,14 @@ export default function InvoicesPage(): React.ReactNode {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between gap-4 sm:justify-end">
                       <div className="text-right">
                         <p className="font-semibold">
                           {formatAmount(invoice.amount, invoice.currency)}
                         </p>
                         <p
                           className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(
-                            invoice.status
+                            invoice.status,
                           )}`}
                         >
                           {invoice.status.charAt(0).toUpperCase() +
@@ -128,7 +129,7 @@ export default function InvoicesPage(): React.ReactNode {
                           disabled
                         >
                           <Eye className="w-4 h-4" />
-                          View
+                          <span className="hidden sm:inline">View</span>
                         </Button>
                         <Button
                           variant="outline"
@@ -137,7 +138,7 @@ export default function InvoicesPage(): React.ReactNode {
                           disabled
                         >
                           <Download className="w-4 h-4" />
-                          Download
+                          <span className="hidden sm:inline">Download</span>
                         </Button>
                       </div>
                     </div>
@@ -152,8 +153,8 @@ export default function InvoicesPage(): React.ReactNode {
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">
               Need help with your invoices?{" "}
-              <Button variant="link" className="p-0 h-auto">
-                Contact support
+              <Button asChild variant="link" className="p-0 h-auto">
+                <Link href="/contact">Contact support</Link>
               </Button>
             </p>
           </CardContent>

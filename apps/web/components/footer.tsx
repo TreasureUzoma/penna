@@ -67,14 +67,14 @@ export const Footer = () => {
         ))}
       </div>
 
-      <div className="text-xs md:text-sm py-4 px-6 flex items-center justify-between max-w-5xl mx-auto">
-        <p className="text-muted-foreground">
+      <div className="text-[11px] sm:text-sm py-4 px-4 sm:px-6 flex flex-nowrap items-center justify-between gap-2 max-w-5xl mx-auto">
+        <p className="text-muted-foreground whitespace-nowrap truncate">
           &copy; {new Date().getFullYear()} {meta.name}. mit licensed.
         </p>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <Link
             href={meta.developer.url}
-            className="underline hover:text-muted-foreground"
+            className="underline hover:text-muted-foreground whitespace-nowrap"
             target="_blank"
             rel="noopener noreferrer"
           >
