@@ -39,4 +39,4 @@ export interface ExternalProjectCreate {
 
 export type OauthType = "google" | "github";
 
-export type OauthParamErros = "missing_code" | "auth_failed";
+export type OauthParamErros = "missing_code" | "auth_failed" | "signups_closed";

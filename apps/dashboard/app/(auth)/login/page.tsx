@@ -13,15 +13,19 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ [key: string]: OauthParamErros | undefined }>;
 }) {
-  const VALID_OAUTH_ERRORS: OauthParamErros[] = ["missing_code", "auth_failed"];
+  const OAUTH_ERROR_MESSAGES: Record<OauthParamErros, string> = {
+    missing_code: "Something went wrong signing you in. Please try again.",
+    auth_failed: "Something went wrong signing you in. Please try again.",
+    signups_closed: "Signups are currently closed — check back after launch.",
+  };
   const error = (await searchParams).error;
   return (
     <div className="flex min-h-screen md:min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full flex-col gap-6 flex-center">
-        {error && VALID_OAUTH_ERRORS.includes(error) && (
+        {error && OAUTH_ERROR_MESSAGES[error] && (
           <Alert variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Error occured {error}.</AlertTitle>
+            <AlertTitle>{OAUTH_ERROR_MESSAGES[error]}</AlertTitle>
           </Alert>
         )}
         <AuthForm mode="login" />

@@ -514,8 +514,27 @@ export const inviteUserToProject = async (
       } as NewProjectInvite)
       .returning();
 
-    // todo: use actual team name
-    await sendProjectInviteEmail("[projectName]", role);
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, projectId));
+    const [inviter] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, invitedByUserId));
+    const [invitee] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, invitedToUserId));
+
+    if (invitee) {
+      await sendProjectInviteEmail(
+        invitee.email,
+        inviter?.name ?? "Someone",
+        project?.name ?? "a project",
+        role
+      );
+    }
 
     return {
       data: newInvite,

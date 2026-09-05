@@ -61,6 +61,9 @@ export const useForgotPassword = () => {
   return useMutation({
     mutationFn: async (email: string) =>
       api.post("/auth/forgotten-password", { email }),
+    onSuccess: (res) => {
+      toast.success(res.data.message ?? "Password reset link sent — check your email");
+    },
     onError: (err) => {
       toast.error(err?.message ?? "Failed to send password reset link");
     },
@@ -68,9 +71,14 @@ export const useForgotPassword = () => {
 };
 
 export const useResetPassowrd = () => {
+  const router = useRouter();
   return useMutation({
     mutationFn: (body: VerifyResetPassword) =>
       api.post("/auth/reset-password", body),
+    onSuccess: () => {
+      toast.success("Password reset successfully");
+      router.push("/login");
+    },
     onError: (err) => {
       toast.error(err?.message ?? "Failed to reset password.");
     },

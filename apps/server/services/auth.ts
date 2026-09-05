@@ -22,6 +22,15 @@ import { type ChangePasswordData } from "@workspace/validations";
 const GOOGLE_REDIRECT_URI = `${envConfig.APP_URL}/api/v1/auth/google/callback`;
 const GITHUB_REDIRECT_URI = `${envConfig.APP_URL}/api/v1/auth/github/callback`;
 
+// Pre-launch lockdown: block new account creation in production while
+// still allowing existing users to log in (password or OAuth). Remove
+// this once the product actually launches. Matched by exact message in
+// the OAuth callback routes (auth.ts) to redirect with a specific error
+// code instead of the generic "auth_failed".
+export const SIGNUPS_CLOSED_MESSAGE =
+  "Signups are currently closed — check back after launch.";
+const signupsBlocked = () => envConfig.NODE_ENV === "production";
+
 const oauth2Client = new google.auth.OAuth2(
   envConfig.GOOGLE_CLIENT_ID,
   envConfig.GOOGLE_CLIENT_SECRET,
@@ -170,6 +179,14 @@ const upsertUser = async (user: {
     .where(eq(users.email, user.email))
     .limit(1);
 
+  if (existing.length === 0 && signupsBlocked()) {
+    return {
+      message: SIGNUPS_CLOSED_MESSAGE,
+      data: null,
+      success: false,
+    };
+  }
+
   let currentUserId: string;
 
   if (existing.length === 0) {
@@ -239,6 +256,14 @@ export const login = async (payload: Login) => {
 };
 
 export const signup = async (payload: Signup) => {
+  if (signupsBlocked()) {
+    return {
+      success: false,
+      message: SIGNUPS_CLOSED_MESSAGE,
+      data: null,
+    };
+  }
+
   const { email, password, name } = payload;
 
   const existingUser = await db

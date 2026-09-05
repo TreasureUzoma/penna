@@ -252,15 +252,15 @@ only `Permanent` bounces and complaints suppress the subscriber.
 - Check email format
 - Ensure no special characters
 
-## Internal Emails (TODO)
+## Internal Emails
 
-The following internal email functions are planned:
-- `sendWelcomeEmail()` - Welcome new users
-- `sendForgottenPasswordEmail()` - Password reset
-- `sendProjectInviteEmail()` - Project invitations
-- `sendUnsubscribeCofirmationEmail()` - Unsubscribe confirmations
+All implemented in `internal.ts`, using the same `sendSystemEmail` (SES v1) infrastructure as the subscriber-limit warning:
+- `sendWelcomeEmail()` - Welcome new users, links to the dashboard
+- `sendForgottenPasswordEmail()` - Password reset, links to `/reset-password?token=...`
+- `sendProjectInviteEmail()` - Project invitations, links to the dashboard (no dedicated accept-invite page exists yet — invitee signs in and accepts via `POST /projects/roles/accept`)
+- `sendUnsubscribeCofirmationEmail()` - Unsubscribe confirmations, links to the provided `confirmUrl`
 
-These will use the same AWS SES infrastructure.
+None of these set up a `List-Unsubscribe` header — that's specific to bulk newsletter sends (see `sendNewsletterEmail` in `ses.ts`), not one-off transactional email.
 
 ## Support
 

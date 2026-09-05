@@ -21,6 +21,7 @@ import {
   changePassword,
   getActiveSessions,
   revokeSession,
+  SIGNUPS_CLOSED_MESSAGE,
 } from "@/services/auth";
 import { getSignedCookie } from "hono/cookie";
 import { verify } from "hono/jwt";
@@ -166,6 +167,10 @@ authRoute.get("/google/callback", async (c) => {
     return c.redirect("/dashboard", 302);
   }
 
+  if (serviceData.message === SIGNUPS_CLOSED_MESSAGE) {
+    return c.redirect("/login?error=signups_closed", 302);
+  }
+
   return c.redirect("/login?error=auth_failed", 302);
 });
 
@@ -196,6 +201,10 @@ authRoute.get("/github/callback", async (c) => {
     await setAuthCookies(c, accessToken, refreshToken);
 
     return c.redirect("/dashboard", 302);
+  }
+
+  if (serviceData.message === SIGNUPS_CLOSED_MESSAGE) {
+    return c.redirect("/login?error=signups_closed", 302);
   }
 
   return c.redirect("/login?error=auth_failed", 302);
