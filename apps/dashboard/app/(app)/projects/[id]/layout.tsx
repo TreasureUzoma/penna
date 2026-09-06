@@ -13,6 +13,7 @@ const SECTION_TITLES: Record<string, string> = {
   analytics: "Analytics",
   subscribers: "Subscribers",
   segments: "Segments",
+  domains: "Domains",
   settings: "Settings",
 };
 

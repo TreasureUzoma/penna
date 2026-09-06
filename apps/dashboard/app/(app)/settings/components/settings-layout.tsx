@@ -36,11 +36,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
     <div className="min-h-screen  px-4 py-7">
       <div className="space-y-0.5">
         <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <p className="text-muted-foreground">
-          Manage your account settings and preferences.
-        </p>
       </div>
-      <Separator className="my-6" />
 
       <div className="flex flex-col lg:flex-row gap-8 relative">
         <aside className="lg:w-1/5 space-y-2 lg:sticky lg:top-24 h-fit">
@@ -52,7 +48,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
                 "w-full justify-start gap-2",
                 pathname === item.href
                   ? "bg-muted hover:bg-muted"
-                  : "hover:bg-transparent"
+                  : "hover:bg-transparent",
               )}
               asChild
             >

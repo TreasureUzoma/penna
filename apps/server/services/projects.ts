@@ -72,12 +72,17 @@ export const createProject = async (
 };
 
 /**
- * Whether a project is allowed to remove Penna branding from outgoing
- * emails. Gated on the project owner's plan (not just whoever happens to be
- * toggling the setting), and re-checked server-side on every send rather
- * than trusted from the stored config, in case the owner downgrades later.
+ * Whether a project's owner is on any paid plan. Gates the coarse features
+ * that only distinguish "free" from "everything else" — see
+ * `packages/constants/plans.ts`, where "remove branding" and "custom
+ * domain" both appear starting at the professional tier. Checked against
+ * the project owner's plan (not just whoever happens to be toggling the
+ * setting), and re-checked server-side on every use rather than trusted
+ * from stored config, in case the owner downgrades later.
  */
-export const canRemoveBranding = async (projectId: string): Promise<boolean> => {
+export const isProjectOwnerOnPaidPlan = async (
+  projectId: string
+): Promise<boolean> => {
   const [owner] = await db
     .select({ subscriptionType: users.subscriptionType })
     .from(projectMembers)
@@ -91,6 +96,12 @@ export const canRemoveBranding = async (projectId: string): Promise<boolean> => 
 
   return !!owner && owner.subscriptionType !== "free";
 };
+
+/** See `isProjectOwnerOnPaidPlan` — same gate, kept as a named alias at each call site for readability. */
+export const canRemoveBranding = isProjectOwnerOnPaidPlan;
+
+/** See `isProjectOwnerOnPaidPlan` — same gate, kept as a named alias at each call site for readability. */
+export const canUseCustomDomain = isProjectOwnerOnPaidPlan;
 
 export const updateProject = async (
   projectId: string,

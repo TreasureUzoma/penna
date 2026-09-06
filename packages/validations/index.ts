@@ -325,3 +325,20 @@ export const dashboardOverviewSchema = z.object({
 });
 
 export type DashboardOverview = z.infer<typeof dashboardOverviewSchema>;
+
+export const addDomainSchema = z.object({
+  // Bare hostname only — no protocol/path. Lowercased and trimmed so
+  // "Blog.John.dev" and "blog.john.dev " both land on the same row (the
+  // `domains.name` column has a unique index).
+  name: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(3, { message: "Enter a domain, e.g. news.yoursite.com" })
+    .max(255)
+    .regex(/^(?!:\/\/)([a-z0-9-]+\.)+[a-z]{2,}$/, {
+      message: "Enter a valid domain, e.g. news.yoursite.com",
+    }),
+});
+
+export type AddDomain = z.infer<typeof addDomainSchema>;

@@ -12,6 +12,7 @@ import {
   BookOpen,
   LogOut,
   ChevronDown,
+  Globe,
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -92,6 +93,11 @@ export default function AppSidebar({
       icon: <LayoutDashboard className="w-4 h-4" />,
     },
     {
+      label: "Domains",
+      href: "/domains",
+      icon: <Globe className="w-4 h-4" />,
+    },
+    {
       label: "Settings",
       href: "/settings",
       icon: <Settings className="w-4 h-4" />,
@@ -124,6 +130,11 @@ export default function AppSidebar({
           label: "Subscribers",
           href: `/projects/${projectSlug}/subscribers`,
           icon: <Users className="w-4 h-4" />,
+        },
+        {
+          label: "Domains",
+          href: `/projects/${projectSlug}/domains`,
+          icon: <Globe className="w-4 h-4" />,
         },
         {
           label: "Settings",

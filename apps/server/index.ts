@@ -17,6 +17,7 @@ import postRoutes from "./routes/api/v1/posts";
 import dashboardRoute from "./routes/api/v1/dashboard";
 import emailsRoute from "./routes/api/v1/emails";
 import segmentRoutes from "./routes/api/v1/segments";
+import domainsRoute from "./routes/api/v1/domains";
 import { start } from "workflow/api";
 import { myTestWorkflow } from "./tests/workflow";
 
@@ -128,6 +129,9 @@ v1.route("/dashboard", dashboardRoute.use(rateLimiter(60 * 60 * 1000, 70)));
 
 // segments, 70 req per hour
 v1.route("/segments", segmentRoutes.use(rateLimiter(60 * 60 * 1000, 70)));
+
+// domains (account-wide view), 70 req per hour
+v1.route("/domains", domainsRoute.use(rateLimiter(60 * 60 * 1000, 70)));
 
 app.route("/", v1);
 

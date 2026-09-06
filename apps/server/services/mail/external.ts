@@ -1,5 +1,6 @@
 import { sendNewsletterEmail, sendBulkNewsletterEmails } from "./ses";
 import { applyBranding } from "./branding";
+import { getVerifiedSendingDomain } from "../domains";
 
 export const sendEmailNewsletter = async (
   project: { id: string; slug: string },
@@ -14,6 +15,9 @@ export const sendEmailNewsletter = async (
   }
 
   const brandedHtml = applyBranding(html, removeBranding);
+  // Falls back to the shared NEWSLETTER_DOMAIN (see ses.ts) whenever the
+  // project has no verified custom domain — see services/domains.ts.
+  const fromDomain = await getVerifiedSendingDomain(project.id);
 
   if (recipientEmails.length === 1 && recipientEmails[0]) {
     const result = await sendNewsletterEmail({
@@ -23,6 +27,7 @@ export const sendEmailNewsletter = async (
       subject,
       html: brandedHtml,
       replyTo,
+      fromDomain,
     });
 
     if (!result.success) {
@@ -39,6 +44,7 @@ export const sendEmailNewsletter = async (
     subject,
     html: brandedHtml,
     replyTo,
+    fromDomain,
   });
 
   if (!result.success && result.failed === recipientEmails.length) {

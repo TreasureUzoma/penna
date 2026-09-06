@@ -279,7 +279,7 @@ export function SettingsTab({ project }: SettingsTabProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="space-y-1">
               <p className="font-medium">Delete Project</p>
               <p className="text-sm text-muted-foreground">
@@ -288,7 +288,7 @@ export function SettingsTab({ project }: SettingsTabProps) {
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive">
+                <Button variant="destructive" className="w-full sm:w-auto">
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Project
                 </Button>

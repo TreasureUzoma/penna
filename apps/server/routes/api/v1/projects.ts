@@ -14,7 +14,14 @@ import {
   deleteProjectApiKey,
   transferProjectOwnership,
   canRemoveBranding,
+  canUseCustomDomain,
 } from "@/services/projects";
+import {
+  listProjectDomains,
+  addProjectDomain,
+  refreshDomainVerification,
+  removeProjectDomain,
+} from "@/services/domains";
 import {
   getSubscribers,
   createSubscriber,
@@ -35,6 +42,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import {
   acceptProjectInviteSchema,
+  addDomainSchema,
   createProjectSchema,
   inviteUserToProjectSchema,
   isValidUUID,
@@ -196,11 +204,21 @@ projectsRoute.get(
     // Computed server-side (mirrors the check `updateProject` re-runs on
     // every branding-toggle write) so the dashboard can grey out "Remove
     // branding" for free-plan owners instead of letting them click it and
-    // hit a 400 — see settings-tab.tsx.
-    const removableBranding = await canRemoveBranding(serviceData.data.id);
+    // hit a 400 — see settings-tab.tsx. Same gate backs the custom-domains
+    // tab (see domains-tab.tsx).
+    const [removableBranding, customDomainAllowed] = await Promise.all([
+      canRemoveBranding(serviceData.data.id),
+      canUseCustomDomain(serviceData.data.id),
+    ]);
 
     return c.json(
-      { project: { ...serviceData.data, canRemoveBranding: removableBranding } },
+      {
+        project: {
+          ...serviceData.data,
+          canRemoveBranding: removableBranding,
+          canUseCustomDomain: customDomainAllowed,
+        },
+      },
       200
     );
   }
@@ -260,6 +278,95 @@ projectsRoute.get(
     const project = projectOrRes;
 
     const serviceData = await getProjectMembers(project.id);
+    return c.json(serviceData, routeStatus(serviceData));
+  }
+);
+
+// list a project's custom sending domains
+projectsRoute.get(
+  "/:id/domains",
+  zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  async (c) => {
+    const { id: projectId } = c.req.valid("param");
+    const projectOrRes = await getProjectOrFail(c, projectId);
+    if (projectOrRes instanceof Response) return projectOrRes;
+    const project = projectOrRes;
+
+    const serviceData = await listProjectDomains(project.id);
+    return c.json(serviceData, routeStatus(serviceData));
+  }
+);
+
+// add a custom sending domain (kicks off SES verification)
+projectsRoute.post(
+  "/:id/domains",
+  zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  zValidator("json", addDomainSchema, (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  async (c) => {
+    const { id: projectId } = c.req.valid("param");
+    const { name } = c.req.valid("json");
+    const projectOrRes = await getProjectOrFail(c, projectId, [
+      "owner",
+      "admin",
+    ]);
+    if (projectOrRes instanceof Response) return projectOrRes;
+    const project = projectOrRes;
+
+    const serviceData = await addProjectDomain(project.id, name);
+    return c.json(serviceData, routeStatus(serviceData));
+  }
+);
+
+// re-check a domain's DNS/verification status against SES
+projectsRoute.post(
+  "/:id/domains/:domainId/verify",
+  zValidator(
+    "param",
+    z.object({ id: z.string().min(1), domainId: z.string().uuid() }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
+    }
+  ),
+  async (c) => {
+    const { id: projectId, domainId } = c.req.valid("param");
+    const projectOrRes = await getProjectOrFail(c, projectId, [
+      "owner",
+      "admin",
+    ]);
+    if (projectOrRes instanceof Response) return projectOrRes;
+    const project = projectOrRes;
+
+    const serviceData = await refreshDomainVerification(project.id, domainId);
+    return c.json(serviceData, routeStatus(serviceData));
+  }
+);
+
+// remove a custom sending domain
+projectsRoute.delete(
+  "/:id/domains/:domainId",
+  zValidator(
+    "param",
+    z.object({ id: z.string().min(1), domainId: z.string().uuid() }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
+    }
+  ),
+  async (c) => {
+    const { id: projectId, domainId } = c.req.valid("param");
+    const projectOrRes = await getProjectOrFail(c, projectId, [
+      "owner",
+      "admin",
+    ]);
+    if (projectOrRes instanceof Response) return projectOrRes;
+    const project = projectOrRes;
+
+    const serviceData = await removeProjectDomain(project.id, domainId);
     return c.json(serviceData, routeStatus(serviceData));
   }
 );

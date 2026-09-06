@@ -65,14 +65,18 @@ export function ApiKeysTab({ projectId }: { projectId: string }) {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0 pb-2">
           <div className="space-y-1">
             <CardTitle>API Keys</CardTitle>
             <CardDescription>
               Manage your API keys for accessing the Penna API.
             </CardDescription>
           </div>
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <Button
+            onClick={handleCreate}
+            disabled={isCreating}
+            className="w-full sm:w-auto"
+          >
             {isCreating ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (

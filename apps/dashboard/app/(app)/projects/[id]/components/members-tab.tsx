@@ -69,23 +69,23 @@ export function MembersTab({ projectId }: { projectId: string }) {
         {members?.map((member: any) => (
           <div
             key={member.userId}
-            className="flex items-center justify-between"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
           >
-            <div className="flex items-center gap-4">
-              <Avatar>
+            <div className="flex items-center gap-4 min-w-0">
+              <Avatar className="shrink-0">
                 <AvatarImage
                   src={`https://avatar.idolo.dev/${member.user.email}`}
                 />
                 <AvatarFallback>{member.user.name?.[0]}</AvatarFallback>
               </Avatar>
-              <div>
-                <p className="font-medium">{member.user.name}</p>
-                <p className="text-sm text-muted-foreground">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{member.user.name}</p>
+                <p className="text-sm text-muted-foreground truncate">
                   {member.user.email}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
               {isCurrentUserOwner && member.role !== "owner" && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

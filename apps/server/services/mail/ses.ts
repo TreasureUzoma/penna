@@ -38,6 +38,8 @@ export interface SendNewsletterOptions {
   subject: string;
   html: string;
   replyTo?: string;
+  /** A verified custom domain to send from instead of the shared `NEWSLETTER_DOMAIN` — see `services/domains.ts`. */
+  fromDomain?: string | null;
 }
 
 export interface SendBulkNewsletterOptions {
@@ -46,6 +48,7 @@ export interface SendBulkNewsletterOptions {
   subject: string;
   html: string;
   replyTo?: string;
+  fromDomain?: string | null;
 }
 
 /**
@@ -55,8 +58,15 @@ export const sendNewsletterEmail = async (
   options: SendNewsletterOptions
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
   try {
-    const { projectId, projectSlug, recipientEmail, subject, html, replyTo } =
-      options;
+    const {
+      projectId,
+      projectSlug,
+      recipientEmail,
+      subject,
+      html,
+      replyTo,
+      fromDomain,
+    } = options;
 
     // Per-recipient: the token embedded in both the visible footer link and
     // the List-Unsubscribe header is signed for this exact (project, email)
@@ -72,7 +82,10 @@ export const sendNewsletterEmail = async (
       // The onboarding UI (create-project-form.tsx, username-form.tsx) has
       // always shown subscribers this short, non-repetitive form; this was
       // the one place still sending from the longer one.
-      FromEmailAddress: `${projectSlug}@${envConfig.NEWSLETTER_DOMAIN}`,
+      // `fromDomain` overrides this with the project's own verified domain
+      // (services/domains.ts) when it has one — same {slug}@ local part,
+      // just on their domain instead of the shared one.
+      FromEmailAddress: `${projectSlug}@${fromDomain || envConfig.NEWSLETTER_DOMAIN}`,
       Destination: {
         ToAddresses: [recipientEmail],
       },
@@ -130,7 +143,8 @@ export const sendBulkNewsletterEmails = async (
   failed: number;
   errors?: Array<{ email: string; error: string }>;
 }> => {
-  const { project, recipientEmails, subject, html, replyTo } = options;
+  const { project, recipientEmails, subject, html, replyTo, fromDomain } =
+    options;
   const results = {
     sent: 0,
     failed: 0,
@@ -149,6 +163,7 @@ export const sendBulkNewsletterEmails = async (
         subject,
         html,
         replyTo,
+        fromDomain,
       });
 
       if (result.success) {

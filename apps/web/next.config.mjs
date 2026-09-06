@@ -28,6 +28,8 @@ const nextConfig = {
       "onboarding/:path+",
       "billings",
       "billings/:path+",
+      "domains",
+      "domains/:path+",
     ];
 
     const staticRoutes = [

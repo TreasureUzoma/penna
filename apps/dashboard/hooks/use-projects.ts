@@ -50,7 +50,13 @@ export function useUpdateProject(projectId: string) {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      // Keyed by the URL slug, not the DB id (see useProject above) — a
+      // project's slug can differ from its id, so invalidating
+      // ["project", projectId] here would silently miss the cache entry
+      // the settings page is actually reading from. Invalidate the whole
+      // "project" prefix instead so this works regardless of which one
+      // the caller passed in.
+      queryClient.invalidateQueries({ queryKey: ["project"] });
       toast.success("Project updated successfully");
     },
     onError: (error: any) => {
