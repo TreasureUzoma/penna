@@ -40,10 +40,15 @@ export function KPICards({ stats }: KPICardsProps) {
           : "0%",
     },
     {
+      // Open/click tracking isn't implemented yet (no tracking pixel on
+      // sent emails, no click-redirect endpoint) — the API always reports
+      // 0 for this. Showing "Coming soon" instead of a value reads as
+      // intentional; a bare "-" or a fake "0%" both read as broken data.
       title: "Open Rate",
-      value: "-",
-      description: "Average for last campaign",
+      value: "Coming soon",
+      description: "Open tracking isn't available yet",
       icon: Mail,
+      muted: true,
     },
     {
       title: "Last Sent",
@@ -62,7 +67,15 @@ export function KPICards({ stats }: KPICardsProps) {
             <kpi.icon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpi.value}</div>
+            <div
+              className={
+                kpi.muted
+                  ? "text-lg font-medium text-muted-foreground"
+                  : "text-2xl font-bold"
+              }
+            >
+              {kpi.value}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               {kpi.trend && (
                 <span className="text-emerald-500 font-medium mr-1">

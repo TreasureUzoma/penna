@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useNewsletter, useNewsletterAnalytics } from "@/hooks/use-newsletters";
 import { useEmails } from "@/hooks/use-emails";
@@ -20,24 +21,32 @@ import {
 } from "@workspace/ui/components/table";
 import Link from "next/link";
 import numeral from "numeral";
+import { GrowthChart } from "../components/overview/growth-chart";
+import { GrowthChartSkeleton } from "../components/overview/growth-chart-skeleton";
+import { ActivityFeed } from "../components/overview/activity-feed";
+import { ActivityFeedSkeleton } from "../components/overview/activity-feed-skeleton";
 
 /**
  * Deliberately distinct from the Overview tab rather than repeating its
- * KPI cards/growth chart: subscriber health (subscribed/unsubscribed/
- * bounced — real now that the SES bounce/complaint webhook actually
- * suppresses subscribers) and the full send history, not just the single
- * "latest post" Overview already shows.
+ * KPI cards: subscriber health (subscribed/unsubscribed/bounced — real now
+ * that the SES bounce/complaint webhook actually suppresses subscribers)
+ * and the full send history, not just the single "latest post" Overview
+ * already shows. The growth chart and activity feed are the same
+ * components Overview uses (same underlying data), since this tab is
+ * where someone actually wants to dig into them at a chosen timeframe
+ * rather than the one preset Overview shows.
  */
 export default function NewsletterAnalyticsPage() {
   const params = useParams();
   const slug = params.id as string;
+  const [timeframe, setTimeframe] = useState(30);
 
   const { data: newsletter, isLoading: isNewsletterLoading } = useNewsletter(slug);
   const { data: analytics, isLoading: isAnalyticsLoading } =
-    useNewsletterAnalytics(newsletter?.id ?? "");
+    useNewsletterAnalytics(newsletter?.id ?? "", timeframe);
   const { data: emails, isLoading: isEmailsLoading } = useEmails(slug);
 
-  if (isNewsletterLoading || isAnalyticsLoading) {
+  if (isNewsletterLoading) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -94,21 +103,54 @@ export default function NewsletterAnalyticsPage() {
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statusCards.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <p className="text-xl font-medium">
-                {numeral(stat.value).format("0,0")}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        {isAnalyticsLoading
+          ? [...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+                  <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-6 w-12 rounded bg-muted animate-pulse" />
+                </CardContent>
+              </Card>
+            ))
+          : statusCards.map((stat) => (
+              <Card key={stat.label}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.label}
+                  </CardTitle>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xl font-medium">
+                    {numeral(stat.value).format("0,0")}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          {isAnalyticsLoading ? (
+            <GrowthChartSkeleton />
+          ) : (
+            <GrowthChart
+              data={analytics?.chartData}
+              timeframe={timeframe}
+              onTimeframeChange={setTimeframe}
+            />
+          )}
+        </div>
+        <div>
+          {isAnalyticsLoading ? (
+            <ActivityFeedSkeleton />
+          ) : (
+            <ActivityFeed activities={analytics?.activity} />
+          )}
+        </div>
       </div>
 
       <Card>

@@ -13,6 +13,7 @@ import { ActivityFeedSkeleton } from "./components/overview/activity-feed-skelet
 import { LatestPost } from "./components/overview/latest-post";
 import { LatestPostSkeleton } from "./components/overview/latest-post-skeleton";
 import { NewsletterCTA } from "./components/overview/newsletter-cta";
+import { NewsletterCTASkeleton } from "./components/overview/newsletter-cta-skeleton";
 
 export default function NewsletterOverviewPage() {
   const params = useParams();
@@ -81,7 +82,11 @@ export default function NewsletterOverviewPage() {
         ) : (
           <LatestPost post={analytics?.lastPost} />
         )}
-        <NewsletterCTA newsletter={newsletter} stats={analytics?.stats} />
+        {isAnalyticsLoading ? (
+          <NewsletterCTASkeleton />
+        ) : (
+          <NewsletterCTA newsletter={newsletter} stats={analytics?.stats} />
+        )}
       </div>
     </div>
   );
