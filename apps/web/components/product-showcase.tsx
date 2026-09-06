@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock3 } from "lucide-react";
+import { CheckCircle2, Clock3, Globe, ShieldCheck } from "lucide-react";
 
 const chartBars = [35, 52, 40, 68, 58, 82, 74];
 
@@ -40,9 +40,7 @@ const MarkdownMock = () => (
     <div className="p-4 font-mono text-xs leading-relaxed space-y-1.5">
       <p className="text-muted-foreground"># weekly digest</p>
       <p>&nbsp;</p>
-      <p>
-        hey <span className="text-muted-foreground">**friends**</span>,
-      </p>
+      <p className="text-muted-foreground">hey **friends**</p>
       <p>&nbsp;</p>
       <p className="text-muted-foreground">- shipped custom domains</p>
       <p className="text-muted-foreground">- fixed webhook retries</p>
@@ -89,6 +87,28 @@ const SubscribersMock = () => (
   </div>
 );
 
+const DomainMock = () => (
+  <div className="p-4 space-y-2">
+    <div className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2.5">
+      <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+      <span className="text-xs font-mono flex-1 truncate">
+        news.yoursite.com
+      </span>
+      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
+        <CheckCircle2 className="w-2.5 h-2.5" />
+        verified
+      </span>
+    </div>
+    <div className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2.5">
+      <ShieldCheck className="w-4 h-4 text-muted-foreground shrink-0" />
+      <span className="text-xs flex-1">remove penna branding</span>
+      <div className="w-8 h-4.5 rounded-full bg-foreground/80 relative shrink-0">
+        <div className="absolute right-0.5 top-0.5 w-3.5 h-3.5 rounded-full bg-background" />
+      </div>
+    </div>
+  </div>
+);
+
 const showcases = [
   {
     title: "dashboard",
@@ -108,6 +128,12 @@ const showcases = [
       "segment, tag, and manage your list without ever leaving the dashboard.",
     mock: <SubscribersMock />,
   },
+  {
+    title: "your own domain",
+    description:
+      "verify a sending domain, drop the penna branding, and make it look entirely like you.",
+    mock: <DomainMock />,
+  },
 ];
 
 export const ProductShowcase = () => {
@@ -116,14 +142,15 @@ export const ProductShowcase = () => {
       <div className="max-w-4xl w-full space-y-8">
         <div className="space-y-2 text-center">
           <h2 className="text-3xl md:text-4xl font-bold">
-            everything you need to send newsletters
+            a full platform, not just an API
           </h2>
           <p className="text-lg text-muted-foreground">
-            no bloat, no busywork — just the tools that matter.
+            everything you need to run a newsletter, in one clean dashboard — no
+            bloat, no busywork.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 gap-6">
           {showcases.map((showcase) => (
             <div
               key={showcase.title}

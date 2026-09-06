@@ -6,13 +6,13 @@ export const Hero = () => {
       <div className="max-w-3xl space-y-8">
         <div className="space-y-4">
           <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight">
-            build, send, and manage newsletters with an API you'll actually
-            enjoy
+            the newsletter platform that gets out of your way
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            penna is the newsletter platform built for developers. send emails
-            from your code. manage subscribers without leaving your terminal.
-            scale without fighting the tool.
+            write, send, and grow your newsletter from a dashboard that
+            doesn't fight you — subscribers, segments, analytics, and your
+            own domain, all in one place. automate any of it with a real API
+            when you need to.
           </p>
         </div>
 

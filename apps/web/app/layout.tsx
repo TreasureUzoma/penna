@@ -16,7 +16,7 @@ const fontMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "penna - opensoure alternative to buttondown",
+  title: "penna - open source alternative to buttondown",
 };
 
 // No Header/Footer here — those are marketing-site chrome and only belong

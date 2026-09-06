@@ -13,16 +13,17 @@ export default function AboutPage() {
 
         <div className="space-y-4 text-muted-foreground leading-relaxed">
           <p>
-            {meta.name} is a newsletter platform built for developers. write in
-            markdown, manage subscribers, and send email from an api you'll
-            actually enjoy using — no bloated dashboards, no fighting the tool
-            to do simple things.
+            {meta.name} is a full newsletter platform built for developers:
+            write in markdown, manage subscribers and segments, track real
+            analytics, and send from your own verified domain — all from one
+            clean dashboard. automate any of it with a real api when you
+            need to.
           </p>
           <p>
             we built it because most newsletter tools are designed for
-            marketers, not engineers. {meta.name} strips that away and gets
-            out of your way: clean writing, a real api, and infrastructure
-            that scales without the busywork.
+            marketers, not engineers. {meta.name} strips out the busywork
+            without stripping out the features: a dashboard that stays out
+            of your way, and infrastructure that scales with you.
           </p>
           <p>
             it's{" "}

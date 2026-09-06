@@ -2,24 +2,11 @@ import { Check, X } from "lucide-react";
 
 export const Comparison = () => {
   const features = [
-    { name: "open source", penna: true, buttondown: false, mailchimp: false },
     {
-      name: "self-hostable",
-      penna: true,
-      buttondown: false,
-      mailchimp: false,
-    },
-    {
-      name: "API-first design",
-      penna: true,
-      buttondown: false,
-      mailchimp: false,
-    },
-    {
-      name: "transparent pricing",
+      name: "clean, full-featured dashboard",
       penna: true,
       buttondown: true,
-      mailchimp: false,
+      mailchimp: true,
     },
     {
       name: "markdown editor",
@@ -34,13 +21,32 @@ export const Comparison = () => {
       mailchimp: true,
     },
     { name: "segmentation", penna: true, buttondown: true, mailchimp: true },
-    { name: "webhooks", penna: true, buttondown: false, mailchimp: true },
     {
       name: "custom domain",
       penna: true,
       buttondown: false,
       mailchimp: true,
     },
+    { name: "open source", penna: true, buttondown: false, mailchimp: false },
+    {
+      name: "self-hostable",
+      penna: true,
+      buttondown: false,
+      mailchimp: false,
+    },
+    {
+      name: "transparent pricing",
+      penna: true,
+      buttondown: true,
+      mailchimp: false,
+    },
+    {
+      name: "developer-friendly API",
+      penna: true,
+      buttondown: false,
+      mailchimp: false,
+    },
+    { name: "webhooks", penna: true, buttondown: false, mailchimp: true },
   ];
 
   const FeatureIcon = ({ value }: { value: boolean }) =>
