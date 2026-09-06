@@ -6,13 +6,13 @@ import { paginate } from "@/utils/pagination";
 import { parse } from "csv-parse/sync";
 import {
   assertSubscriberCapacity,
-  getProjectSubscriberUsage,
+  getNewsletterSubscriberUsage,
   syncSubscriberLimitWarnings,
   SubscriberLimitError,
 } from "./limits";
 
 export const getSubscribers = async (
-  projectId: string,
+  newsletterId: string,
   page = 1,
   limit = 10
 ): Promise<ServiceResponse> => {
@@ -22,7 +22,7 @@ export const getSubscribers = async (
     const dbQuery = db
       .select()
       .from(subscribers)
-      .where(eq(subscribers.projectId, projectId))
+      .where(eq(subscribers.newsletterId, newsletterId))
       .orderBy(desc(subscribers.createdAt))
       .limit(limit)
       .offset(offset);
@@ -30,7 +30,7 @@ export const getSubscribers = async (
     const countQuery = db
       .select({ count: count() })
       .from(subscribers)
-      .where(eq(subscribers.projectId, projectId));
+      .where(eq(subscribers.newsletterId, newsletterId));
 
     const paginatedData = await paginate(dbQuery, countQuery, page, limit);
 
@@ -52,7 +52,7 @@ export const getSubscribers = async (
 };
 
 export const createSubscriber = async (
-  projectId: string,
+  newsletterId: string,
   email: string,
   name?: string
 ): Promise<ServiceResponse> => {
@@ -61,23 +61,23 @@ export const createSubscriber = async (
       .select()
       .from(subscribers)
       .where(
-        and(eq(subscribers.projectId, projectId), eq(subscribers.email, email))
+        and(eq(subscribers.newsletterId, newsletterId), eq(subscribers.email, email))
       );
 
     if (existingSubscriber) {
       return {
         success: false,
-        message: "Subscriber with this email already exists in the project",
+        message: "Subscriber with this email already exists in the newsletter",
         data: null,
       };
     }
 
-    const usage = await assertSubscriberCapacity(projectId);
+    const usage = await assertSubscriberCapacity(newsletterId);
 
     const [newSubscriber] = await db
       .insert(subscribers)
       .values({
-        projectId,
+        newsletterId,
         email,
         name,
         status: "subscribed",
@@ -110,7 +110,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_IMPORT_ROWS = 10_000;
 
 export const importSubscribersFromCsv = async (
-  projectId: string,
+  newsletterId: string,
   csvContent: string
 ): Promise<ServiceResponse> => {
   try {
@@ -173,11 +173,11 @@ export const importSubscribersFromCsv = async (
       };
     }
 
-    const usage = await getProjectSubscriberUsage(projectId);
+    const usage = await getNewsletterSubscriberUsage(newsletterId);
     if (!usage) {
       return {
         success: false,
-        message: "Could not determine this project's subscriber limit.",
+        message: "Could not determine this newsletter's subscriber limit.",
         data: null,
       };
     }
@@ -193,7 +193,7 @@ export const importSubscribersFromCsv = async (
       void syncSubscriberLimitWarnings(usage);
       return {
         success: false,
-        message: `${usage.projectName} is already at its ${usage.plan.name} plan limit of ${usage.cap?.toLocaleString()} subscribers. Upgrade to import more.`,
+        message: `${usage.newsletterName} is already at its ${usage.plan.name} plan limit of ${usage.cap?.toLocaleString()} subscribers. Upgrade to import more.`,
         data: null,
       };
     }
@@ -202,14 +202,14 @@ export const importSubscribersFromCsv = async (
       .insert(subscribers)
       .values(
         importableRows.map((row) => ({
-          projectId,
+          newsletterId,
           email: row.email,
           name: row.name,
           status: "subscribed" as const,
         }))
       )
       .onConflictDoNothing({
-        target: [subscribers.projectId, subscribers.email],
+        target: [subscribers.newsletterId, subscribers.email],
       })
       .returning();
 
@@ -248,18 +248,18 @@ export const importSubscribersFromCsv = async (
 };
 
 /**
- * All actively-subscribed emails for a project, unpaginated — for actual
+ * All actively-subscribed emails for a newsletter, unpaginated — for actual
  * sends, not UI listing.
  */
 export const getSubscribedEmails = async (
-  projectId: string
+  newsletterId: string
 ): Promise<string[]> => {
   const rows = await db
     .select({ email: subscribers.email })
     .from(subscribers)
     .where(
       and(
-        eq(subscribers.projectId, projectId),
+        eq(subscribers.newsletterId, newsletterId),
         eq(subscribers.status, "subscribed")
       )
     );
@@ -269,12 +269,12 @@ export const getSubscribedEmails = async (
 
 /**
  * Filters a candidate list of email addresses down to the ones that are
- * actually subscribed to this project. Used to scope external-API sends
+ * actually subscribed to this newsletter. Used to scope external-API sends
  * (`recipientEmails`) to real subscribers instead of letting a caller send
  * to arbitrary addresses just because they hold a valid private key.
  */
 export const getSubscribedEmailsFromList = async (
-  projectId: string,
+  newsletterId: string,
   emails: string[]
 ): Promise<string[]> => {
   if (emails.length === 0) return [];
@@ -284,7 +284,7 @@ export const getSubscribedEmailsFromList = async (
     .from(subscribers)
     .where(
       and(
-        eq(subscribers.projectId, projectId),
+        eq(subscribers.newsletterId, newsletterId),
         eq(subscribers.status, "subscribed"),
         inArray(subscribers.email, emails)
       )
@@ -294,7 +294,7 @@ export const getSubscribedEmailsFromList = async (
 };
 
 export const deleteSubscriber = async (
-  projectId: string,
+  newsletterId: string,
   subscriberId: string
 ): Promise<ServiceResponse> => {
   try {
@@ -302,7 +302,7 @@ export const deleteSubscriber = async (
       .delete(subscribers)
       .where(
         and(
-          eq(subscribers.projectId, projectId),
+          eq(subscribers.newsletterId, newsletterId),
           eq(subscribers.id, subscriberId)
         )
       )

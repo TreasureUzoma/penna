@@ -3,13 +3,13 @@ import { routeStatus } from "@/lib/utils";
 import { sendUnsubscribeCofirmationEmail } from "@/services/mail/internal";
 import {
   confirmUnsubscribe,
-  getProjectSubscriberExistence,
+  getNewsletterSubscriberExistence,
 } from "@/services/subscriptions";
 import { validationErrorResponse } from "@/utils/validation-error-response";
 import { zValidator } from "@hono/zod-validator";
 import {
   isValidToken,
-  unsubscribeFromProjectSchema,
+  unsubscribeFromNewsletterSchema,
 } from "@workspace/validations";
 import { Hono } from "hono";
 import type { Context } from "hono";
@@ -41,27 +41,27 @@ const verifyAndUnsubscribe = async (c: Context, token: string) => {
     );
   }
 
-  const { projectId, email } = validToken as {
-    projectId: string;
+  const { newsletterId, email } = validToken as {
+    newsletterId: string;
     email: string;
   };
 
-  if (!projectId || !email) {
+  if (!newsletterId || !email) {
     return c.json({ success: false, message: "Invalid token payload" }, 400);
   }
 
-  const serviceData = await confirmUnsubscribe({ projectId, email });
+  const serviceData = await confirmUnsubscribe({ newsletterId, email });
   return c.json(serviceData, routeStatus(serviceData));
 };
 
 // unsubsribe req
 unsubscribeRoutes.post(
-  zValidator("json", unsubscribeFromProjectSchema, (result, c) => {
+  zValidator("json", unsubscribeFromNewsletterSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
   async (c) => {
     const body = c.req.valid("json");
-    const existence = await getProjectSubscriberExistence(body);
+    const existence = await getNewsletterSubscriberExistence(body);
 
     if (existence.success == false) {
       return c.json(existence, 404);
@@ -69,7 +69,7 @@ unsubscribeRoutes.post(
 
     const token = await sign(
       {
-        projectId: body.projectId,
+        newsletterId: body.newsletterId,
         email: body.email,
         exp: Math.floor(Date.now() / 1000) + 15 * 60, // 15m from now
       },
@@ -80,7 +80,7 @@ unsubscribeRoutes.post(
 
     await sendUnsubscribeCofirmationEmail(
       body.email,
-      existence.data.projectName,
+      existence.data.newsletterName,
       confirmUrl
     );
 

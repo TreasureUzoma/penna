@@ -1,8 +1,10 @@
 import { z } from "zod";
 
-const USERNAME_REGEX = /^[a-z0-9_-]+$/;
-
-export const BANNED_USERNAMES = [
+// Also doubles as the newsletter-slug reserved list — both live in the
+// same URL namespace now that a newsletter's public page is just
+// penna.dev/{slug} (no per-user prefix; see the note on `newsletters.slug`
+// in packages/db/schema.ts).
+export const RESERVED_SLUGS = [
   "about",
   "account",
   "activity",
@@ -29,6 +31,8 @@ export const BANNED_USERNAMES = [
   "login",
   "logout",
   "new",
+  "newsletter",
+  "newsletters",
   "onboarding",
   "payments",
   "post",
@@ -36,7 +40,6 @@ export const BANNED_USERNAMES = [
   "pricing",
   "privacy",
   "profile",
-  "projects",
   "register",
   "reset-password",
   "root",
@@ -48,16 +51,14 @@ export const BANNED_USERNAMES = [
   "status",
   "support",
   "terms",
-  "u",
   "user",
-  "username",
   "users",
   "verify-email",
   "www",
 ];
 
-const BANNED_SET = new Set(
-  BANNED_USERNAMES.map((name) => name.toLowerCase().trim())
+const RESERVED_SET = new Set(
+  RESERVED_SLUGS.map((name) => name.toLowerCase().trim())
 );
 
 export const loginSchema = z.object({
@@ -131,7 +132,7 @@ export const verifyEmailSchema = z.object({
 
 export type VerifyEmail = z.infer<typeof verifyEmailSchema>;
 
-export const createProjectSchema = z.object({
+export const createNewsletterSchema = z.object({
   name: z.string().min(1).max(35),
   slug: z
     .string()
@@ -144,7 +145,7 @@ export const createProjectSchema = z.object({
         "Slug must only contain lowercase letters, numbers, and hyphens (-).",
     })
     .refine(
-      (value) => !BANNED_SET.has(value),
+      (value) => !RESERVED_SET.has(value),
       (value) => ({
         message: `The slug '${value}' is reserved and cannot be used.`,
       })
@@ -153,9 +154,9 @@ export const createProjectSchema = z.object({
   isPublic: z.boolean(),
 });
 
-export type NewProject = z.infer<typeof createProjectSchema>;
+export type NewNewsletter = z.infer<typeof createNewsletterSchema>;
 
-export const updateProjectSchema = z.object({
+export const updateNewsletterSchema = z.object({
   name: z.string().min(1).max(35).optional(),
   slug: z
     .string()
@@ -168,7 +169,7 @@ export const updateProjectSchema = z.object({
         "Slug must only contain lowercase letters, numbers, and hyphens (-).",
     })
     .refine(
-      (value) => !BANNED_SET.has(value),
+      (value) => !RESERVED_SET.has(value),
       (value) => ({
         message: `The slug '${value}' is reserved and cannot be used.`,
       })
@@ -179,14 +180,14 @@ export const updateProjectSchema = z.object({
   removeBranding: z.boolean().optional(),
 });
 
-export type UpdateProject = z.infer<typeof updateProjectSchema>;
+export type UpdateNewsletter = z.infer<typeof updateNewsletterSchema>;
 
-export const transferProjectOwnershipSchema = z.object({
+export const transferNewsletterOwnershipSchema = z.object({
   newOwnerUserId: z.string().uuid("Invalid user ID"),
 });
 
-export type TransferProjectOwnership = z.infer<
-  typeof transferProjectOwnershipSchema
+export type TransferNewsletterOwnership = z.infer<
+  typeof transferNewsletterOwnershipSchema
 >;
 
 export const importSubscribersSchema = z.object({
@@ -203,69 +204,50 @@ export const isValidEmail = z.object({
   email: z.string().email("Invalid email format"),
 });
 
-export const isValidUsername = z.object({
-  username: z
-    .string()
-    .min(3, { message: "Username must be at least 3 characters long." })
-    .max(20, { message: "Username must be 20 characters or less." })
-    .trim()
-    .toLowerCase()
-    .regex(USERNAME_REGEX, {
-      message:
-        "Username must only contain lowercase letters, numbers, hyphens (-), or underscores (_).",
-    })
-    .refine(
-      (value) => !BANNED_SET.has(value),
-      (value) => ({
-        message: `The username '${value}' is reserved and cannot be used.`,
-      })
-    ),
-});
-
 export const isValidToken = z.object({
   token: z.string().min(60).max(900),
 });
 
-export const newProjectInviteSchema = z.object({
-  projectId: z.string().min(1),
+export const newNewsletterInviteSchema = z.object({
+  newsletterId: z.string().min(1),
   invitedByUserId: z.string().uuid(),
   invitedToUserId: z.string().uuid(),
 });
 
-export const updateProjectMemberRoleSchema = z.object({
-  projectId: z.string().min(1),
+export const updateNewsletterMemberRoleSchema = z.object({
+  newsletterId: z.string().min(1),
   targetUserId: z.string().uuid(),
   role: z.enum(["owner", "admin", "editor", "viewer"]),
 });
 
-export type NewProjectInvite = z.infer<typeof newProjectInviteSchema>;
+export type NewNewsletterInvite = z.infer<typeof newNewsletterInviteSchema>;
 
-export const acceptProjectInviteSchema = z.object({
+export const acceptNewsletterInviteSchema = z.object({
   inviteId: z.string().uuid(),
   acceptingUserId: z.string().uuid(),
 });
 
-export const inviteUserToProjectSchema = z.object({
-  projectId: z.string().min(1),
+export const inviteUserToNewsletterSchema = z.object({
+  newsletterId: z.string().min(1),
   invitedByUserId: z.string().uuid(),
   invitedToUserId: z.string().uuid(),
   role: z.enum(["owner", "admin", "editor", "viewer"]),
 });
 
-export const unsubscribeFromProjectSchema = z.object({
-  projectId: z.string().min(1),
+export const unsubscribeFromNewsletterSchema = z.object({
+  newsletterId: z.string().min(1),
   email: z.string().email(),
 });
 
-export type UnsubscribeRequest = z.infer<typeof unsubscribeFromProjectSchema>;
+export type UnsubscribeRequest = z.infer<typeof unsubscribeFromNewsletterSchema>;
 
-export const createProjectSubscriberSchema = z.object({
+export const createNewsletterSubscriberSchema = z.object({
   name: z.string().min(2).max(40).optional().or(z.literal("")),
   email: z.string().email(),
-  projectId: z.string().min(1),
+  newsletterId: z.string().min(1),
 });
 
-export type CreateSubscriber = z.infer<typeof createProjectSubscriberSchema>;
+export type CreateSubscriber = z.infer<typeof createNewsletterSubscriberSchema>;
 
 export const createSegmentSchema = z.object({
   name: z.string().min(1, "Name is required").max(50),
@@ -284,26 +266,6 @@ export const updateProfileSchema = z
       .max(50, { message: "Name must be 50 characters or less." })
       .optional(),
 
-    username: z
-      .string({
-        invalid_type_error: "Username must be a string.",
-      })
-      .min(3, { message: "Username must be at least 3 characters long." })
-      .max(20, { message: "Username must be 20 characters or less." })
-      .trim()
-      .toLowerCase()
-      .regex(USERNAME_REGEX, {
-        message:
-          "Username must only contain lowercase letters, numbers, hyphens (-), or underscores (_).",
-      })
-      .refine(
-        (value) => !BANNED_SET.has(value),
-        (value) => ({
-          message: `The username '${value}' is reserved and cannot be used.`,
-        })
-      )
-      .optional(),
-
     avatarUrl: z
       .string({
         invalid_type_error: "Avatar URL must be a string.",
@@ -319,7 +281,7 @@ export const insertPostSchema = z.object({
   subject: z.string().min(4).max(30),
   body: z.string().min(2).max(6000),
   status: z.enum(["published", "draft"]),
-  projectId: z.string().min(1),
+  newsletterId: z.string().min(1),
   sentAt: z.coerce.date().optional(),
 });
 
@@ -349,15 +311,15 @@ export const addDomainSchema = z.object({
     .regex(/^(?!:\/\/)([a-z0-9-]+\.)+[a-z]{2,}$/, {
       message: "Enter a valid domain, e.g. news.yoursite.com",
     }),
-  // Optional — omit to verify the domain first and assign it to a project
-  // later (see the account-wide Domains page + `assignDomainSchema` below).
-  projectId: z.string().uuid().optional(),
+  // Optional — omit to verify the domain first and assign it to a
+  // newsletter later (see the account-wide Domains page + `assignDomainSchema` below).
+  newsletterId: z.string().uuid().optional(),
 });
 
 export type AddDomain = z.infer<typeof addDomainSchema>;
 
 export const assignDomainSchema = z.object({
-  projectId: z.string().uuid("Pick a project"),
+  newsletterId: z.string().uuid("Pick a newsletter"),
 });
 
 export type AssignDomain = z.infer<typeof assignDomainSchema>;

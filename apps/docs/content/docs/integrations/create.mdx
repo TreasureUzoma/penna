@@ -1,6 +1,6 @@
 ---
 title: Create Subscriber
-description: "Learn how to add new subscribers to your project programmatically."
+description: "Learn how to add new subscribers to your newsletter programmatically."
 ---
 
 # Create Subscriber
@@ -9,7 +9,7 @@ Penna provides a simple REST API to integrate newsletter functionality directly 
 
 ## Authentication
 
-All API requests must be authenticated using your project's Public Key. You can find this key in your project settings dashboard.
+All API requests must be authenticated using your newsletter's Public Key. You can find this key in your newsletter settings dashboard.
 
 Include the key in the `x-penna-public-key` header of your requests.
 
@@ -24,9 +24,9 @@ x-penna-public-key: penn_your_public_key_here
 
 ### Add New Subscriber
 
-Adds a new subscriber to your project.
+Adds a new subscriber to your newsletter.
 
-**Endpoint:** `POST /api/v1/external/projects/subscriber/new`
+**Endpoint:** `POST /api/v1/external/newsletters/subscriber/new`
 
 **Headers:**
 
@@ -60,7 +60,7 @@ export function NewsletterForm() {
 
     try {
       const res = await fetch(
-        "https://api.penna.dev/api/v1/external/projects/subscriber/new",
+        "https://api.penna.dev/api/v1/external/newsletters/subscriber/new",
         {
           method: "POST",
           headers: {
@@ -123,7 +123,7 @@ export function NewsletterForm() {
 
     try {
       const response = await fetch(
-        "https://api.penna.dev/api/v1/external/projects/subscriber/new",
+        "https://api.penna.dev/api/v1/external/newsletters/subscriber/new",
         {
           method: "POST",
           headers: {
@@ -149,7 +149,7 @@ export function NewsletterForm() {
 ### cURL
 
 ```bash
-curl -X POST https://api.penna.dev/api/v1/external/projects/subscriber/new \
+curl -X POST https://api.penna.dev/api/v1/external/newsletters/subscriber/new \
   -H "Content-Type: application/json" \
   -H "x-penna-public-key: penn_abc1234567890" \
   -d '{"email": "test@example.com"}'
@@ -160,7 +160,7 @@ curl -X POST https://api.penna.dev/api/v1/external/projects/subscriber/new \
 ```python
 import requests
 
-url = "https://api.penna.dev/api/v1/external/projects/subscriber/new"
+url = "https://api.penna.dev/api/v1/external/newsletters/subscriber/new"
 headers = {
     "Content-Type": "application/json",
     "x-penna-public-key": "penn_abc1234567890"

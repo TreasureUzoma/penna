@@ -1,11 +1,11 @@
 "use client";
 
 import { Card } from "@workspace/ui/components/card";
-import { CreateProjectForm } from "./components/create-project-form";
+import { CreateNewsletterForm } from "./components/create-newsletter-form";
 import { useGetProfile } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
-export default function NewProjectPage() {
+export default function NewNewsletterPage() {
   const { data: user, isLoading } = useGetProfile();
 
   if (isLoading) {
@@ -25,14 +25,14 @@ export default function NewProjectPage() {
       <Card className="w-full max-w-2xl p-6 md:p-8">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Create a new project
+            Create a new newsletter
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Deploy your new project in one click.
+            Deploy your new newsletter in one click.
           </p>
         </div>
 
-        <CreateProjectForm />
+        <CreateNewsletterForm />
       </Card>
     </div>
   );

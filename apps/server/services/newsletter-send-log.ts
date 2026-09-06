@@ -7,7 +7,7 @@ type ModerationVerdict =
   (typeof newsletterSendLogs.$inferInsert)["moderationVerdict"];
 
 interface LogNewsletterSendInput {
-  projectId: string;
+  newsletterId: string;
   apiKeyId: string;
   subject: string;
   recipientCount?: number;
@@ -34,7 +34,7 @@ export const logNewsletterSend = async (
 ): Promise<void> => {
   try {
     await db.insert(newsletterSendLogs).values({
-      projectId: input.projectId,
+      newsletterId: input.newsletterId,
       apiKeyId: input.apiKeyId,
       subject: input.subject,
       recipientCount: input.recipientCount ?? 0,
@@ -47,7 +47,7 @@ export const logNewsletterSend = async (
     });
   } catch (error) {
     console.error(
-      `Failed to log newsletter send for project ${input.projectId}:`,
+      `Failed to log newsletter send for newsletter ${input.newsletterId}:`,
       error
     );
   }

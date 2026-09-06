@@ -1,22 +1,22 @@
 import { routeStatus } from "@/lib/utils";
 import {
-  createProjectSubscriber,
-  getProjectSubscribers,
+  createNewsletterSubscriber,
+  getNewsletterSubscribers,
   getRecentSubscribers,
-  removeProjectSubscriber,
+  removeNewsletterSubscriber,
 } from "@/services/subscriptions";
-import { getProjectOrFail } from "@/utils/project-access";
+import { getNewsletterOrFail } from "@/utils/newsletter-access";
 import { validationErrorResponse } from "@/utils/validation-error-response";
 import { zValidator } from "@hono/zod-validator";
 import {
-  createProjectSubscriberSchema,
+  createNewsletterSubscriberSchema,
   isValidUUID,
 } from "@workspace/validations";
 import { Hono } from "hono";
 
 const subscriptionRoutes = new Hono();
 
-// get all subscribers from a project
+// get all subscribers from a newsletter
 subscriptionRoutes.get(
   "/:id",
   zValidator("param", isValidUUID, (result, c) => {
@@ -25,22 +25,22 @@ subscriptionRoutes.get(
     }
   }),
   async (c) => {
-    const { id: projectId } = c.req.valid("param");
+    const { id: newsletterId } = c.req.valid("param");
 
     const { page, limit } = c.req.query();
     const pageNumber = page ? parseInt(page) : undefined;
     const limitNumber = limit ? parseInt(limit) : undefined;
 
-    const project = await getProjectOrFail(c, projectId, [
+    const newsletter = await getNewsletterOrFail(c, newsletterId, [
       "owner",
       "admin",
       "editor",
       "viewer",
     ]);
-    if (!project) return;
+    if (!newsletter) return;
 
-    const subscribers = await getProjectSubscribers(
-      projectId,
+    const subscribers = await getNewsletterSubscribers(
+      newsletterId,
       pageNumber,
       limitNumber
     );
@@ -49,7 +49,7 @@ subscriptionRoutes.get(
       {
         data: subscribers,
         success: true,
-        message: "Fetched project subscribers successfully",
+        message: "Fetched newsletter subscribers successfully",
       },
       200
     );
@@ -64,24 +64,24 @@ subscriptionRoutes.get(
     }
   }),
   async (c) => {
-    const { id: projectId } = c.req.valid("param");
+    const { id: newsletterId } = c.req.valid("param");
 
 
-    const project = await getProjectOrFail(c, projectId, [
+    const newsletter = await getNewsletterOrFail(c, newsletterId, [
       "owner",
       "admin",
       "editor",
       "viewer",
     ]);
-    if (!project) return;
+    if (!newsletter) return;
 
-    const subscribers = await getRecentSubscribers(projectId);
+    const subscribers = await getRecentSubscribers(newsletterId);
 
     return c.json(
       {
         data: subscribers,
         success: true,
-        message: "Fetched project subscribers successfully",
+        message: "Fetched newsletter subscribers successfully",
       },
       200
     );
@@ -91,35 +91,35 @@ subscriptionRoutes.get(
 // create subscriber (internal)
 subscriptionRoutes.post(
   "/",
-  zValidator("json", createProjectSubscriberSchema, (result, c) => {
+  zValidator("json", createNewsletterSubscriberSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
   async (c) => {
     const body = c.req.valid("json");
-    const project = await getProjectOrFail(c, body.projectId, [
+    const newsletter = await getNewsletterOrFail(c, body.newsletterId, [
       "owner",
       "admin",
     ]);
-    if (!project) return;
-    const serviceData = await createProjectSubscriber(body);
+    if (!newsletter) return;
+    const serviceData = await createNewsletterSubscriber(body);
     return c.json(serviceData, routeStatus(serviceData));
   }
 );
 
 subscriptionRoutes.post(
   "/delete",
-  zValidator("json", createProjectSubscriberSchema, (result, c) => {
+  zValidator("json", createNewsletterSubscriberSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
   async (c) => {
     const body = c.req.valid("json");
-    const project = await getProjectOrFail(c, body.projectId, [
+    const newsletter = await getNewsletterOrFail(c, body.newsletterId, [
       "owner",
       "admin",
     ]);
-    if (!project) return;
-    const serviceData = await removeProjectSubscriber(
-      body.projectId,
+    if (!newsletter) return;
+    const serviceData = await removeNewsletterSubscriber(
+      body.newsletterId,
       body.email
     );
 

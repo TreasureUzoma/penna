@@ -19,7 +19,7 @@ export const userAuthMethodEnum = pgEnum("user_auth_method", [
   "google",
   "github",
 ]);
-export const projectRoleEnum = pgEnum("project_role", [
+export const newsletterRoleEnum = pgEnum("newsletter_role", [
   "owner",
   "admin",
   "editor",
@@ -95,7 +95,6 @@ export const users = pgTable("users", {
   id: uuid("id").defaultRandom().notNull().unique(),
   providerId: text("provider_id"),
   name: text("name").notNull(),
-  username: text("username").unique(),
   email: text("email").notNull().unique(),
   password: text("password"),
   emailVerifiedAt: timestamp("email_verified_at"),
@@ -109,7 +108,13 @@ export const users = pgTable("users", {
   plan: userPlanEnum("plan").default("hobby").notNull(),
 });
 
-export const projects = pgTable("projects", {
+// A "newsletter" here is the whole publication: its subscribers, posts,
+// domains, API keys, and the team that manages it — not a single issue.
+// Renamed from "projects" (see packages/validations, apps/server,
+// apps/dashboard for the matching rename) since that's what it actually is;
+// `slug` has always been globally unique, so it's also the entire public
+// URL segment (penna.dev/{slug}) with no per-user namespacing.
+export const newsletters = pgTable("newsletters", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
   name: text("name").notNull(),
@@ -122,38 +127,39 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at").defaultNow().notNull().notNull(),
 });
 
-export const projectMembers = pgTable(
-  "project_members",
+export const newsletterMembers = pgTable(
+  "newsletter_members",
   {
     serial: serial("serial").primaryKey(),
     id: uuid("id").defaultRandom().notNull().unique(),
-    projectId: uuid("project_id")
+    newsletterId: uuid("newsletter_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => newsletters.id, { onDelete: "cascade" }),
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    role: projectRoleEnum("role").default("viewer").notNull(),
+    role: newsletterRoleEnum("role").default("viewer").notNull(),
     joinedAt: timestamp("joined_at").defaultNow(),
   },
   (table) => ({
-    projectIdx: index("project_members_project_idx").on(table.projectId),
-    userIdx: index("project_members_user_idx").on(table.userId),
-    projectUserUnique: uniqueIndex("project_members_project_user_idx").on(
-      table.projectId,
-      table.userId,
+    newsletterIdx: index("newsletter_members_newsletter_idx").on(
+      table.newsletterId,
     ),
+    userIdx: index("newsletter_members_user_idx").on(table.userId),
+    newsletterUserUnique: uniqueIndex(
+      "newsletter_members_newsletter_user_idx",
+    ).on(table.newsletterId, table.userId),
   }),
 );
 
-export const projectApiKeys = pgTable(
-  "project_api_keys",
+export const newsletterApiKeys = pgTable(
+  "newsletter_api_keys",
   {
     serial: serial("serial").primaryKey(),
     id: uuid("id").defaultRandom().notNull().unique(),
-    projectId: uuid("project_id")
+    newsletterId: uuid("newsletter_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => newsletters.id, { onDelete: "cascade" }),
     publicKey: varchar("public_key", { length: 128 }).notNull().unique(),
     encryptedSecretKey: varchar("encrypted_secret_key", { length: 256 })
       .notNull()
@@ -163,7 +169,7 @@ export const projectApiKeys = pgTable(
     revokedAt: timestamp("revoked_at"),
   },
   (table) => ({
-    projectIdx: index("api_keys_project_idx").on(table.projectId),
+    newsletterIdx: index("api_keys_newsletter_idx").on(table.newsletterId),
     publickKeyIdx: index("api_keys_public_key_idx").on(table.publicKey),
   }),
 );
@@ -173,16 +179,16 @@ export const emails = pgTable(
   {
     serial: serial("serial").primaryKey(),
     id: uuid("id").defaultRandom().notNull().unique(),
-    projectId: uuid("project_id")
+    newsletterId: uuid("newsletter_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => newsletters.id, { onDelete: "cascade" }),
     subject: text("subject").notNull(),
     body: text("body").notNull(), // encrypted
     sentAt: timestamp("sent_at").defaultNow().notNull().notNull(),
     status: emailStatusEnum("status").notNull(),
   },
   (table) => ({
-    projectIdx: index("emails_project_idx").on(table.projectId),
+    newsletterIdx: index("emails_newsletter_idx").on(table.newsletterId),
     statusIdx: index("emails_status_idx").on(table.status),
   }),
 );
@@ -192,14 +198,14 @@ export const domains = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     // Nullable: a domain can be verified before it's attached to any
-    // project (see the account-wide Domains page) and assigned to one
-    // later — see `assignDomainToProject` in services/domains.ts.
-    projectId: uuid("project_id").references(() => projects.id, {
+    // newsletter (see the account-wide Domains page) and assigned to one
+    // later — see `assignDomainToNewsletter` in services/domains.ts.
+    newsletterId: uuid("newsletter_id").references(() => newsletters.id, {
       onDelete: "cascade",
     }),
     // Who verified this domain. Doubles as the permission check for an
-    // unassigned domain (no project members to check yet) and stays set
-    // after assignment for provenance, though project membership takes
+    // unassigned domain (no newsletter members to check yet) and stays set
+    // after assignment for provenance, though newsletter membership takes
     // over as the actual permission check at that point.
     createdByUserId: uuid("created_by_user_id")
       .notNull()
@@ -219,7 +225,7 @@ export const domains = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
-    projectIdx: index("domains_project_idx").on(table.projectId),
+    newsletterIdx: index("domains_newsletter_idx").on(table.newsletterId),
     nameIdx: uniqueIndex("domains_name_idx").on(table.name),
   }),
 );
@@ -229,9 +235,9 @@ export const subscribers = pgTable(
   {
     serial: serial("serial").primaryKey(),
     id: uuid("id").defaultRandom().notNull().unique(),
-    projectId: uuid("project_id")
+    newsletterId: uuid("newsletter_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => newsletters.id, { onDelete: "cascade" }),
     name: text("name"),
     email: text("email").notNull(),
     status: subscriberStatusEnum("status").default("subscribed").notNull(),
@@ -239,43 +245,44 @@ export const subscribers = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull().notNull(),
   },
   (table) => ({
-    projectIdx: index("subscribers_project_idx").on(table.projectId),
+    newsletterIdx: index("subscribers_newsletter_idx").on(table.newsletterId),
     statusIdx: index("subscribers_status_idx").on(table.status),
-    projectEmailUnique: uniqueIndex("subscribers_project_email_idx").on(
-      table.projectId,
+    newsletterEmailUnique: uniqueIndex("subscribers_newsletter_email_idx").on(
+      table.newsletterId,
       table.email,
     ),
   }),
 );
 
-export const projectInvites = pgTable(
-  "project_invites",
+export const newsletterInvites = pgTable(
+  "newsletter_invites",
   {
     serial: serial("serial").primaryKey(),
     id: uuid("id").defaultRandom().notNull().unique(),
-    projectId: uuid("project_id")
+    newsletterId: uuid("newsletter_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => newsletters.id, { onDelete: "cascade" }),
     invitedByUserId: uuid("invited_by_user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     invitedToUserId: uuid("invited_to_user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    role: projectRoleEnum("role").default("viewer").notNull(),
+    role: newsletterRoleEnum("role").default("viewer").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull().notNull(),
     acceptedAt: timestamp("accepted_at"),
     revokedAt: timestamp("revoked_at"),
   },
   (table) => ({
-    projectIdx: index("project_invites_project_idx").on(table.projectId),
-    invitedToUserIdx: index("project_invites_invited_to_user_idx").on(
+    newsletterIdx: index("newsletter_invites_newsletter_idx").on(
+      table.newsletterId,
+    ),
+    invitedToUserIdx: index("newsletter_invites_invited_to_user_idx").on(
       table.invitedToUserId,
     ),
-    projectToUserUnique: uniqueIndex("project_invites_project_to_user_idx").on(
-      table.projectId,
-      table.invitedToUserId,
-    ),
+    newsletterToUserUnique: uniqueIndex(
+      "newsletter_invites_newsletter_to_user_idx",
+    ).on(table.newsletterId, table.invitedToUserId),
   }),
 );
 
@@ -287,7 +294,7 @@ export const payments = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    projectId: uuid("project_id").references(() => projects.id, {
+    newsletterId: uuid("newsletter_id").references(() => newsletters.id, {
       onDelete: "set null",
     }),
     provider: paymentProviderEnum("provider").notNull(),
@@ -301,7 +308,7 @@ export const payments = pgTable(
   },
   (table) => ({
     userIdx: index("payments_user_idx").on(table.userId),
-    projectIdx: index("payments_project_idx").on(table.projectId),
+    newsletterIdx: index("payments_newsletter_idx").on(table.newsletterId),
     statusIdx: index("payments_status_idx").on(table.status),
   }),
 );
@@ -360,9 +367,9 @@ export const segments = pgTable(
   {
     serial: serial("serial").primaryKey(),
     id: uuid("id").defaultRandom().notNull().unique(),
-    projectId: uuid("project_id")
+    newsletterId: uuid("newsletter_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => newsletters.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     description: text("description"),
     criteria: jsonb("criteria").default({}), // stores filtering criteria
@@ -370,7 +377,7 @@ export const segments = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
-    projectIdx: index("segments_project_idx").on(table.projectId),
+    newsletterIdx: index("segments_newsletter_idx").on(table.newsletterId),
   }),
 );
 
@@ -401,8 +408,8 @@ export const segmentSubscribers = pgTable(
 /**
  * One row per attempted external-API newsletter send (`POST
  * .../newsletters/send`), whether it went out, was blocked (rate limit, no
- * resolvable recipients, moderation) or errored. Gives project owners and
- * admins an audit trail for abuse review, independent of the `emails`
+ * resolvable recipients, moderation) or errored. Gives newsletter owners
+ * and admins an audit trail for abuse review, independent of the `emails`
  * table (which is dashboard-composed campaigns, not raw API sends).
  */
 export const newsletterSendLogs = pgTable(
@@ -410,12 +417,12 @@ export const newsletterSendLogs = pgTable(
   {
     serial: serial("serial").primaryKey(),
     id: uuid("id").defaultRandom().notNull().unique(),
-    projectId: uuid("project_id")
+    newsletterId: uuid("newsletter_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => newsletters.id, { onDelete: "cascade" }),
     apiKeyId: uuid("api_key_id")
       .notNull()
-      .references(() => projectApiKeys.id, { onDelete: "cascade" }),
+      .references(() => newsletterApiKeys.id, { onDelete: "cascade" }),
     subject: text("subject").notNull(),
     recipientCount: integer("recipient_count").notNull().default(0),
     skippedNonSubscribers: integer("skipped_non_subscribers")
@@ -429,7 +436,9 @@ export const newsletterSendLogs = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => ({
-    projectIdx: index("newsletter_send_logs_project_idx").on(table.projectId),
+    newsletterIdx: index("newsletter_send_logs_newsletter_idx").on(
+      table.newsletterId,
+    ),
     createdAtIdx: index("newsletter_send_logs_created_at_idx").on(
       table.createdAt,
     ),
@@ -439,38 +448,41 @@ export const newsletterSendLogs = pgTable(
 export const newsletterSendLogRelations = relations(
   newsletterSendLogs,
   ({ one }) => ({
-    project: one(projects, {
-      fields: [newsletterSendLogs.projectId],
-      references: [projects.id],
+    newsletter: one(newsletters, {
+      fields: [newsletterSendLogs.newsletterId],
+      references: [newsletters.id],
     }),
-    apiKey: one(projectApiKeys, {
+    apiKey: one(newsletterApiKeys, {
       fields: [newsletterSendLogs.apiKeyId],
-      references: [projectApiKeys.id],
+      references: [newsletterApiKeys.id],
     }),
   }),
 );
 
-export const projectInviteRelations = relations(projectInvites, ({ one }) => ({
-  project: one(projects, {
-    fields: [projectInvites.projectId],
-    references: [projects.id],
+export const newsletterInviteRelations = relations(
+  newsletterInvites,
+  ({ one }) => ({
+    newsletter: one(newsletters, {
+      fields: [newsletterInvites.newsletterId],
+      references: [newsletters.id],
+    }),
+    invitedBy: one(users, {
+      fields: [newsletterInvites.invitedByUserId],
+      references: [users.id],
+      relationName: "invited_by_user",
+    }),
+    invitedTo: one(users, {
+      fields: [newsletterInvites.invitedToUserId],
+      references: [users.id],
+      relationName: "invited_to_user",
+    }),
   }),
-  invitedBy: one(users, {
-    fields: [projectInvites.invitedByUserId],
-    references: [users.id],
-    relationName: "invited_by_user",
-  }),
-  invitedTo: one(users, {
-    fields: [projectInvites.invitedToUserId],
-    references: [users.id],
-    relationName: "invited_to_user",
-  }),
-}));
+);
 
 export const domainRelations = relations(domains, ({ one }) => ({
-  project: one(projects, {
-    fields: [domains.projectId],
-    references: [projects.id],
+  newsletter: one(newsletters, {
+    fields: [domains.newsletterId],
+    references: [newsletters.id],
   }),
   createdBy: one(users, {
     fields: [domains.createdByUserId],
@@ -482,49 +494,55 @@ export const userRelations = relations(users, ({ many }) => ({
   refreshTokens: many(refreshTokens),
   passwordResets: many(passwordResets),
   payments: many(payments),
-  projectMemberships: many(projectMembers),
+  newsletterMemberships: many(newsletterMembers),
 }));
 
-export const projectRelations = relations(projects, ({ one, many }) => ({
-  emails: many(emails),
-  subscribers: many(subscribers),
-  payments: many(payments),
-  apiKeys: many(projectApiKeys),
-  members: many(projectMembers),
-  invites: many(projectInvites),
-  segments: many(segments),
-  newsletterSendLogs: many(newsletterSendLogs),
-}));
-
-export const projectMemberRelations = relations(projectMembers, ({ one }) => ({
-  project: one(projects, {
-    fields: [projectMembers.projectId],
-    references: [projects.id],
+export const newsletterRelations = relations(
+  newsletters,
+  ({ one, many }) => ({
+    emails: many(emails),
+    subscribers: many(subscribers),
+    payments: many(payments),
+    apiKeys: many(newsletterApiKeys),
+    members: many(newsletterMembers),
+    invites: many(newsletterInvites),
+    segments: many(segments),
+    newsletterSendLogs: many(newsletterSendLogs),
   }),
-  user: one(users, {
-    fields: [projectMembers.userId],
-    references: [users.id],
-  }),
-}));
+);
 
-export const apiKeyRelations = relations(projectApiKeys, ({ one }) => ({
-  project: one(projects, {
-    fields: [projectApiKeys.projectId],
-    references: [projects.id],
+export const newsletterMemberRelations = relations(
+  newsletterMembers,
+  ({ one }) => ({
+    newsletter: one(newsletters, {
+      fields: [newsletterMembers.newsletterId],
+      references: [newsletters.id],
+    }),
+    user: one(users, {
+      fields: [newsletterMembers.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const apiKeyRelations = relations(newsletterApiKeys, ({ one }) => ({
+  newsletter: one(newsletters, {
+    fields: [newsletterApiKeys.newsletterId],
+    references: [newsletters.id],
   }),
 }));
 
 export const emailRelations = relations(emails, ({ one }) => ({
-  project: one(projects, {
-    fields: [emails.projectId],
-    references: [projects.id],
+  newsletter: one(newsletters, {
+    fields: [emails.newsletterId],
+    references: [newsletters.id],
   }),
 }));
 
 export const subscriberRelations = relations(subscribers, ({ one }) => ({
-  project: one(projects, {
-    fields: [subscribers.projectId],
-    references: [projects.id],
+  newsletter: one(newsletters, {
+    fields: [subscribers.newsletterId],
+    references: [newsletters.id],
   }),
 }));
 
@@ -547,16 +565,16 @@ export const paymentRelations = relations(payments, ({ one }) => ({
     fields: [payments.userId],
     references: [users.id],
   }),
-  project: one(projects, {
-    fields: [payments.projectId],
-    references: [projects.id],
+  newsletter: one(newsletters, {
+    fields: [payments.newsletterId],
+    references: [newsletters.id],
   }),
 }));
 
 export const segmentRelations = relations(segments, ({ one, many }) => ({
-  project: one(projects, {
-    fields: [segments.projectId],
-    references: [projects.id],
+  newsletter: one(newsletters, {
+    fields: [segments.newsletterId],
+    references: [newsletters.id],
   }),
   subscribers: many(segmentSubscribers),
 }));

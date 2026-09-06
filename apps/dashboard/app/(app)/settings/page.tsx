@@ -13,7 +13,6 @@ import { Input } from "@workspace/ui/components/input";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,7 +32,6 @@ export default function SettingsPage() {
     resolver: zodResolver(updateProfileSchema),
     values: {
       name: profile?.name || "",
-      username: profile?.username || "",
     },
   });
 
@@ -80,22 +78,6 @@ export default function SettingsPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="johndoe" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        This is your unique URL identifier.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <div className="space-y-2">
                   <FormLabel>Email</FormLabel>
                   <div className="flex items-center gap-2">
@@ -135,7 +117,7 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-destructive">Danger Zone</CardTitle>
             <CardDescription>
-              Permanently delete your account and all associated projects.
+              Permanently delete your account and all associated newsletters.
             </CardDescription>
           </CardHeader>
           <CardContent>

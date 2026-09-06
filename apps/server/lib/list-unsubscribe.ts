@@ -27,10 +27,10 @@ export interface ListUnsubscribeInfo {
  * inbound mail, so a `mailto:` fallback would silently go nowhere.
  */
 export const buildListUnsubscribeHeaders = async (
-  projectId: string,
+  newsletterId: string,
   email: string
 ): Promise<ListUnsubscribeInfo> => {
-  const token = await sign({ projectId, email }, envConfig.UNSUBSCRIBE_SECRET);
+  const token = await sign({ newsletterId, email }, envConfig.UNSUBSCRIBE_SECRET);
   const unsubscribeUrl = `${envConfig.API_URL}/api/v1/unsubscribe/one-click/${token}`;
 
   return {

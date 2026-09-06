@@ -1,7 +1,7 @@
 /**
  * Appends a "Powered by Penna" footer to outgoing newsletter HTML.
- * Pro/enterprise projects can opt out via project settings (see
- * `canRemoveBranding` in services/projects.ts, which is the source of
+ * Pro/enterprise newsletters can opt out via newsletter settings (see
+ * `canRemoveBranding` in services/newsletters.ts, which is the source of
  * truth gate — this function just does the wrapping).
  */
 export const applyBranding = (html: string, removeBranding: boolean): string => {

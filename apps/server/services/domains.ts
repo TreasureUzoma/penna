@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { domains, projectMembers, projects } from "@workspace/db/schema";
+import { domains, newsletterMembers, newsletters } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
 import { and, desc, eq, isNull, or } from "drizzle-orm";
 import {
@@ -11,9 +11,9 @@ import {
 import { envConfig } from "@/config";
 import {
   canUseCustomDomain,
-  getUserProjectRole,
+  getUserNewsletterRole,
   isUserOnPaidPlan,
-} from "./projects";
+} from "./newsletters";
 
 const sesv2 = new SESv2Client({
   region: envConfig.AWS_REGION,
@@ -70,7 +70,7 @@ const dkimCnameRecords = (
 /** Shapes a `domains` row for the dashboard: DB fields plus the DNS records to show. */
 const toDomainView = (row: typeof domains.$inferSelect) => ({
   id: row.id,
-  projectId: row.projectId,
+  newsletterId: row.newsletterId,
   name: row.name,
   verified: row.verified,
   createdAt: row.createdAt,
@@ -80,35 +80,35 @@ const toDomainView = (row: typeof domains.$inferSelect) => ({
 export type DomainView = ReturnType<typeof toDomainView>;
 
 /**
- * Every domain visible to a user: ones attached to a project they belong
+ * Every domain visible to a user: ones attached to a newsletter they belong
  * to, plus ones they've verified themselves but haven't assigned to a
- * project yet. Backs both the account-wide Domains page (unfiltered) and
- * a single project's Domains tab (`projectId` filter) — same query either
+ * newsletter yet. Backs both the account-wide Domains page (unfiltered) and
+ * a single newsletter's Domains tab (`newsletterId` filter) — same query either
  * way, just narrowed.
  */
 export const listUserDomains = async (
   userId: string,
-  projectId?: string
+  newsletterId?: string
 ): Promise<ServiceResponse> => {
   try {
     const rows = await db
-      .select({ domain: domains, project: projects })
+      .select({ domain: domains, newsletter: newsletters })
       .from(domains)
-      .leftJoin(projects, eq(domains.projectId, projects.id))
+      .leftJoin(newsletters, eq(domains.newsletterId, newsletters.id))
       .leftJoin(
-        projectMembers,
+        newsletterMembers,
         and(
-          eq(projectMembers.projectId, domains.projectId),
-          eq(projectMembers.userId, userId)
+          eq(newsletterMembers.newsletterId, domains.newsletterId),
+          eq(newsletterMembers.userId, userId)
         )
       )
       .where(
         and(
           or(
-            eq(projectMembers.userId, userId),
-            and(isNull(domains.projectId), eq(domains.createdByUserId, userId))
+            eq(newsletterMembers.userId, userId),
+            and(isNull(domains.newsletterId), eq(domains.createdByUserId, userId))
           ),
-          projectId ? eq(domains.projectId, projectId) : undefined
+          newsletterId ? eq(domains.newsletterId, newsletterId) : undefined
         )
       )
       .orderBy(desc(domains.createdAt));
@@ -118,8 +118,8 @@ export const listUserDomains = async (
       message: "Fetched domains successfully",
       data: rows.map((row) => ({
         ...toDomainView(row.domain),
-        project: row.project
-          ? { id: row.project.id, slug: row.project.slug, name: row.project.name }
+        newsletter: row.newsletter
+          ? { id: row.newsletter.id, slug: row.newsletter.slug, name: row.newsletter.name }
           : null,
       })),
     };
@@ -138,35 +138,35 @@ export const listUserDomains = async (
  * the DNS records asynchronously, so `refreshDomainVerification` (polled
  * from the dashboard's "Recheck" button) is what flips it to verified.
  *
- * `projectId` is optional: pass it to add a domain straight into a project
- * (requires the caller to manage that project — checked here since these
- * routes aren't nested under `/projects/:id`), or omit it to verify a
- * domain first and attach it to a project later via `assignDomainToProject`
+ * `newsletterId` is optional: pass it to add a domain straight into a newsletter
+ * (requires the caller to manage that newsletter — checked here since these
+ * routes aren't nested under `/newsletters/:id`), or omit it to verify a
+ * domain first and attach it to a newsletter later via `assignDomainToNewsletter`
  * — the account-wide Domains page's flow.
  */
 export const addDomain = async (
   userId: string,
   name: string,
-  projectId?: string
+  newsletterId?: string
 ): Promise<ServiceResponse> => {
   try {
-    if (projectId) {
-      const roleRes = await getUserProjectRole(projectId, userId);
+    if (newsletterId) {
+      const roleRes = await getUserNewsletterRole(newsletterId, userId);
       const role = roleRes.data?.role;
       if (!role || !MANAGE_ROLES.includes(role as any)) {
         return {
           success: false,
-          message: "You don't have enough permissions on that project.",
+          message: "You don't have enough permissions on that newsletter.",
           data: null,
         };
       }
 
-      const allowed = await canUseCustomDomain(projectId);
+      const allowed = await canUseCustomDomain(newsletterId);
       if (!allowed) {
         return {
           success: false,
           message:
-            "Custom domains are a Pro feature. Upgrade the project owner's plan to enable it.",
+            "Custom domains are a Pro feature. Upgrade the newsletter owner's plan to enable it.",
           data: null,
         };
       }
@@ -217,7 +217,7 @@ export const addDomain = async (
     const [row] = await db
       .insert(domains)
       .values({
-        projectId: projectId ?? null,
+        newsletterId: newsletterId ?? null,
         createdByUserId: userId,
         name,
         verified: identity.VerifiedForSendingStatus ?? false,
@@ -244,8 +244,8 @@ export const addDomain = async (
 /**
  * Whether `userId` may verify/remove `domainId` — ownership on an
  * unassigned domain, or owner/admin membership once it's attached to a
- * project. Shared by `refreshDomainVerification` and `removeDomain` since
- * both routes sit at `/domains/:id`, outside any `/projects/:id` nesting
+ * newsletter. Shared by `refreshDomainVerification` and `removeDomain` since
+ * both routes sit at `/domains/:id`, outside any `/newsletters/:id` nesting
  * that would otherwise carry this check.
  */
 const authorizeDomainAccess = async (
@@ -258,8 +258,8 @@ const authorizeDomainAccess = async (
   const [row] = await db.select().from(domains).where(eq(domains.id, domainId));
   if (!row) return { ok: false, message: "Domain not found" };
 
-  if (row.projectId) {
-    const roleRes = await getUserProjectRole(row.projectId, userId);
+  if (row.newsletterId) {
+    const roleRes = await getUserNewsletterRole(row.newsletterId, userId);
     const role = roleRes.data?.role;
     if (!role || !MANAGE_ROLES.includes(role as any)) {
       return { ok: false, message: "You don't have enough permissions" };
@@ -368,16 +368,16 @@ export const removeDomain = async (
 };
 
 /**
- * Attaches an already-verified, unassigned domain to a project — the
- * "verify now, add to a project later" flow from the account-wide Domains
+ * Attaches an already-verified, unassigned domain to a newsletter — the
+ * "verify now, add to a newsletter later" flow from the account-wide Domains
  * page. Only the person who verified it can assign it, and only onto a
- * project they manage whose owner is on a paid plan (same gate as adding
- * a domain directly from that project).
+ * newsletter they manage whose owner is on a paid plan (same gate as adding
+ * a domain directly from that newsletter).
  */
-export const assignDomainToProject = async (
+export const assignDomainToNewsletter = async (
   userId: string,
   domainId: string,
-  projectId: string
+  newsletterId: string
 ): Promise<ServiceResponse> => {
   try {
     const [row] = await db.select().from(domains).where(eq(domains.id, domainId));
@@ -385,11 +385,11 @@ export const assignDomainToProject = async (
       return { success: false, message: "Domain not found", data: null };
     }
 
-    if (row.projectId) {
+    if (row.newsletterId) {
       return {
         success: false,
         message:
-          "This domain is already assigned to a project. Remove it there first to move it.",
+          "This domain is already assigned to a newsletter. Remove it there first to move it.",
         data: null,
       };
     }
@@ -402,35 +402,35 @@ export const assignDomainToProject = async (
       };
     }
 
-    const roleRes = await getUserProjectRole(projectId, userId);
+    const roleRes = await getUserNewsletterRole(newsletterId, userId);
     const role = roleRes.data?.role;
     if (!role || !MANAGE_ROLES.includes(role as any)) {
       return {
         success: false,
-        message: "You don't have enough permissions on that project.",
+        message: "You don't have enough permissions on that newsletter.",
         data: null,
       };
     }
 
-    const allowed = await canUseCustomDomain(projectId);
+    const allowed = await canUseCustomDomain(newsletterId);
     if (!allowed) {
       return {
         success: false,
         message:
-          "Custom domains are a Pro feature. Upgrade the project owner's plan to enable it.",
+          "Custom domains are a Pro feature. Upgrade the newsletter owner's plan to enable it.",
         data: null,
       };
     }
 
     const [updated] = await db
       .update(domains)
-      .set({ projectId, updatedAt: new Date() })
+      .set({ newsletterId, updatedAt: new Date() })
       .where(eq(domains.id, domainId))
       .returning();
 
     return {
       success: true,
-      message: "Domain assigned to project",
+      message: "Domain assigned to newsletter",
       data: toDomainView(updated!),
     };
   } catch (err) {
@@ -443,21 +443,21 @@ export const assignDomainToProject = async (
 };
 
 /**
- * The verified sending domain for a project, if it has one — what
+ * The verified sending domain for a newsletter, if it has one — what
  * `sendNewsletterEmail` (services/mail/ses.ts) uses instead of the shared
  * `NEWSLETTER_DOMAIN` for its `FromEmailAddress`. Returns `null` when the
- * project has no domain of type "email"/"both" that SES has verified,
+ * newsletter has no domain of type "email"/"both" that SES has verified,
  * which callers treat as "use the default domain".
  */
 export const getVerifiedSendingDomain = async (
-  projectId: string
+  newsletterId: string
 ): Promise<string | null> => {
   const [row] = await db
     .select({ name: domains.name })
     .from(domains)
     .where(
       and(
-        eq(domains.projectId, projectId),
+        eq(domains.newsletterId, newsletterId),
         eq(domains.verified, true),
         eq(domains.type, "email")
       )

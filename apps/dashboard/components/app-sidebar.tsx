@@ -59,9 +59,9 @@ export default function AppSidebar({
   const { data: profileData, isLoading: profileLoading } = useGetProfile();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
-  const isProjectRoute =
-    segments[0] === "projects" && !!segments[1] && segments[1] !== "new";
-  const projectSlug = isProjectRoute ? segments[1] : null;
+  const isNewsletterRoute =
+    segments[0] === "newsletters" && !!segments[1] && segments[1] !== "new";
+  const newsletterSlug = isNewsletterRoute ? segments[1] : null;
 
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
@@ -88,8 +88,8 @@ export default function AppSidebar({
 
   const mainNavItems: NavItem[] = [
     {
-      label: "Projects",
-      href: "/projects",
+      label: "Newsletters",
+      href: "/newsletters",
       icon: <LayoutDashboard className="w-4 h-4" />,
     },
     {
@@ -109,45 +109,45 @@ export default function AppSidebar({
     },
   ];
 
-  const projectNavItems: NavItem[] = projectSlug
+  const newsletterNavItems: NavItem[] = newsletterSlug
     ? [
         {
           label: "Overview",
-          href: `/projects/${projectSlug}`,
+          href: `/newsletters/${newsletterSlug}`,
           icon: <LayoutDashboard className="w-4 h-4" />,
         },
         {
           label: "Posts",
-          href: `/projects/${projectSlug}/posts`,
+          href: `/newsletters/${newsletterSlug}/posts`,
           icon: <FileText className="w-4 h-4" />,
         },
         {
           label: "Analytics",
-          href: `/projects/${projectSlug}/analytics`,
+          href: `/newsletters/${newsletterSlug}/analytics`,
           icon: <BarChart3 className="w-4 h-4" />,
         },
         {
           label: "Subscribers",
-          href: `/projects/${projectSlug}/subscribers`,
+          href: `/newsletters/${newsletterSlug}/subscribers`,
           icon: <Users className="w-4 h-4" />,
         },
         {
           label: "Domains",
-          href: `/projects/${projectSlug}/domains`,
+          href: `/newsletters/${newsletterSlug}/domains`,
           icon: <Globe className="w-4 h-4" />,
         },
         {
           label: "Settings",
-          href: `/projects/${projectSlug}/settings`,
+          href: `/newsletters/${newsletterSlug}/settings`,
           icon: <Settings className="w-4 h-4" />,
         },
       ]
     : [];
 
-  const navItems = isProjectRoute ? projectNavItems : mainNavItems;
+  const navItems = isNewsletterRoute ? newsletterNavItems : mainNavItems;
 
   const isActive = (href: string) => {
-    if (isProjectRoute) {
+    if (isNewsletterRoute) {
       return pathname === href;
     }
     return pathname.startsWith(href);
@@ -177,7 +177,7 @@ export default function AppSidebar({
       {/* Logo Section */}
       <div className="px-4 py-3.5 flex items-center justify-between">
         {!isCollapsed && (
-          <Link href="/projects" className="flex items-center gap-2">
+          <Link href="/newsletters" className="flex items-center gap-2">
             <Logo />
           </Link>
         )}

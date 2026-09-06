@@ -3,7 +3,7 @@ import {
   addDomain,
   refreshDomainVerification,
   removeDomain,
-  assignDomainToProject,
+  assignDomainToNewsletter,
 } from "@/services/domains";
 import { routeStatus } from "@/lib/utils";
 import { validationErrorResponse } from "@/utils/validation-error-response";
@@ -15,31 +15,31 @@ import { addDomainSchema, assignDomainSchema } from "@workspace/validations";
 
 const domainsRoute = new Hono<AppBindings>();
 
-// All domains visible to the user — ones attached to a project they
-// belong to, plus ones they've verified but not assigned to a project yet.
-// The dashboard's per-project Domains tab calls this with `?projectId=` to
-// narrow it to just that project; the account-wide Domains page calls it
+// All domains visible to the user — ones attached to a newsletter they
+// belong to, plus ones they've verified but not assigned to a newsletter yet.
+// The dashboard's per-newsletter Domains tab calls this with `?newsletterId=` to
+// narrow it to just that newsletter; the account-wide Domains page calls it
 // with no filter.
 domainsRoute.get(
   "/",
   zValidator(
     "query",
-    z.object({ projectId: z.string().uuid().optional() }),
+    z.object({ newsletterId: z.string().uuid().optional() }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
     }
   ),
   async (c) => {
     const cookieUser = c.get("user") as AuthType;
-    const { projectId } = c.req.valid("query");
-    const serviceData = await listUserDomains(cookieUser.id, projectId);
+    const { newsletterId } = c.req.valid("query");
+    const serviceData = await listUserDomains(cookieUser.id, newsletterId);
     return c.json(serviceData, routeStatus(serviceData));
   }
 );
 
-// Add a domain — with `projectId`, it's added straight into that project
+// Add a domain — with `newsletterId`, it's added straight into that newsletter
 // (caller must manage it); without one, it's verified under the caller's
-// own account and assigned to a project later via /:domainId/assign.
+// own account and assigned to a newsletter later via /:domainId/assign.
 domainsRoute.post(
   "/",
   zValidator("json", addDomainSchema, (result, c) => {
@@ -47,8 +47,8 @@ domainsRoute.post(
   }),
   async (c) => {
     const cookieUser = c.get("user") as AuthType;
-    const { name, projectId } = c.req.valid("json");
-    const serviceData = await addDomain(cookieUser.id, name, projectId);
+    const { name, newsletterId } = c.req.valid("json");
+    const serviceData = await addDomain(cookieUser.id, name, newsletterId);
     return c.json(serviceData, routeStatus(serviceData));
   }
 );
@@ -74,7 +74,7 @@ domainsRoute.post(
   }
 );
 
-// Attach an already-verified, unassigned domain to a project.
+// Attach an already-verified, unassigned domain to a newsletter.
 domainsRoute.post(
   "/:domainId/assign",
   zValidator(
@@ -90,17 +90,17 @@ domainsRoute.post(
   async (c) => {
     const cookieUser = c.get("user") as AuthType;
     const { domainId } = c.req.valid("param");
-    const { projectId } = c.req.valid("json");
-    const serviceData = await assignDomainToProject(
+    const { newsletterId } = c.req.valid("json");
+    const serviceData = await assignDomainToNewsletter(
       cookieUser.id,
       domainId,
-      projectId
+      newsletterId
     );
     return c.json(serviceData, routeStatus(serviceData));
   }
 );
 
-// Remove a domain (unassigned or attached to a project).
+// Remove a domain (unassigned or attached to a newsletter).
 domainsRoute.delete(
   "/:domainId",
   zValidator(

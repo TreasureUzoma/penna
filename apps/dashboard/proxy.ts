@@ -7,13 +7,13 @@ const API_URL = process.env.API_URL || "https://api.penna.dev";
 // Everything under (app) — requires a session, redirects to /login otherwise.
 const PROTECTED_PREFIXES = [
   "/dashboard",
-  "/projects",
+  "/newsletters",
   "/settings",
   "/new",
-  "/username",
   "/onboarding",
   "/billings",
   "/activity",
+  "/domains",
 ];
 
 // Entry forms only — visiting these while already signed in just bounces
@@ -80,13 +80,13 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/projects/:path*",
+    "/newsletters/:path*",
     "/settings/:path*",
     "/new/:path*",
-    "/username/:path*",
     "/onboarding/:path*",
     "/billings/:path*",
     "/activity/:path*",
+    "/domains/:path*",
     "/login",
     "/signup",
   ],

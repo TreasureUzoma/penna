@@ -9,7 +9,7 @@ export type PrepareEmailSendResult =
   | { status: "cancelled" | "skipped" | "failed"; reason: string }
   | {
       status: "ready";
-      project: { id: string; slug: string };
+      newsletter: { id: string; slug: string };
       subject: string;
       html: string;
       recipientEmails: string[];
@@ -17,7 +17,7 @@ export type PrepareEmailSendResult =
     };
 
 /**
- * Reads everything needed to send a campaign — the email row, project,
+ * Reads everything needed to send a campaign — the email row, newsletter,
  * subscriber list, and branding eligibility — and hands back a fully
  * resolved, serializable payload. Kept separate from the actual sending
  * (`sendEmailChunk`) so the workflow can fan the send out across many
@@ -48,13 +48,13 @@ export async function prepareEmailSend(
     };
   }
 
-  const [project] = await dbLite
+  const [newsletter] = await dbLite
     .select()
-    .from(schema.projects)
-    .where(eq(schema.projects.id, email.projectId));
+    .from(schema.newsletters)
+    .where(eq(schema.newsletters.id, email.newsletterId));
 
-  if (!project) {
-    return { status: "failed", reason: "Project not found" };
+  if (!newsletter) {
+    return { status: "failed", reason: "Newsletter not found" };
   }
 
   const subscriberRows = await dbLite
@@ -62,7 +62,7 @@ export async function prepareEmailSend(
     .from(schema.subscribers)
     .where(
       and(
-        eq(schema.subscribers.projectId, email.projectId),
+        eq(schema.subscribers.newsletterId, email.newsletterId),
         eq(schema.subscribers.status, "subscribed")
       )
     );
@@ -74,7 +74,7 @@ export async function prepareEmailSend(
 
   // The dashboard's post editor stores the raw Markdown a user typed, not
   // HTML — render it the same way the external API send path does
-  // (`routes/api/v1/external/projects.ts`), otherwise subscribers get
+  // (`routes/api/v1/external/newsletters.ts`), otherwise subscribers get
   // literal "**bold**"/"# heading" markdown syntax in their inbox instead
   // of formatted email.
   const rawBody = await decryptDataSubtle(
@@ -85,19 +85,19 @@ export async function prepareEmailSend(
 
   const [owner] = await dbLite
     .select({ subscriptionType: schema.users.subscriptionType })
-    .from(schema.projectMembers)
-    .innerJoin(schema.users, eq(schema.projectMembers.userId, schema.users.id))
+    .from(schema.newsletterMembers)
+    .innerJoin(schema.users, eq(schema.newsletterMembers.userId, schema.users.id))
     .where(
       and(
-        eq(schema.projectMembers.projectId, email.projectId),
-        eq(schema.projectMembers.role, "owner")
+        eq(schema.newsletterMembers.newsletterId, email.newsletterId),
+        eq(schema.newsletterMembers.role, "owner")
       )
     );
   const removeBranding = !!owner && owner.subscriptionType !== "free";
 
   return {
     status: "ready",
-    project: { id: project.id, slug: project.slug },
+    newsletter: { id: newsletter.id, slug: newsletter.slug },
     subject: email.subject,
     html,
     recipientEmails,
@@ -118,7 +118,7 @@ export interface SendEmailChunkResult {
  * to recipients this same chunk already reached.
  */
 export async function sendEmailChunk(
-  project: { id: string; slug: string },
+  newsletter: { id: string; slug: string },
   subject: string,
   html: string,
   recipientEmails: string[],
@@ -128,7 +128,7 @@ export async function sendEmailChunk(
 
   try {
     const result = await sendEmailNewsletter(
-      project,
+      newsletter,
       recipientEmails,
       subject,
       html,

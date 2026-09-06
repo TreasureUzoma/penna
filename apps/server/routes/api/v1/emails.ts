@@ -3,17 +3,17 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { AppBindings } from "@/types";
 import { sendEmailNewsletter } from "@/services/mail/external";
-import { getProjectOrFail } from "@/utils/project-access";
+import { getNewsletterOrFail } from "@/utils/newsletter-access";
 import { validationErrorResponse } from "@/utils/validation-error-response";
 
 const emailsRoute = new Hono<AppBindings>();
 
 // Send newsletter to subscribers
 emailsRoute.post(
-  "/:projectId/send",
+  "/:newsletterId/send",
   zValidator(
     "param",
-    z.object({ projectId: z.string().min(1) }),
+    z.object({ newsletterId: z.string().min(1) }),
     (result, c) => {
       if (!result.success) {
         return validationErrorResponse(c, result.error);
@@ -38,17 +38,17 @@ emailsRoute.post(
   ),
   async (c) => {
     try {
-      const { projectId } = c.req.valid("param");
+      const { newsletterId } = c.req.valid("param");
       const { subject, html, recipientEmails, replyTo } = c.req.valid("json");
 
-      // Verify user has access to this project
-      const projectOrRes = await getProjectOrFail(c, projectId);
-      if (projectOrRes instanceof Response) return projectOrRes;
-      const project = projectOrRes;
+      // Verify user has access to this newsletter
+      const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+      if (newsletterOrRes instanceof Response) return newsletterOrRes;
+      const newsletter = newsletterOrRes;
 
       // Send newsletter
       const result = await sendEmailNewsletter(
-        { id: project.id, slug: project.slug },
+        { id: newsletter.id, slug: newsletter.slug },
         recipientEmails,
         subject,
         html,
@@ -80,10 +80,10 @@ emailsRoute.post(
 
 // Send test email
 emailsRoute.post(
-  "/:projectId/test",
+  "/:newsletterId/test",
   zValidator(
     "param",
-    z.object({ projectId: z.string().min(1) }),
+    z.object({ newsletterId: z.string().min(1) }),
     (result, c) => {
       if (!result.success) {
         return validationErrorResponse(c, result.error);
@@ -105,17 +105,17 @@ emailsRoute.post(
   ),
   async (c) => {
     try {
-      const { projectId } = c.req.valid("param");
+      const { newsletterId } = c.req.valid("param");
       const { testEmail, subject, html } = c.req.valid("json");
 
-      // Verify user has access to this project
-      const projectOrRes = await getProjectOrFail(c, projectId);
-      if (projectOrRes instanceof Response) return projectOrRes;
-      const project = projectOrRes;
+      // Verify user has access to this newsletter
+      const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+      if (newsletterOrRes instanceof Response) return newsletterOrRes;
+      const newsletter = newsletterOrRes;
 
       // Send test email
       const result = await sendEmailNewsletter(
-        { id: project.id, slug: project.slug },
+        { id: newsletter.id, slug: newsletter.slug },
         [testEmail],
         subject,
         html

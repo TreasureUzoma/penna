@@ -2,7 +2,7 @@ import { codeToHtml } from "shiki";
 
 export const CodeExample = async () => {
   const codeString = `const response = await fetch(
-  'https://api.penna.dev/api/v1/external/projects/subscribers',
+  'https://api.penna.dev/api/v1/external/newsletters/subscribers',
   {
     headers: {
       'x-penna-public-key': 'penn_your_public_key',
@@ -14,7 +14,7 @@ export const CodeExample = async () => {
 const subscribers = await response.json();
 
 await fetch(
-  'https://api.penna.dev/api/v1/external/projects/newsletters/send',
+  'https://api.penna.dev/api/v1/external/newsletters/send',
   {
     method: 'POST',
     headers: {

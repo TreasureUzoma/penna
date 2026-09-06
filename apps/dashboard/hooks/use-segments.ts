@@ -12,14 +12,14 @@ export interface Segment {
   subscriberCount: number;
 }
 
-export function useSegments(projectId: string) {
+export function useSegments(newsletterId: string) {
   return useQuery({
-    queryKey: ["segments", projectId],
+    queryKey: ["segments", newsletterId],
     queryFn: async () => {
-      const res = await api.get<{ data: Segment[] }>(`/segments/${projectId}`);
+      const res = await api.get<{ data: Segment[] }>(`/segments/${newsletterId}`);
       return res.data.data;
     },
-    enabled: !!projectId,
+    enabled: !!newsletterId,
   });
 }
 
@@ -28,19 +28,19 @@ interface CreateSegmentData {
   description?: string;
 }
 
-export function useCreateSegment(projectId: string) {
+export function useCreateSegment(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: CreateSegmentData) => {
       const res = await api.post<{ data: Segment }>(
-        `/segments/${projectId}`,
+        `/segments/${newsletterId}`,
         data
       );
       return res.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["segments", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["segments", newsletterId] });
       toast.success("Segment created successfully");
     },
     onError: (error: any) => {
@@ -49,16 +49,16 @@ export function useCreateSegment(projectId: string) {
   });
 }
 
-export function useDeleteSegment(projectId: string) {
+export function useDeleteSegment(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (segmentId: string) => {
-      const res = await api.delete(`/segments/${projectId}/${segmentId}`);
+      const res = await api.delete(`/segments/${newsletterId}/${segmentId}`);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["segments", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["segments", newsletterId] });
       toast.success("Segment deleted successfully");
     },
     onError: (error: any) => {
@@ -72,20 +72,20 @@ export interface SegmentSubscriber {
   email: string;
 }
 
-export function useSegmentSubscribers(projectId: string, segmentId: string) {
+export function useSegmentSubscribers(newsletterId: string, segmentId: string) {
   return useQuery({
-    queryKey: ["segments", projectId, segmentId, "subscribers"],
+    queryKey: ["segments", newsletterId, segmentId, "subscribers"],
     queryFn: async () => {
       const res = await api.get<{ data: SegmentSubscriber[] }>(
-        `/segments/${projectId}/${segmentId}/subscribers`
+        `/segments/${newsletterId}/${segmentId}/subscribers`
       );
       return res.data.data;
     },
-    enabled: !!projectId && !!segmentId,
+    enabled: !!newsletterId && !!segmentId,
   });
 }
 
-export function useAddSubscriberToSegment(projectId: string) {
+export function useAddSubscriberToSegment(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -97,14 +97,14 @@ export function useAddSubscriberToSegment(projectId: string) {
       subscriberId: string;
     }) => {
       const res = await api.post(
-        `/segments/${projectId}/${segmentId}/subscribers/${subscriberId}`
+        `/segments/${newsletterId}/${segmentId}/subscribers/${subscriberId}`
       );
       return res.data;
     },
     onSuccess: (_data, { segmentId }) => {
-      queryClient.invalidateQueries({ queryKey: ["segments", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["segments", newsletterId] });
       queryClient.invalidateQueries({
-        queryKey: ["segments", projectId, segmentId, "subscribers"],
+        queryKey: ["segments", newsletterId, segmentId, "subscribers"],
       });
       toast.success("Subscriber added to segment");
     },
@@ -114,7 +114,7 @@ export function useAddSubscriberToSegment(projectId: string) {
   });
 }
 
-export function useRemoveSubscriberFromSegment(projectId: string) {
+export function useRemoveSubscriberFromSegment(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -126,14 +126,14 @@ export function useRemoveSubscriberFromSegment(projectId: string) {
       subscriberId: string;
     }) => {
       const res = await api.delete(
-        `/segments/${projectId}/${segmentId}/subscribers/${subscriberId}`
+        `/segments/${newsletterId}/${segmentId}/subscribers/${subscriberId}`
       );
       return res.data;
     },
     onSuccess: (_data, { segmentId }) => {
-      queryClient.invalidateQueries({ queryKey: ["segments", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["segments", newsletterId] });
       queryClient.invalidateQueries({
-        queryKey: ["segments", projectId, segmentId, "subscribers"],
+        queryKey: ["segments", newsletterId, segmentId, "subscribers"],
       });
       toast.success("Subscriber removed from segment");
     },

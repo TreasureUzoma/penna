@@ -1,7 +1,7 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getPublicProject, getPublicPosts } from "@/lib/public-projects";
-import { ProjectView } from "@/components/public-project/project-view";
+import { getPublicNewsletter, getPublicPosts } from "@/lib/public-newsletters";
+import { NewsletterView } from "@/components/public-newsletter/newsletter-view";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -9,32 +9,22 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const project = await getPublicProject(slug);
-  if (!project) return {};
+  const newsletter = await getPublicNewsletter(slug);
+  if (!newsletter) return {};
 
   return {
-    title: `${project.name} - penna`,
-    description: project.description ?? undefined,
+    title: `${newsletter.name} - penna`,
+    description: newsletter.description ?? undefined,
   };
 }
 
-/**
- * The clean, no-username project URL — a Pro+ perk (see `hasCleanUrl` in
- * services/projects.ts's `getPublicProjectBySlug`). A free-plan owner's
- * project still exists, but only answers at /u/{username}/{slug}; hitting
- * it here redirects there instead of rendering, so the clean path can't be
- * used to route around the gate.
- */
-export default async function PublicProjectCleanPage({ params }: Props) {
+/** A newsletter's public page — penna.dev/{slug}, for every plan (slugs have always been globally unique, so there's no per-user namespacing to gate). */
+export default async function PublicNewsletterPage({ params }: Props) {
   const { slug } = await params;
-  const project = await getPublicProject(slug);
-  if (!project) notFound();
-
-  if (!project.hasCleanUrl) {
-    redirect(`/u/${project.ownerUsername}/${slug}`);
-  }
+  const newsletter = await getPublicNewsletter(slug);
+  if (!newsletter) notFound();
 
   const posts = (await getPublicPosts(slug)) ?? [];
 
-  return <ProjectView project={project} posts={posts} basePath={`/${slug}`} />;
+  return <NewsletterView newsletter={newsletter} posts={posts} />;
 }

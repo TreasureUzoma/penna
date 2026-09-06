@@ -1,5 +1,5 @@
 import { routeStatus } from "@/lib/utils";
-import { getProjectOrFail } from "@/utils/project-access";
+import { getNewsletterOrFail } from "@/utils/newsletter-access";
 import { validationErrorResponse } from "@/utils/validation-error-response";
 import {
   createSegment,
@@ -18,33 +18,33 @@ import { z } from "zod";
 
 const segmentRoutes = new Hono<AppBindings>();
 
-// Get all segments for a project
+// Get all segments for a newsletter
 segmentRoutes.get(
-  "/:projectId",
+  "/:newsletterId",
   zValidator(
     "param",
-    z.object({ projectId: z.string().min(1) }),
+    z.object({ newsletterId: z.string().min(1) }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
     },
   ),
   async (c) => {
-    const { projectId } = c.req.valid("param");
-    const projectOrRes = await getProjectOrFail(c, projectId);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
+    const { newsletterId } = c.req.valid("param");
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    if (newsletterOrRes instanceof Response) return newsletterOrRes;
+    const newsletter = newsletterOrRes;
 
-    const serviceData = await getSegments(project.id);
+    const serviceData = await getSegments(newsletter.id);
     return c.json(serviceData, routeStatus(serviceData));
   },
 );
 
 // Create a new segment
 segmentRoutes.post(
-  "/:projectId",
+  "/:newsletterId",
   zValidator(
     "param",
-    z.object({ projectId: z.string().min(1) }),
+    z.object({ newsletterId: z.string().min(1) }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
     },
@@ -61,14 +61,14 @@ segmentRoutes.post(
     },
   ),
   async (c) => {
-    const { projectId } = c.req.valid("param");
+    const { newsletterId } = c.req.valid("param");
     const { name, description, criteria } = c.req.valid("json");
-    const projectOrRes = await getProjectOrFail(c, projectId);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    if (newsletterOrRes instanceof Response) return newsletterOrRes;
+    const newsletter = newsletterOrRes;
 
     const serviceData = await createSegment(
-      project.id,
+      newsletter.id,
       name,
       description,
       criteria,
@@ -80,11 +80,11 @@ segmentRoutes.post(
 
 // Get a single segment
 segmentRoutes.get(
-  "/:projectId/:segmentId",
+  "/:newsletterId/:segmentId",
   zValidator(
     "param",
     z.object({
-      projectId: z.string().min(1),
+      newsletterId: z.string().min(1),
       segmentId: z.string().uuid(),
     }),
     (result, c) => {
@@ -92,23 +92,23 @@ segmentRoutes.get(
     },
   ),
   async (c) => {
-    const { projectId, segmentId } = c.req.valid("param");
-    const projectOrRes = await getProjectOrFail(c, projectId);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
+    const { newsletterId, segmentId } = c.req.valid("param");
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    if (newsletterOrRes instanceof Response) return newsletterOrRes;
+    const newsletter = newsletterOrRes;
 
-    const serviceData = await getSegment(segmentId, project.id);
+    const serviceData = await getSegment(segmentId, newsletter.id);
     return c.json(serviceData, routeStatus(serviceData));
   },
 );
 
 // Update a segment
 segmentRoutes.patch(
-  "/:projectId/:segmentId",
+  "/:newsletterId/:segmentId",
   zValidator(
     "param",
     z.object({
-      projectId: z.string().min(1),
+      newsletterId: z.string().min(1),
       segmentId: z.string().uuid(),
     }),
     (result, c) => {
@@ -127,24 +127,24 @@ segmentRoutes.patch(
     },
   ),
   async (c) => {
-    const { projectId, segmentId } = c.req.valid("param");
+    const { newsletterId, segmentId } = c.req.valid("param");
     const updates = c.req.valid("json");
-    const projectOrRes = await getProjectOrFail(c, projectId);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    if (newsletterOrRes instanceof Response) return newsletterOrRes;
+    const newsletter = newsletterOrRes;
 
-    const serviceData = await updateSegment(segmentId, project.id, updates);
+    const serviceData = await updateSegment(segmentId, newsletter.id, updates);
     return c.json(serviceData, routeStatus(serviceData));
   },
 );
 
 // Delete segment
 segmentRoutes.delete(
-  "/:projectId/:segmentId",
+  "/:newsletterId/:segmentId",
   zValidator(
     "param",
     z.object({
-      projectId: z.string().min(1),
+      newsletterId: z.string().min(1),
       segmentId: z.string().uuid(),
     }),
     (result, c) => {
@@ -152,23 +152,23 @@ segmentRoutes.delete(
     },
   ),
   async (c) => {
-    const { projectId, segmentId } = c.req.valid("param");
-    const projectOrRes = await getProjectOrFail(c, projectId);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
+    const { newsletterId, segmentId } = c.req.valid("param");
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    if (newsletterOrRes instanceof Response) return newsletterOrRes;
+    const newsletter = newsletterOrRes;
 
-    const serviceData = await deleteSegment(segmentId, project.id);
+    const serviceData = await deleteSegment(segmentId, newsletter.id);
     return c.json(serviceData, routeStatus(serviceData));
   },
 );
 
 // Get subscribers in a segment
 segmentRoutes.get(
-  "/:projectId/:segmentId/subscribers",
+  "/:newsletterId/:segmentId/subscribers",
   zValidator(
     "param",
     z.object({
-      projectId: z.string().min(1),
+      newsletterId: z.string().min(1),
       segmentId: z.string().uuid(),
     }),
     (result, c) => {
@@ -176,23 +176,23 @@ segmentRoutes.get(
     },
   ),
   async (c) => {
-    const { projectId, segmentId } = c.req.valid("param");
-    const projectOrRes = await getProjectOrFail(c, projectId);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
+    const { newsletterId, segmentId } = c.req.valid("param");
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    if (newsletterOrRes instanceof Response) return newsletterOrRes;
+    const newsletter = newsletterOrRes;
 
-    const serviceData = await getSegmentSubscribers(segmentId, project.id);
+    const serviceData = await getSegmentSubscribers(segmentId, newsletter.id);
     return c.json(serviceData, routeStatus(serviceData));
   },
 );
 
 // Add subscriber to segment
 segmentRoutes.post(
-  "/:projectId/:segmentId/subscribers/:subscriberId",
+  "/:newsletterId/:segmentId/subscribers/:subscriberId",
   zValidator(
     "param",
     z.object({
-      projectId: z.string().min(1),
+      newsletterId: z.string().min(1),
       segmentId: z.string().uuid(),
       subscriberId: z.string().uuid(),
     }),
@@ -201,15 +201,15 @@ segmentRoutes.post(
     },
   ),
   async (c) => {
-    const { projectId, segmentId, subscriberId } = c.req.valid("param");
-    const projectOrRes = await getProjectOrFail(c, projectId);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
+    const { newsletterId, segmentId, subscriberId } = c.req.valid("param");
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    if (newsletterOrRes instanceof Response) return newsletterOrRes;
+    const newsletter = newsletterOrRes;
 
     const serviceData = await addSubscriberToSegment(
       segmentId,
       subscriberId,
-      project.id,
+      newsletter.id,
     );
 
     return c.json(serviceData, routeStatus(serviceData));
@@ -218,11 +218,11 @@ segmentRoutes.post(
 
 // Remove subscriber from segment
 segmentRoutes.delete(
-  "/:projectId/:segmentId/subscribers/:subscriberId",
+  "/:newsletterId/:segmentId/subscribers/:subscriberId",
   zValidator(
     "param",
     z.object({
-      projectId: z.string().min(1),
+      newsletterId: z.string().min(1),
       segmentId: z.string().uuid(),
       subscriberId: z.string().uuid(),
     }),
@@ -231,15 +231,15 @@ segmentRoutes.delete(
     },
   ),
   async (c) => {
-    const { projectId, segmentId, subscriberId } = c.req.valid("param");
-    const projectOrRes = await getProjectOrFail(c, projectId);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
+    const { newsletterId, segmentId, subscriberId } = c.req.valid("param");
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    if (newsletterOrRes instanceof Response) return newsletterOrRes;
+    const newsletter = newsletterOrRes;
 
     const serviceData = await removeSubscriberFromSegment(
       segmentId,
       subscriberId,
-      project.id,
+      newsletter.id,
     );
 
     return c.json(serviceData, routeStatus(serviceData));

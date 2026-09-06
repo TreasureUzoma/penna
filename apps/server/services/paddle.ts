@@ -32,7 +32,7 @@ const PLAN_PRICE_IDS: Partial<Record<string, string>> = {
 /**
  * Maps billing plan slugs (as used in checkout / Paddle price catalog) to
  * the `users.subscriptionType` enum ("free" | "pro" | "enterprise"), which
- * gates coarse features (e.g. `canRemoveBranding` in `services/projects.ts`).
+ * gates coarse features (e.g. `canRemoveBranding` in `services/newsletters.ts`).
  * These aren't the same vocabulary — "hobby" and "enterprise" line up, but
  * "professional" and "business" both collapse to "pro" since that's all the
  * enum distinguishes. The exact slug is preserved separately in

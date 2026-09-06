@@ -10,32 +10,10 @@ export const getProfileDataById = async (id: string) => {
       name: users.name,
       email: users.email,
       avatarUrl: users.avatarUrl,
-      username: users.username,
       plan: users.plan,
     })
     .from(users)
     .where(eq(users.id, id));
-
-  if (!user) {
-    return { data: null, success: false, message: "User not found." };
-  }
-
-  return {
-    data: user,
-    success: true,
-    message: "Profile fetched successfully",
-  };
-};
-
-export const getProfileDataByUsername = async (username: string) => {
-  const [user] = await db
-    .select({
-      name: users.name,
-      username: users.username,
-      avatarUrl: users.avatarUrl,
-    })
-    .from(users)
-    .where(eq(users.username, username));
 
   if (!user) {
     return { data: null, success: false, message: "User not found." };
@@ -58,9 +36,6 @@ export const updateUserProfile = async (
     if (body.name !== undefined) {
       fieldsToUpdate.name = body.name;
     }
-    if (body.username !== undefined) {
-      fieldsToUpdate.username = body.username;
-    }
     if (body.avatarUrl !== undefined) {
       fieldsToUpdate.avatarUrl = body.avatarUrl;
     }
@@ -80,7 +55,6 @@ export const updateUserProfile = async (
       .returning({
         id: users.id,
         name: users.name,
-        username: users.username,
         email: users.email,
         avatarUrl: users.avatarUrl,
       });
@@ -107,7 +81,7 @@ export const updateUserProfile = async (
         err.message.includes("unique constraint") ||
         err.message.includes("duplicate key")
       ) {
-        errorMessage = "A user with that username or email already exists.";
+        errorMessage = "A user with that email already exists.";
       } else {
         errorMessage = err.message;
       }

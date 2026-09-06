@@ -9,7 +9,7 @@ import {
   useAssignDomain,
   useDeleteDomain,
 } from "@/hooks/use-domains";
-import { useProjects } from "@/hooks/use-projects";
+import { useNewsletters } from "@/hooks/use-newsletters";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import {
@@ -51,7 +51,7 @@ import {
 
 export default function AccountDomainsPage() {
   const { data: domains, isLoading } = useDomains();
-  const { data: projects } = useProjects();
+  const { data: newsletters } = useNewsletters();
   const { mutate: addDomain, isPending: isAdding } = useAddDomain();
   const { mutate: verifyDomain, isPending: isVerifying } = useVerifyDomain();
   const { mutate: assignDomain, isPending: isAssigning } = useAssignDomain();
@@ -59,7 +59,7 @@ export default function AccountDomainsPage() {
 
   const [name, setName] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
-  // Per-row "assign to project" picks, keyed by domain id.
+  // Per-row "assign to newsletter" picks, keyed by domain id.
   const [assignPicks, setAssignPicks] = useState<Record<string, string>>({});
 
   function handleAdd(e: React.FormEvent) {
@@ -74,11 +74,11 @@ export default function AccountDomainsPage() {
   }
 
   function handleAssign(domainId: string) {
-    const projectId = assignPicks[domainId];
-    if (!projectId) return;
+    const newsletterId = assignPicks[domainId];
+    if (!newsletterId) return;
     setPendingId(domainId);
     assignDomain(
-      { domainId, projectId },
+      { domainId, newsletterId },
       { onSettled: () => setPendingId(null) }
     );
   }
@@ -88,8 +88,8 @@ export default function AccountDomainsPage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Domains</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Verify a domain here, then assign it to a project whenever you're
-          ready — or add one straight from a project's Domains tab.
+          Verify a domain here, then assign it to a newsletter whenever you're
+          ready — or add one straight from a newsletter's Domains tab.
         </p>
       </div>
 
@@ -139,7 +139,7 @@ export default function AccountDomainsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Domain</TableHead>
-                <TableHead>Project</TableHead>
+                <TableHead>Newsletter</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -154,12 +154,12 @@ export default function AccountDomainsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {domain.project ? (
+                    {domain.newsletter ? (
                       <Link
-                        href={`/projects/${domain.project.slug}/domains`}
+                        href={`/newsletters/${domain.newsletter.slug}/domains`}
                         className="text-muted-foreground hover:text-foreground hover:underline"
                       >
-                        {domain.project.name}
+                        {domain.newsletter.name}
                       </Link>
                     ) : domain.verified ? (
                       <div className="flex items-center gap-1.5">
@@ -176,9 +176,9 @@ export default function AccountDomainsPage() {
                             <SelectValue placeholder="Assign to…" />
                           </SelectTrigger>
                           <SelectContent>
-                            {projects?.map((project) => (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.name}
+                            {newsletters?.map((newsletter) => (
+                              <SelectItem key={newsletter.id} value={newsletter.id}>
+                                {newsletter.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -254,7 +254,7 @@ export default function AccountDomainsPage() {
                             <AlertDialogTitle>Remove domain</AlertDialogTitle>
                             <AlertDialogDescription>
                               Remove <strong>{domain.name}</strong>?
-                              {domain.project && (
+                              {domain.newsletter && (
                                 <>
                                   {" "}
                                   Newsletters will go back to sending from the

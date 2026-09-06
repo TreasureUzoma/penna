@@ -50,16 +50,16 @@ Do NOT flag legitimate content just because it mentions discounts, crypto, datin
  * that doesn't parse, this returns a "clean" verdict (category
  * `moderation_unavailable`) rather than blocking the send. A transient AI
  * outage shouldn't take down sending entirely — recipient scoping and the
- * per-project send cap are real defenses on their own.
+ * per-newsletter send cap are real defenses on their own.
  */
 export const moderateNewsletterContent = async ({
   subject,
   content,
-  projectName,
+  newsletterName,
 }: {
   subject: string;
   content: string;
-  projectName: string;
+  newsletterName: string;
 }): Promise<ModerationResult> => {
   if (!envConfig.GROQ_API_KEY) {
     return {
@@ -76,7 +76,7 @@ export const moderateNewsletterContent = async ({
       model: groq("openai/gpt-oss-120b"),
       schema: moderationSchema,
       system: SYSTEM_PROMPT,
-      prompt: `Project: ${projectName}\n\nSubject: ${subject}\n\nBody:\n${content}`,
+      prompt: `Newsletter: ${newsletterName}\n\nSubject: ${subject}\n\nBody:\n${content}`,
       abortSignal: AbortSignal.timeout(10_000),
     });
 

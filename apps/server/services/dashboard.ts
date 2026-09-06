@@ -2,8 +2,8 @@ import { db } from "@workspace/db";
 import {
   emails,
   payments,
-  projectMembers,
-  projects,
+  newsletterMembers,
+  newsletters,
   subscribers,
 } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
@@ -30,36 +30,36 @@ export const getDashboardOverview = async (
   search?: string
 ): Promise<ServiceResponse> => {
   try {
-    const userProjects = await db
-      .select({ id: projects.id })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(eq(projectMembers.userId, userId));
+    const userNewsletters = await db
+      .select({ id: newsletters.id })
+      .from(newsletters)
+      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
+      .where(eq(newsletterMembers.userId, userId));
 
-    const projectIds = userProjects.map((p) => p.id);
+    const newsletterIds = userNewsletters.map((p) => p.id);
 
-    let totalProjects = projectIds.length;
+    let totalNewsletters = newsletterIds.length;
     let totalSubscribers = 0;
     let totalRevenue = 0;
     let totalPosts = 0;
 
-    if (projectIds.length > 0) {
+    if (newsletterIds.length > 0) {
       const [subStats] = await db
         .select({ count: count() })
         .from(subscribers)
-        .where(inArray(subscribers.projectId, projectIds));
+        .where(inArray(subscribers.newsletterId, newsletterIds));
       totalSubscribers = subStats?.count ?? 0;
 
       const [revStats] = await db
         .select({ total: sum(payments.amount) })
         .from(payments)
-        .where(inArray(payments.projectId, projectIds));
+        .where(inArray(payments.newsletterId, newsletterIds));
       totalRevenue = revStats?.total ? parseInt(revStats.total) : 0;
 
       const [postStats] = await db
         .select({ count: count() })
         .from(emails)
-        .where(inArray(emails.projectId, projectIds));
+        .where(inArray(emails.newsletterId, newsletterIds));
       totalPosts = postStats?.count ?? 0;
     }
 
@@ -68,15 +68,15 @@ export const getDashboardOverview = async (
     let orderBy;
     switch (sort) {
       case "name":
-        orderBy = asc(projects.name);
+        orderBy = asc(newsletters.name);
         break;
       case "oldest":
-        orderBy = asc(projects.createdAt);
+        orderBy = asc(newsletters.createdAt);
         break;
       case "newest":
       case "activity":
       default:
-        orderBy = desc(projects.createdAt);
+        orderBy = desc(newsletters.createdAt);
         break;
       // Note: Sorting by revenue or subscribers would require complex joins/subqueries
       // For now, we'll fallback to createdAt for these complex sorts or implement them if strictly needed
@@ -84,26 +84,26 @@ export const getDashboardOverview = async (
     }
 
     // Build where conditions
-    const whereConditions = [eq(projectMembers.userId, userId)];
+    const whereConditions = [eq(newsletterMembers.userId, userId)];
 
     if (search && search.trim()) {
       whereConditions.push(
-        sql`LOWER(${projects.name}) LIKE LOWER(${"%" + search + "%"})`
+        sql`LOWER(${newsletters.name}) LIKE LOWER(${"%" + search + "%"})`
       );
     }
 
     const dbQuery = db
       .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-        role: projectMembers.role,
-        slug: projects.slug,
+        id: newsletters.id,
+        name: newsletters.name,
+        description: newsletters.description,
+        createdAt: newsletters.createdAt,
+        updatedAt: newsletters.updatedAt,
+        role: newsletterMembers.role,
+        slug: newsletters.slug,
       })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+      .from(newsletters)
+      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
       .where(and(...whereConditions))
       .orderBy(orderBy)
       .limit(limit)
@@ -111,23 +111,23 @@ export const getDashboardOverview = async (
 
     const countQuery = db
       .select({ count: count() })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+      .from(newsletters)
+      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
       .where(and(...whereConditions));
 
-    const projectsData = await paginate(dbQuery, countQuery, page, limit);
+    const newslettersData = await paginate(dbQuery, countQuery, page, limit);
 
     return {
       success: true,
       message: "Dashboard overview fetched successfully",
       data: {
         stats: {
-          totalProjects,
+          totalNewsletters,
           totalSubscribers,
           totalRevenue,
           totalPosts,
         },
-        projects: projectsData,
+        newsletters: newslettersData,
       },
     };
   } catch (err) {
@@ -143,7 +143,7 @@ export const getDashboardOverview = async (
 };
 
 /**
- * The most recently *actually sent* posts across every project the user
+ * The most recently *actually sent* posts across every newsletter the user
  * belongs to — scheduled-but-not-yet-sent posts are excluded (they're not
  * "activity" yet), matching the same published-and-sentAt-has-passed check
  * used to lock post editing (see the dashboard's posts/[postId] page).
@@ -153,15 +153,15 @@ export const getRecentActivity = async (
   limit = 5
 ): Promise<ServiceResponse> => {
   try {
-    const userProjects = await db
-      .select({ id: projects.id })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(eq(projectMembers.userId, userId));
+    const userNewsletters = await db
+      .select({ id: newsletters.id })
+      .from(newsletters)
+      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
+      .where(eq(newsletterMembers.userId, userId));
 
-    const projectIds = userProjects.map((p) => p.id);
+    const newsletterIds = userNewsletters.map((p) => p.id);
 
-    if (projectIds.length === 0) {
+    if (newsletterIds.length === 0) {
       return {
         success: true,
         message: "No recent activity",
@@ -174,15 +174,15 @@ export const getRecentActivity = async (
         id: emails.id,
         subject: emails.subject,
         sentAt: emails.sentAt,
-        projectId: emails.projectId,
-        projectName: projects.name,
-        projectSlug: projects.slug,
+        newsletterId: emails.newsletterId,
+        newsletterName: newsletters.name,
+        newsletterSlug: newsletters.slug,
       })
       .from(emails)
-      .innerJoin(projects, eq(emails.projectId, projects.id))
+      .innerJoin(newsletters, eq(emails.newsletterId, newsletters.id))
       .where(
         and(
-          inArray(emails.projectId, projectIds),
+          inArray(emails.newsletterId, newsletterIds),
           eq(emails.status, "published"),
           lte(emails.sentAt, new Date())
         )
@@ -208,36 +208,36 @@ export const getRecentActivity = async (
 };
 
 /**
- * Account-wide analytics — combined subscriber growth across every project
- * the user belongs to, plus a ranking of their top projects by active
- * subscriber count. Distinct from `getProjectAnalytics` (services/
- * analytics.ts), which is scoped to one project.
+ * Account-wide analytics — combined subscriber growth across every newsletter
+ * the user belongs to, plus a ranking of their top newsletters by active
+ * subscriber count. Distinct from `getNewsletterAnalytics` (services/
+ * analytics.ts), which is scoped to one newsletter.
  */
 export const getAccountAnalytics = async (
   userId: string,
   days: number = 30
 ): Promise<ServiceResponse> => {
   try {
-    const userProjects = await db
-      .select({ id: projects.id })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(eq(projectMembers.userId, userId));
+    const userNewsletters = await db
+      .select({ id: newsletters.id })
+      .from(newsletters)
+      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
+      .where(eq(newsletterMembers.userId, userId));
 
-    const projectIds = userProjects.map((p) => p.id);
+    const newsletterIds = userNewsletters.map((p) => p.id);
 
-    if (projectIds.length === 0) {
+    if (newsletterIds.length === 0) {
       return {
         success: true,
         message: "No analytics yet",
-        data: { chartData: [], topProjects: [] },
+        data: { chartData: [], topNewsletters: [] },
       };
     }
 
     const now = new Date();
     const timeframeDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-    // Combined daily new-subscriber counts across every project.
+    // Combined daily new-subscriber counts across every newsletter.
     const dailyGrowth = await db
       .select({
         date: sql<string>`date_trunc('day', ${subscribers.createdAt})`,
@@ -246,7 +246,7 @@ export const getAccountAnalytics = async (
       .from(subscribers)
       .where(
         and(
-          inArray(subscribers.projectId, projectIds),
+          inArray(subscribers.newsletterId, newsletterIds),
           gte(subscribers.createdAt, timeframeDate)
         )
       )
@@ -266,32 +266,32 @@ export const getAccountAnalytics = async (
       chartData.push({ date: dateStr, count: existing ? existing.count : 0 });
     }
 
-    // Top projects by active subscriber count.
-    const topProjects = await db
+    // Top newsletters by active subscriber count.
+    const topNewsletters = await db
       .select({
-        id: projects.id,
-        name: projects.name,
-        slug: projects.slug,
+        id: newsletters.id,
+        name: newsletters.name,
+        slug: newsletters.slug,
         subscriberCount: count(subscribers.id),
       })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+      .from(newsletters)
+      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
       .leftJoin(
         subscribers,
         and(
-          eq(subscribers.projectId, projects.id),
+          eq(subscribers.newsletterId, newsletters.id),
           eq(subscribers.status, "subscribed")
         )
       )
-      .where(eq(projectMembers.userId, userId))
-      .groupBy(projects.id)
+      .where(eq(newsletterMembers.userId, userId))
+      .groupBy(newsletters.id)
       .orderBy(desc(count(subscribers.id)))
       .limit(5);
 
     return {
       success: true,
       message: "Account analytics fetched successfully",
-      data: { chartData, topProjects },
+      data: { chartData, topNewsletters },
     };
   } catch (err) {
     return {

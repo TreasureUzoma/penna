@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { projects, subscribers } from "@workspace/db/schema";
+import { newsletters, subscribers } from "@workspace/db/schema";
 import { eq, count, and, desc } from "drizzle-orm";
 import { paginate } from "../utils/pagination";
 import type {
@@ -13,8 +13,8 @@ import {
   SubscriberLimitError,
 } from "./limits";
 
-export const getProjectSubscribers = (
-  projectId: string,
+export const getNewsletterSubscribers = (
+  newsletterId: string,
   page = 1,
   limit = 10,
   status: SubscriberStatus = "subscribed"
@@ -25,7 +25,7 @@ export const getProjectSubscribers = (
     .select()
     .from(subscribers)
     .where(
-      and(eq(subscribers.projectId, projectId), eq(subscribers.status, status))
+      and(eq(subscribers.newsletterId, newsletterId), eq(subscribers.status, status))
     )
     .limit(limit)
     .offset(offset);
@@ -33,21 +33,21 @@ export const getProjectSubscribers = (
   const countResult = db
     .select({ count: count() })
     .from(subscribers)
-    .where(eq(subscribers.projectId, projectId));
+    .where(eq(subscribers.newsletterId, newsletterId));
 
   return paginate(subscribersData, countResult, page, limit);
 };
 
-export const createProjectSubscriber = async (body: CreateSubscriber) => {
+export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
   try {
-    const usage = await assertSubscriberCapacity(body.projectId);
+    const usage = await assertSubscriberCapacity(body.newsletterId);
 
     const subscriber = await db
       .insert(subscribers)
       .values({
         name: body?.name ?? null,
         email: body.email,
-        projectId: body.projectId,
+        newsletterId: body.newsletterId,
       })
       .returning();
 
@@ -71,15 +71,15 @@ export const createProjectSubscriber = async (body: CreateSubscriber) => {
   }
 };
 
-export const removeProjectSubscriber = async (
-  projectId: string,
+export const removeNewsletterSubscriber = async (
+  newsletterId: string,
   email: string
 ) => {
   try {
     await db
       .delete(subscribers)
       .where(
-        and(eq(subscribers.projectId, projectId), eq(subscribers.email, email))
+        and(eq(subscribers.newsletterId, newsletterId), eq(subscribers.email, email))
       );
 
     return {
@@ -96,15 +96,15 @@ export const removeProjectSubscriber = async (
   }
 };
 
-export const getProjectSubscriberExistence = async (
+export const getNewsletterSubscriberExistence = async (
   body: UnsubscribeRequest
 ): Promise<ServiceResponse> => {
-  const { projectId, email } = body;
+  const { newsletterId, email } = body;
   const [subscriber] = await db
     .select()
     .from(subscribers)
     .where(
-      and(eq(subscribers.projectId, projectId), eq(subscribers.email, email))
+      and(eq(subscribers.newsletterId, newsletterId), eq(subscribers.email, email))
     );
 
   if (!subscriber)
@@ -114,16 +114,16 @@ export const getProjectSubscriberExistence = async (
       data: null,
     };
 
-  const [project] = await db
-    .select({ name: projects.name })
-    .from(projects)
-    .where(eq(projects.id, projectId));
+  const [newsletter] = await db
+    .select({ name: newsletters.name })
+    .from(newsletters)
+    .where(eq(newsletters.id, newsletterId));
 
   return {
     message: "Subscriber found",
     success: true,
     data: {
-      projectName: project?.name ?? null,
+      newsletterName: newsletter?.name ?? null,
     },
   };
 };
@@ -135,20 +135,20 @@ export const confirmUnsubscribe = async (body: UnsubscribeRequest) => {
       .set({ status: "unsubscribed" })
       .where(
         and(
-          eq(subscribers.projectId, body.projectId),
+          eq(subscribers.newsletterId, body.newsletterId),
           eq(subscribers.email, body.email)
         )
       );
 
-    const [project] = await db
-      .select({ name: projects.name })
-      .from(projects)
-      .where(eq(projects.id, body.projectId));
+    const [newsletter] = await db
+      .select({ name: newsletters.name })
+      .from(newsletters)
+      .where(eq(newsletters.id, body.newsletterId));
 
     return {
       success: true,
       data: {
-        projectName: project?.name ?? null,
+        newsletterName: newsletter?.name ?? null,
       },
       message: "Subscribed sucessfully",
     };
@@ -159,12 +159,12 @@ export const confirmUnsubscribe = async (body: UnsubscribeRequest) => {
       message:
         err instanceof Error
           ? err.message
-          : "Failed to unsubscribe from project.",
+          : "Failed to unsubscribe from newsletter.",
     };
   }
 };
 
-export const getRecentSubscribers = async (projectId: string, limit = 5) => {
+export const getRecentSubscribers = async (newsletterId: string, limit = 5) => {
   try {
     const recentSubscribers = await db
       .select({
@@ -175,7 +175,7 @@ export const getRecentSubscribers = async (projectId: string, limit = 5) => {
         createdAt: subscribers.createdAt,
       })
       .from(subscribers)
-      .where(eq(subscribers.projectId, projectId))
+      .where(eq(subscribers.newsletterId, newsletterId))
       .orderBy(desc(subscribers.createdAt))
       .limit(limit);
 

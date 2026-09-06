@@ -3,7 +3,7 @@ import { applyBranding } from "./branding";
 import { getVerifiedSendingDomain } from "../domains";
 
 export const sendEmailNewsletter = async (
-  project: { id: string; slug: string },
+  newsletter: { id: string; slug: string },
   recipientEmails: string[],
   subject: string,
   html: string,
@@ -16,13 +16,13 @@ export const sendEmailNewsletter = async (
 
   const brandedHtml = applyBranding(html, removeBranding);
   // Falls back to the shared NEWSLETTER_DOMAIN (see ses.ts) whenever the
-  // project has no verified custom domain — see services/domains.ts.
-  const fromDomain = await getVerifiedSendingDomain(project.id);
+  // newsletter has no verified custom domain — see services/domains.ts.
+  const fromDomain = await getVerifiedSendingDomain(newsletter.id);
 
   if (recipientEmails.length === 1 && recipientEmails[0]) {
     const result = await sendNewsletterEmail({
-      projectId: project.id,
-      projectSlug: project.slug,
+      newsletterId: newsletter.id,
+      newsletterSlug: newsletter.slug,
       recipientEmail: recipientEmails[0],
       subject,
       html: brandedHtml,
@@ -39,7 +39,7 @@ export const sendEmailNewsletter = async (
 
   // Send to multiple recipients
   const result = await sendBulkNewsletterEmails({
-    project,
+    newsletter,
     recipientEmails,
     subject,
     html: brandedHtml,
@@ -53,4 +53,3 @@ export const sendEmailNewsletter = async (
 
   return result;
 };
-

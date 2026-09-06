@@ -1,5 +1,5 @@
 import { envConfig } from "@/config";
-import { getProjectBySlug } from "@/services/projects";
+import { getNewsletterBySlug } from "@/services/newsletters";
 import { db } from "@workspace/db";
 import { subscribers } from "@workspace/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -26,12 +26,12 @@ interface SesNotification {
 }
 
 /**
- * Pulls the project slug back out of a newsletter Source address built by
+ * Pulls the newsletter slug back out of a newsletter Source address built by
  * `sendNewsletterEmail` (`{slug}@{NEWSLETTER_DOMAIN}`). Returns null for
  * system/transactional sends (`SYSTEM_EMAIL_FROM`), which aren't tied to
- * any project's subscriber list.
+ * any newsletter's subscriber list.
  */
-const projectSlugFromSource = (source: string): string | null => {
+const newsletterSlugFromSource = (source: string): string | null => {
   const suffix = `@${envConfig.NEWSLETTER_DOMAIN}`;
   if (!source.endsWith(suffix)) {
     return null;
@@ -47,18 +47,18 @@ const suppressRecipients = async (
 ): Promise<void> => {
   if (emails.length === 0) return;
 
-  const slug = projectSlugFromSource(source);
+  const slug = newsletterSlugFromSource(source);
   if (!slug) {
     console.warn(
-      `SES ${status} notification for non-project source "${source}" — no subscriber list to update.`
+      `SES ${status} notification for non-newsletter source "${source}" — no subscriber list to update.`
     );
     return;
   }
 
-  const project = await getProjectBySlug(slug);
-  if (!project.success || !project.data) {
+  const newsletter = await getNewsletterBySlug(slug);
+  if (!newsletter.success || !newsletter.data) {
     console.warn(
-      `SES ${status} notification for unknown project slug "${slug}".`
+      `SES ${status} notification for unknown newsletter slug "${slug}".`
     );
     return;
   }
@@ -69,7 +69,7 @@ const suppressRecipients = async (
       .set({ status })
       .where(
         and(
-          eq(subscribers.projectId, project.data.id),
+          eq(subscribers.newsletterId, newsletter.data.id),
           eq(subscribers.email, email)
         )
       );

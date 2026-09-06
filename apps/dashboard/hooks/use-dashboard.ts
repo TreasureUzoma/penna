@@ -5,12 +5,12 @@ import type { ServiceResponse } from "@workspace/types";
 
 interface DashboardData {
   stats: {
-    totalProjects: number;
+    totalNewsletters: number;
     totalSubscribers: number;
     totalRevenue: number;
     totalPosts: number;
   };
-  projects: {
+  newsletters: {
     data: any[];
     meta: {
       total: number;
@@ -34,11 +34,11 @@ export function useDashboardStats() {
   });
 }
 
-export function useDashboardProjects(
+export function useDashboardNewsletters(
   params: Omit<DashboardOverview, "limit"> & { limit?: number }
 ) {
   return useQuery({
-    queryKey: ["dashboard-projects", params],
+    queryKey: ["dashboard-newsletters", params],
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       if (params.page) searchParams.set("page", params.page.toString());
@@ -47,8 +47,8 @@ export function useDashboardProjects(
       if (params.search) searchParams.set("search", params.search);
 
       const res = await api.get<
-        ServiceResponse<{ projects: DashboardData["projects"] }>
-      >(`/dashboard/projects?${searchParams.toString()}`);
+        ServiceResponse<{ newsletters: DashboardData["newsletters"] }>
+      >(`/dashboard/newsletters?${searchParams.toString()}`);
       return res.data.data;
     },
   });
@@ -58,9 +58,9 @@ export interface RecentActivityItem {
   id: string;
   subject: string;
   sentAt: string;
-  projectId: string;
-  projectName: string;
-  projectSlug: string;
+  newsletterId: string;
+  newsletterName: string;
+  newsletterSlug: string;
 }
 
 export function useDashboardActivity() {
@@ -75,7 +75,7 @@ export function useDashboardActivity() {
   });
 }
 
-export interface TopProject {
+export interface TopNewsletter {
   id: string;
   name: string;
   slug: string;
@@ -84,7 +84,7 @@ export interface TopProject {
 
 interface AccountAnalytics {
   chartData: Array<{ date: string; count: number }>;
-  topProjects: TopProject[];
+  topNewsletters: TopNewsletter[];
 }
 
 export function useDashboardAnalytics(days: number) {

@@ -1,10 +1,10 @@
 import { routeStatus } from "@/lib/utils";
 import {
-  createProjectPostDraft,
-  getAllProjectPosts,
-  updateProjectPost,
+  createNewsletterPostDraft,
+  getAllNewsletterPosts,
+  updateNewsletterPost,
 } from "@/services/posts";
-import { getProjectOrFail } from "@/utils/project-access";
+import { getNewsletterOrFail } from "@/utils/newsletter-access";
 import { validationErrorResponse } from "@/utils/validation-error-response";
 import { zValidator } from "@hono/zod-validator";
 import { insertPostSchema, isValidUUID } from "@workspace/validations";
@@ -21,13 +21,13 @@ postRoutes.post(
   async (c) => {
     const body = c.req.valid("json");
 
-    const project = await getProjectOrFail(c, body.projectId, [
+    const newsletter = await getNewsletterOrFail(c, body.newsletterId, [
       "admin",
       "owner",
     ]);
-    if (!project) return;
+    if (!newsletter) return;
 
-    const serviceData = await createProjectPostDraft(body);
+    const serviceData = await createNewsletterPostDraft(body);
     return c.json(serviceData, routeStatus(serviceData));
   }
 );
@@ -47,14 +47,14 @@ postRoutes.patch(
     const body = c.req.valid("json");
     const { id: postId } = c.req.valid("param");
 
-    const project = await getProjectOrFail(c, body.projectId, [
+    const newsletter = await getNewsletterOrFail(c, body.newsletterId, [
       "admin",
       "owner",
       "editor",
     ]);
-    if (!project) return;
+    if (!newsletter) return;
 
-    const serviceData = await updateProjectPost(postId, body);
+    const serviceData = await updateNewsletterPost(postId, body);
     return c.json(serviceData, routeStatus(serviceData));
   }
 );
@@ -68,16 +68,16 @@ postRoutes.get(
     }
   }),
   async (c) => {
-    const { id: projectId } = c.req.valid("param");
+    const { id: newsletterId } = c.req.valid("param");
 
-    await getProjectOrFail(c, projectId, [
+    await getNewsletterOrFail(c, newsletterId, [
       "admin",
       "owner",
       "viewer",
       "editor",
     ]);
 
-    const serviceData = await getAllProjectPosts(projectId);
+    const serviceData = await getAllNewsletterPosts(newsletterId);
     return c.json(serviceData, routeStatus(serviceData));
   }
 );

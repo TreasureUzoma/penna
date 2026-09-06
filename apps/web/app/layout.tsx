@@ -20,10 +20,10 @@ export const metadata: Metadata = {
 };
 
 // No Header/Footer here — those are marketing-site chrome and only belong
-// on the marketing pages (see app/(marketing)/layout.tsx). Public project
-// pages (app/u/[username]/[slug] and app/[slug]) render bare, with just
-// their own small "Powered by Penna" line, since a subscriber's own
-// newsletter page shouldn't be wrapped in Penna's nav and sitemap footer.
+// on the marketing pages (see app/(marketing)/layout.tsx). Public newsletter
+// pages (app/[slug]) render bare, with just their own small "Powered by
+// Penna" line, since a subscriber's own newsletter page shouldn't be
+// wrapped in Penna's nav and sitemap footer.
 export default function RootLayout({
   children,
 }: Readonly<{

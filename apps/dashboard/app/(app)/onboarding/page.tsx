@@ -22,25 +22,25 @@ import Link from "next/link";
 export default function OnboardingPage() {
   const steps = [
     {
-      title: "Create your first project",
+      title: "Create your first newsletter",
       description: "Set up a home for your newsletter or blog.",
       icon: Layout,
       completed: true, // Assuming if they are here, they might have one or we show how
-      href: "/projects/new",
+      href: "/newsletters/new",
     },
     {
       title: "Add your first subscriber",
       description: "Import existing contacts or add them manually.",
       icon: UserPlus,
       completed: false,
-      href: "/projects",
+      href: "/newsletters",
     },
     {
       title: "Send your first post",
       description: "Write something amazing and share it with the world.",
       icon: Mail,
       completed: false,
-      href: "/projects",
+      href: "/newsletters",
     },
   ];
 

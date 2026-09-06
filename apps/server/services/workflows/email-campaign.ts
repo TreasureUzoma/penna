@@ -62,7 +62,7 @@ export async function emailCampaignWorkflow({
     const results = await Promise.all(
       wave.map((recipients) =>
         sendEmailChunk(
-          prepared.project,
+          prepared.newsletter,
           prepared.subject,
           prepared.html,
           recipients,

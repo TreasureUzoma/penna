@@ -8,7 +8,7 @@ import type { ServiceResponse } from "@workspace/types";
 import { and, count, desc, eq } from "drizzle-orm";
 
 export const getSegments = async (
-  projectId: string,
+  newsletterId: string,
 ): Promise<ServiceResponse> => {
   try {
     const segmentList = await db
@@ -26,7 +26,7 @@ export const getSegments = async (
         segmentSubscribers,
         eq(segmentSubscribers.segmentId, segments.id),
       )
-      .where(eq(segments.projectId, projectId))
+      .where(eq(segments.newsletterId, newsletterId))
       .groupBy(segments.id)
       .orderBy(desc(segments.createdAt));
 
@@ -46,14 +46,14 @@ export const getSegments = async (
 
 export const getSegment = async (
   segmentId: string,
-  projectId: string,
+  newsletterId: string,
 ): Promise<ServiceResponse> => {
   try {
     const [segment] = await db
       .select()
       .from(segments)
       .where(
-        and(eq(segments.id, segmentId), eq(segments.projectId, projectId)),
+        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
       );
 
     if (!segment) {
@@ -80,7 +80,7 @@ export const getSegment = async (
 
 export const updateSegment = async (
   segmentId: string,
-  projectId: string,
+  newsletterId: string,
   updates: {
     name?: string;
     description?: string;
@@ -92,7 +92,7 @@ export const updateSegment = async (
       .update(segments)
       .set({ ...updates, updatedAt: new Date() })
       .where(
-        and(eq(segments.id, segmentId), eq(segments.projectId, projectId)),
+        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
       )
       .returning();
 
@@ -119,7 +119,7 @@ export const updateSegment = async (
 };
 
 export const createSegment = async (
-  projectId: string,
+  newsletterId: string,
   name: string,
   description?: string,
   criteria?: Record<string, unknown>,
@@ -128,7 +128,7 @@ export const createSegment = async (
     const [newSegment] = await db
       .insert(segments)
       .values({
-        projectId,
+        newsletterId,
         name,
         description,
         criteria: criteria || {},
@@ -151,15 +151,15 @@ export const createSegment = async (
 
 export const getSegmentSubscribers = async (
   segmentId: string,
-  projectId: string,
+  newsletterId: string,
 ): Promise<ServiceResponse> => {
   try {
-    // First verify the segment belongs to the project
+    // First verify the segment belongs to the newsletter
     const [segment] = await db
       .select()
       .from(segments)
       .where(
-        and(eq(segments.id, segmentId), eq(segments.projectId, projectId)),
+        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
       );
 
     if (!segment) {
@@ -200,15 +200,15 @@ export const getSegmentSubscribers = async (
 export const addSubscriberToSegment = async (
   segmentId: string,
   subscriberId: string,
-  projectId: string,
+  newsletterId: string,
 ): Promise<ServiceResponse> => {
   try {
-    // Verify segment belongs to project
+    // Verify segment belongs to newsletter
     const [segment] = await db
       .select()
       .from(segments)
       .where(
-        and(eq(segments.id, segmentId), eq(segments.projectId, projectId)),
+        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
       );
 
     if (!segment) {
@@ -266,15 +266,15 @@ export const addSubscriberToSegment = async (
 export const removeSubscriberFromSegment = async (
   segmentId: string,
   subscriberId: string,
-  projectId: string,
+  newsletterId: string,
 ): Promise<ServiceResponse> => {
   try {
-    // Verify segment belongs to project
+    // Verify segment belongs to newsletter
     const [segment] = await db
       .select()
       .from(segments)
       .where(
-        and(eq(segments.id, segmentId), eq(segments.projectId, projectId)),
+        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
       );
 
     if (!segment) {
@@ -322,12 +322,12 @@ export const removeSubscriberFromSegment = async (
 
 export const deleteSegment = async (
   segmentId: string,
-  projectId: string,
+  newsletterId: string,
 ): Promise<ServiceResponse> => {
   try {
     const [deleted] = await db
       .delete(segments)
-      .where(and(eq(segments.id, segmentId), eq(segments.projectId, projectId)))
+      .where(and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)))
       .returning();
 
     if (!deleted) {

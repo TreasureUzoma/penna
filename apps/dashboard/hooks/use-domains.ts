@@ -9,47 +9,47 @@ export interface DnsCnameRecord {
 
 export interface DomainRecord {
   id: string;
-  projectId: string | null;
+  newsletterId: string | null;
   name: string;
   verified: boolean;
   createdAt: string;
   dnsRecords: DnsCnameRecord[];
-  /** null when the domain has been verified but not assigned to a project yet. */
-  project: { id: string; slug: string; name: string } | null;
+  /** null when the domain has been verified but not assigned to a newsletter yet. */
+  newsletter: { id: string; slug: string; name: string } | null;
 }
 
 /**
- * Domains visible to the current user. Pass `projectId` for a single
- * project's Domains tab; omit it for the account-wide Domains page, which
+ * Domains visible to the current user. Pass `newsletterId` for a single
+ * newsletter's Domains tab; omit it for the account-wide Domains page, which
  * also picks up domains the user has verified but not assigned yet.
  */
-export function useDomains(projectId?: string) {
+export function useDomains(newsletterId?: string) {
   return useQuery({
-    queryKey: ["domains", projectId ?? "all"],
+    queryKey: ["domains", newsletterId ?? "all"],
     queryFn: async () => {
       const res = await api.get<{ data: DomainRecord[] }>("/domains", {
-        params: projectId ? { projectId } : undefined,
+        params: newsletterId ? { newsletterId } : undefined,
       });
       return res.data.data;
     },
   });
 }
 
-/** Adds a domain — pass `projectId` to add it straight into a project, or omit it to verify first and assign later. */
+/** Adds a domain — pass `newsletterId` to add it straight into a newsletter, or omit it to verify first and assign later. */
 export function useAddDomain() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
       name,
-      projectId,
+      newsletterId,
     }: {
       name: string;
-      projectId?: string;
+      newsletterId?: string;
     }) => {
       const res = await api.post<{ data: DomainRecord; message: string }>(
         "/domains",
-        { name, projectId }
+        { name, newsletterId }
       );
       return res.data;
     },
@@ -87,21 +87,21 @@ export function useVerifyDomain() {
   });
 }
 
-/** Attaches an already-verified, unassigned domain to a project. */
+/** Attaches an already-verified, unassigned domain to a newsletter. */
 export function useAssignDomain() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
       domainId,
-      projectId,
+      newsletterId,
     }: {
       domainId: string;
-      projectId: string;
+      newsletterId: string;
     }) => {
       const res = await api.post<{ data: DomainRecord; message: string }>(
         `/domains/${domainId}/assign`,
-        { projectId }
+        { newsletterId }
       );
       return res.data;
     },

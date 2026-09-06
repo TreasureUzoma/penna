@@ -6,12 +6,12 @@ import {
   useDashboardAnalytics,
   useDashboardActivity,
 } from "@/hooks/use-dashboard";
-import { DashboardStats } from "../projects/components/dashboard-stats";
-import { DashboardStatsSkeleton } from "../projects/components/dashboard-stats-skeleton";
-import { RecentActivity } from "../projects/components/recent-activity";
-import { GrowthChart } from "../projects/[id]/components/overview/growth-chart";
-import { GrowthChartSkeleton } from "../projects/[id]/components/overview/growth-chart-skeleton";
-import { TopProjects } from "./components/top-projects";
+import { DashboardStats } from "../newsletters/components/dashboard-stats";
+import { DashboardStatsSkeleton } from "../newsletters/components/dashboard-stats-skeleton";
+import { RecentActivity } from "../newsletters/components/recent-activity";
+import { GrowthChart } from "../newsletters/[id]/components/overview/growth-chart";
+import { GrowthChartSkeleton } from "../newsletters/[id]/components/overview/growth-chart-skeleton";
+import { TopNewsletters } from "./components/top-newsletters";
 
 export default function AnalyticsPage() {
   const [timeframe, setTimeframe] = useState(30);
@@ -26,7 +26,7 @@ export default function AnalyticsPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
         <p className="text-muted-foreground">
-          Combined performance across every project you own.
+          Combined performance across every newsletter you own.
         </p>
       </div>
 
@@ -49,7 +49,7 @@ export default function AnalyticsPage() {
           )}
         </div>
         <div>
-          <TopProjects projects={analyticsData?.topProjects} />
+          <TopNewsletters newsletters={analyticsData?.topNewsletters} />
         </div>
       </div>
 

@@ -3,8 +3,8 @@ import { emails, subscribers } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
 import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 
-export const getProjectAnalytics = async (
-  projectId: string,
+export const getNewsletterAnalytics = async (
+  newsletterId: string,
   days: number = 30
 ): Promise<ServiceResponse<any>> => {
   try {
@@ -19,7 +19,7 @@ export const getProjectAnalytics = async (
       .from(subscribers)
       .where(
         and(
-          eq(subscribers.projectId, projectId),
+          eq(subscribers.newsletterId, newsletterId),
           eq(subscribers.status, "subscribed")
         )
       );
@@ -31,7 +31,7 @@ export const getProjectAnalytics = async (
       .from(subscribers)
       .where(
         and(
-          eq(subscribers.projectId, projectId),
+          eq(subscribers.newsletterId, newsletterId),
           gte(subscribers.createdAt, sevenDaysAgo)
         )
       );
@@ -42,7 +42,7 @@ export const getProjectAnalytics = async (
       .from(subscribers)
       .where(
         and(
-          eq(subscribers.projectId, projectId),
+          eq(subscribers.newsletterId, newsletterId),
           gte(subscribers.createdAt, thirtyDaysAgo)
         )
       );
@@ -57,7 +57,7 @@ export const getProjectAnalytics = async (
       .from(emails)
       .where(
         and(
-          eq(emails.projectId, projectId),
+          eq(emails.newsletterId, newsletterId),
           eq(emails.status, "published"),
           lte(emails.sentAt, now)
         )
@@ -71,7 +71,7 @@ export const getProjectAnalytics = async (
         date_trunc('day', created_at) as date,
         count(id)::int as count
       FROM subscribers
-      WHERE project_id = ${projectId}
+      WHERE newsletter_id = ${newsletterId}
         AND created_at >= ${timeframeDate}
       GROUP BY 1
       ORDER BY 1 ASC
@@ -108,7 +108,7 @@ export const getProjectAnalytics = async (
         type: sql<string>`'subscriber'`,
       })
       .from(subscribers)
-      .where(eq(subscribers.projectId, projectId))
+      .where(eq(subscribers.newsletterId, newsletterId))
       .orderBy(desc(subscribers.createdAt))
       .limit(5);
 
@@ -122,7 +122,7 @@ export const getProjectAnalytics = async (
       .from(emails)
       .where(
         and(
-          eq(emails.projectId, projectId),
+          eq(emails.newsletterId, newsletterId),
           eq(emails.status, "published"),
           lte(emails.sentAt, now)
         )
@@ -145,7 +145,7 @@ export const getProjectAnalytics = async (
     const statusRows = await db
       .select({ status: subscribers.status, count: count() })
       .from(subscribers)
-      .where(eq(subscribers.projectId, projectId))
+      .where(eq(subscribers.newsletterId, newsletterId))
       .groupBy(subscribers.status);
 
     const statusBreakdown = {
@@ -160,7 +160,7 @@ export const getProjectAnalytics = async (
 
     return {
       success: true,
-      message: "Project analytics fetched successfully",
+      message: "Newsletter analytics fetched successfully",
       data: {
         stats: {
           totalSubscribers,
@@ -189,7 +189,7 @@ export const getProjectAnalytics = async (
       message:
         err instanceof Error
           ? err.message
-          : "Something went wrong fetching project analytics",
+          : "Something went wrong fetching newsletter analytics",
       data: null,
     };
   }

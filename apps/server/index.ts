@@ -5,20 +5,20 @@ import { withAuth } from "./middlewares/session";
 import authRoute from "./routes/api/v1/auth";
 import type { Context } from "hono";
 import type { AuthType } from "./types";
-import projectsRoute from "./routes/api/v1/projects";
+import newslettersRoute from "./routes/api/v1/newsletters";
 import subscriptionRoutes from "./routes/api/v1/subscriptions";
 import subscriptionsPaddleRoute from "./routes/api/v1/subscriptions-paddle";
 import paddleWebhookRoute from "./routes/api/v1/webhooks/paddle";
 import sesWebhookRoute from "./routes/api/v1/webhooks/ses";
 import unsubscribeRoutes from "./routes/api/v1/unsubscribe";
-import externalProjectRoutes from "./routes/api/v1/external/projects";
+import externalNewslettersRoute from "./routes/api/v1/external/newsletters";
 import profileRoutes from "./routes/api/v1/profiles";
 import postRoutes from "./routes/api/v1/posts";
 import dashboardRoute from "./routes/api/v1/dashboard";
 import emailsRoute from "./routes/api/v1/emails";
 import segmentRoutes from "./routes/api/v1/segments";
 import domainsRoute from "./routes/api/v1/domains";
-import publicProjectsRoute from "./routes/api/v1/public/projects";
+import publicNewslettersRoute from "./routes/api/v1/public/newsletters";
 import { start } from "workflow/api";
 import { myTestWorkflow } from "./tests/workflow";
 
@@ -68,16 +68,16 @@ v1.route("/auth", authRoute.use(rateLimiter(60 * 60 * 1000, 15)));
 v1.route("/unsubscribe", unsubscribeRoutes.use(rateLimiter(60 * 1000, 5)));
 
 v1.route(
-  "/external/projects",
-  externalProjectRoutes.use(rateLimiter(60 * 1000, 9)),
+  "/external/newsletters",
+  externalNewslettersRoute.use(rateLimiter(60 * 1000, 9)),
 );
 
-// Public project pages (apps/web) — no auth, no ownership check beyond
+// Public newsletter pages (apps/web) — no auth, no ownership check beyond
 // "not private". Subscribe is the sensitive one here, so it gets the
 // tighter limit; the read endpoints share a looser one.
 v1.route(
-  "/public/projects",
-  publicProjectsRoute.use(rateLimiter(60 * 1000, 60)),
+  "/public/newsletters",
+  publicNewslettersRoute.use(rateLimiter(60 * 1000, 60)),
 );
 
 // Paddle webhook — public, verified via Paddle's own signature instead of
@@ -109,8 +109,8 @@ v1.get("/session", rateLimiter(60 * 60 * 1000, 80), (c: Context) => {
   });
 });
 
-// projects, 70 req per hour
-v1.route("/projects", projectsRoute.use(rateLimiter(60 * 60 * 1000, 70)));
+// newsletters, 70 req per hour
+v1.route("/newsletters", newslettersRoute.use(rateLimiter(60 * 60 * 1000, 70)));
 
 // subsribers, 70 req per hour
 v1.route(

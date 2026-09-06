@@ -36,6 +36,13 @@
       "when": 1788694131215,
       "tag": "0004_add_domain_ownership",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788780531215,
+      "tag": "0005_rename_projects_to_newsletters",
+      "breakpoints": true
     }
   ]
 }

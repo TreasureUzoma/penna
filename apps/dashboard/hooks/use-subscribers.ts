@@ -12,17 +12,17 @@ export interface Subscriber {
 
 import { PaginatedResponse } from "@workspace/types";
 
-export function useSubscribers(projectId: string, page = 1, limit = 10) {
+export function useSubscribers(newsletterId: string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: ["subscribers", projectId, page, limit],
+    queryKey: ["subscribers", newsletterId, page, limit],
     queryFn: async () => {
       const res = await api.get<{ data: PaginatedResponse<Subscriber> }>(
-        `/projects/${projectId}/subscribers`,
+        `/newsletters/${newsletterId}/subscribers`,
         { params: { page, limit } }
       );
       return res.data.data;
     },
-    enabled: !!projectId,
+    enabled: !!newsletterId,
   });
 }
 
@@ -31,19 +31,19 @@ interface CreateSubscriberData {
   name?: string;
 }
 
-export function useCreateSubscriber(projectId: string) {
+export function useCreateSubscriber(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: CreateSubscriberData) => {
       const res = await api.post<{ data: Subscriber }>(
-        `/projects/${projectId}/subscribers`,
+        `/newsletters/${newsletterId}/subscribers`,
         data
       );
       return res.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscribers", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["subscribers", newsletterId] });
       toast.success("Subscriber added successfully");
     },
     onError: (error: any) => {
@@ -59,19 +59,19 @@ interface ImportSubscribersResult {
   totalRows: number;
 }
 
-export function useImportSubscribers(projectId: string) {
+export function useImportSubscribers(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (csvContent: string) => {
       const res = await api.post<{ data: ImportSubscribersResult }>(
-        `/projects/${projectId}/subscribers/import`,
+        `/newsletters/${newsletterId}/subscribers/import`,
         { csvContent }
       );
       return res.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["subscribers", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["subscribers", newsletterId] });
       const skipped = (data?.skippedDuplicates ?? 0) + (data?.invalidRows ?? 0);
       toast.success(
         `Imported ${data?.imported ?? 0} subscriber${data?.imported === 1 ? "" : "s"}` +
@@ -86,18 +86,18 @@ export function useImportSubscribers(projectId: string) {
   });
 }
 
-export function useDeleteSubscriber(projectId: string) {
+export function useDeleteSubscriber(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (subscriberId: string) => {
       const res = await api.delete(
-        `/projects/${projectId}/subscribers/${subscriberId}`
+        `/newsletters/${newsletterId}/subscribers/${subscriberId}`
       );
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscribers", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["subscribers", newsletterId] });
       toast.success("Subscriber removed successfully");
     },
     onError: (error: any) => {

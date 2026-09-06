@@ -1,7 +1,7 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getPublicProject, getPublicPost } from "@/lib/public-projects";
-import { PostView } from "@/components/public-project/post-view";
+import { getPublicNewsletter, getPublicPost } from "@/lib/public-newsletters";
+import { PostView } from "@/components/public-newsletter/post-view";
 
 interface Props {
   params: Promise<{ slug: string; postId: string }>;
@@ -9,26 +9,22 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, postId } = await params;
-  const project = await getPublicProject(slug);
-  if (!project) return {};
+  const newsletter = await getPublicNewsletter(slug);
+  if (!newsletter) return {};
   const post = await getPublicPost(slug, postId);
   if (!post) return {};
 
-  return { title: `${post.subject} - ${project.name}` };
+  return { title: `${post.subject} - ${newsletter.name}` };
 }
 
-/** Clean-URL counterpart to app/u/[username]/[slug]/[postId] — see that route and app/[slug]/page.tsx for the gating rationale. */
-export default async function PublicPostCleanPage({ params }: Props) {
+/** A single published post — penna.dev/{slug}/{postId}. */
+export default async function PublicPostPage({ params }: Props) {
   const { slug, postId } = await params;
-  const project = await getPublicProject(slug);
-  if (!project) notFound();
-
-  if (!project.hasCleanUrl) {
-    redirect(`/u/${project.ownerUsername}/${slug}/${postId}`);
-  }
+  const newsletter = await getPublicNewsletter(slug);
+  if (!newsletter) notFound();
 
   const post = await getPublicPost(slug, postId);
   if (!post) notFound();
 
-  return <PostView project={project} post={post} basePath={`/${slug}`} />;
+  return <PostView newsletter={newsletter} post={post} />;
 }

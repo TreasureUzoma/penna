@@ -11,29 +11,29 @@ export interface Email {
   sentAt: string;
 }
 
-export function useEmails(projectId: string) {
+export function useEmails(newsletterId: string) {
   return useQuery({
-    queryKey: ["emails", projectId],
+    queryKey: ["emails", newsletterId],
     queryFn: async () => {
       const res = await api.get<{ data: Email[] }>(
-        `/projects/${projectId}/emails`
+        `/newsletters/${newsletterId}/emails`
       );
       return res.data.data;
     },
-    enabled: !!projectId,
+    enabled: !!newsletterId,
   });
 }
 
-export function useEmail(projectId: string, emailId: string) {
+export function useEmail(newsletterId: string, emailId: string) {
   return useQuery({
-    queryKey: ["email", projectId, emailId],
+    queryKey: ["email", newsletterId, emailId],
     queryFn: async () => {
       const res = await api.get<{ data: Email }>(
-        `/projects/${projectId}/emails/${emailId}`
+        `/newsletters/${newsletterId}/emails/${emailId}`
       );
       return res.data.data;
     },
-    enabled: !!projectId && !!emailId,
+    enabled: !!newsletterId && !!emailId,
   });
 }
 
@@ -44,19 +44,19 @@ interface CreateEmailData {
   status?: "published" | "draft";
 }
 
-export function useCreateEmail(projectId: string) {
+export function useCreateEmail(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: CreateEmailData) => {
       const res = await api.post<{ data: Email }>(
-        `/projects/${projectId}/emails`,
+        `/newsletters/${newsletterId}/emails`,
         data
       );
       return res.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["emails", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["emails", newsletterId] });
       toast.success("Post created successfully");
     },
     onError: (error: any) => {
@@ -73,14 +73,14 @@ type UpdateEmailValues = {
   sentAt?: string;
 };
 
-export function useUpdateEmail(projectId: string) {
+export function useUpdateEmail(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (values: UpdateEmailValues) => {
       const { emailId, ...data } = values;
       const res = await api.patch<ServiceResponse<any>>(
-        `/projects/${projectId}/emails/${emailId}`,
+        `/newsletters/${newsletterId}/emails/${emailId}`,
         data
       );
       return res.data;
@@ -88,7 +88,7 @@ export function useUpdateEmail(projectId: string) {
     onSuccess: (data) => {
       if (data.success) {
         toast.success("Post updated successfully");
-        queryClient.invalidateQueries({ queryKey: ["emails", projectId] });
+        queryClient.invalidateQueries({ queryKey: ["emails", newsletterId] });
       } else {
         toast.error(data.message || "Failed to update post");
       }
@@ -103,16 +103,16 @@ export function useUpdateEmail(projectId: string) {
   });
 }
 
-export function useDeleteEmail(projectId: string) {
+export function useDeleteEmail(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (emailId: string) => {
-      const res = await api.delete(`/projects/${projectId}/emails/${emailId}`);
+      const res = await api.delete(`/newsletters/${newsletterId}/emails/${emailId}`);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["emails", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["emails", newsletterId] });
       toast.success("Post deleted successfully");
     },
     onError: (error: any) => {

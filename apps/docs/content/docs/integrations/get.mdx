@@ -1,17 +1,17 @@
 ---
 title: Get Subscribers
-description: "Retrieve a list of all subscribers for your project using the API."
+description: "Retrieve a list of all subscribers for your newsletter using the API."
 ---
 
 # Get Subscribers
 
-Retrieves a list of all subscribers for your project. This endpoint requires a **Private Key**.
+Retrieves a list of all subscribers for your newsletter. This endpoint requires a **Private Key**.
 
 ## Authentication
 
 This endpoint uses both the Public Key and Private Key for authentication.
 
-**Endpoint:** `GET /api/v1/external/projects/subscribers`
+**Endpoint:** `GET /api/v1/external/newsletters/subscribers`
 
 **Query Parameters:**
 
@@ -34,7 +34,7 @@ This endpoint uses both the Public Key and Private Key for authentication.
       {
         "serial": 123,
         "id": "bdc80124-5787-4002-ba52-78ceddfeaadb",
-        "projectId": "bae91c59-0a8a-49f8-b917-f38c3772b88e",
+        "newsletterId": "bae91c59-0a8a-49f8-b917-f38c3772b88e",
         "name": "Subscriber Name",
         "email": "user@mail.com",
         "status": "subscribed",
@@ -59,7 +59,7 @@ This endpoint uses both the Public Key and Private Key for authentication.
 ### cURL
 
 ```bash
-curl -X GET "https://api.penna.dev/api/v1/external/projects/subscribers?page=1&limit=10" \
+curl -X GET "https://api.penna.dev/api/v1/external/newsletters/subscribers?page=1&limit=10" \
   -H "x-penna-public-key: penn_your_public_key" \
   -H "x-penna-private-key: pk_your_private_key"
 ```
@@ -72,7 +72,7 @@ const axios = require("axios");
 async function getSubscribers() {
   try {
     const response = await axios.get(
-      "https://api.penna.dev/api/v1/external/projects/subscribers",
+      "https://api.penna.dev/api/v1/external/newsletters/subscribers",
       {
         headers: {
           "x-penna-public-key": "penn_your_public_key",
@@ -94,7 +94,7 @@ getSubscribers();
 ```python
 import requests
 
-url = "https://api.penna.dev/api/v1/external/projects/subscribers"
+url = "https://api.penna.dev/api/v1/external/newsletters/subscribers"
 headers = {
     "x-penna-public-key": "penn_your_public_key",
     "x-penna-private-key": "pk_your_private_key"

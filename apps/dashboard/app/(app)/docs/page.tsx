@@ -16,7 +16,7 @@ export default function DocsPage() {
     {
       title: "Getting Started",
       description:
-        "Learn the basics of Penna and how to set up your first project.",
+        "Learn the basics of Penna and how to set up your first newsletter.",
       icon: Zap,
       link: "#",
     },
@@ -47,7 +47,7 @@ export default function DocsPage() {
     },
     {
       title: "Security",
-      description: "Best practices for keeping your project and data secure.",
+      description: "Best practices for keeping your newsletter and data secure.",
       icon: Shield,
       link: "#",
     },
@@ -107,10 +107,10 @@ export default function DocsPage() {
             <h2 className="text-2xl font-bold">Try the API</h2>
             <p className="text-muted-foreground">
               Our API is designed to be simple and powerful. Get your API key in
-              project settings and start building today.
+              newsletter settings and start building today.
             </p>
             <Button asChild>
-              <Link href="/projects">Get API Key</Link>
+              <Link href="/newsletters">Get API Key</Link>
             </Button>
           </div>
         </div>

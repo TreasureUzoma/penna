@@ -2,7 +2,7 @@ import { db } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { InsertPost } from "@workspace/validations";
 import type { ServiceResponse } from "@workspace/types";
-import { emails, projectMembers } from "@workspace/db/schema";
+import { emails, newsletterMembers } from "@workspace/db/schema";
 import { decryptDataSubtle, encryptDataSubtle } from "@/lib/encrypt";
 import { envConfig } from "@/config";
 import { start } from "workflow/api";
@@ -20,7 +20,7 @@ const triggerSendIfPublished = async (emailId: string, sentAt?: Date) => {
   ]);
 };
 
-export const createProjectPostDraft = async (
+export const createNewsletterPostDraft = async (
   body: InsertPost
 ): Promise<ServiceResponse<InsertPost>> => {
   try {
@@ -65,7 +65,7 @@ export const createProjectPostDraft = async (
   }
 };
 
-export const updateProjectPost = async (
+export const updateNewsletterPost = async (
   postId: string,
   body: Partial<InsertPost>
 ): Promise<ServiceResponse<InsertPost>> => {
@@ -122,7 +122,7 @@ export const updateProjectPost = async (
   }
 };
 
-export const getAllProjectPosts = async (
+export const getAllNewsletterPosts = async (
   userId: string
 ): Promise<ServiceResponse<InsertPost[]>> => {
   try {
@@ -130,15 +130,15 @@ export const getAllProjectPosts = async (
       .select({
         serial: emails.serial,
         id: emails.id,
-        projectId: emails.projectId,
+        newsletterId: emails.newsletterId,
         subject: emails.subject,
         body: emails.body,
         sentAt: emails.sentAt,
         status: emails.status,
       })
       .from(emails)
-      .innerJoin(projectMembers, eq(emails.projectId, projectMembers.projectId))
-      .where(eq(projectMembers.userId, userId));
+      .innerJoin(newsletterMembers, eq(emails.newsletterId, newsletterMembers.newsletterId))
+      .where(eq(newsletterMembers.userId, userId));
 
     // decrypt all post bodies
     const decryptedPosts = await Promise.all(

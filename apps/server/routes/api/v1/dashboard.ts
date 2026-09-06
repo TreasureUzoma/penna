@@ -32,9 +32,9 @@ dashboardRoute.get("/stats", async (c) => {
   );
 });
 
-// Get dashboard projects only (filtered by search/sort)
+// Get dashboard newsletters only (filtered by search/sort)
 dashboardRoute.get(
-  "/projects",
+  "/newsletters",
   zValidator("query", dashboardOverviewSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
@@ -57,15 +57,15 @@ dashboardRoute.get(
     return c.json(
       {
         success: true,
-        message: "Dashboard projects fetched successfully",
-        data: { projects: serviceData.data.projects },
+        message: "Dashboard newsletters fetched successfully",
+        data: { newsletters: serviceData.data.newsletters },
       },
       200
     );
   }
 );
 
-// Recent activity across all of the user's projects (most recently sent posts)
+// Recent activity across all of the user's newsletters (most recently sent posts)
 dashboardRoute.get("/activity", async (c) => {
   const cookieUser = c.get("user") as AuthType;
   const serviceData = await getRecentActivity(cookieUser.id);
@@ -80,7 +80,7 @@ dashboardRoute.get("/activity", async (c) => {
   );
 });
 
-// Account-wide analytics — combined subscriber growth + top projects
+// Account-wide analytics — combined subscriber growth + top newsletters
 dashboardRoute.get(
   "/analytics",
   zValidator(

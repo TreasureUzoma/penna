@@ -31,7 +31,7 @@ export interface PaginationParams {
   limit?: number;
 }
 
-export interface ExternalProjectCreate {
+export interface ExternalNewsletterCreate {
   id: string;
   name?: string;
   keyType: string;

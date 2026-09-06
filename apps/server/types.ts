@@ -5,16 +5,16 @@ export interface AuthType {
   plan?: string;
 }
 
-export interface ExternalProjectCreate {
+export interface ExternalNewsletterCreate {
   id: string;
-  projectId: string;
+  newsletterId: string;
   name: string;
   email: string;
   keyType: string;
 }
 
 export type InsertApiKey = {
-  projectId: string;
+  newsletterId: string;
   publicKey: string;
   encryptedSecretKey: string;
   revokedAt?: Date;

@@ -1,4 +1,4 @@
-import type { ProjectRoles } from "@workspace/types";
+import type { NewsletterRoles } from "@workspace/types";
 import { sendSystemEmail } from "./ses";
 import { meta } from "@workspace/constants/meta";
 import { envConfig } from "@/config";
@@ -9,7 +9,7 @@ export const sendWelcomeEmail = async (name: string, email: string) => {
   const html = `
     <p>hi ${name},</p>
     <p>welcome to ${meta.name} — glad to have you.</p>
-    <p><a href="${envConfig.DASHBOARD_SITE}/dashboard">head to your dashboard</a> to create your first project.</p>
+    <p><a href="${envConfig.DASHBOARD_SITE}/dashboard">head to your dashboard</a> to create your first newsletter.</p>
     <p>— ${meta.name}</p>
   `;
 
@@ -55,44 +55,44 @@ export const sendForgottenPasswordEmail = async (
   return result;
 };
 
-export const sendProjectInviteEmail = async (
+export const sendNewsletterInviteEmail = async (
   email: string,
   inviterName: string,
-  projectName: string,
-  role: ProjectRoles
+  newsletterName: string,
+  role: NewsletterRoles
 ) => {
   // No accept-invite page exists in the dashboard yet — this links to the
   // dashboard root and relies on the invitee signing in to see/accept it
-  // via `POST /projects/roles/accept`. Update this once that UI ships.
+  // via `POST /newsletters/roles/accept`. Update this once that UI ships.
   const dashboardUrl = `${envConfig.DASHBOARD_SITE}/dashboard`;
 
   const html = `
     <p>hi,</p>
-    <p><strong>${inviterName}</strong> invited you to join <strong>${projectName}</strong> on ${meta.name} as a <strong>${role}</strong>.</p>
+    <p><strong>${inviterName}</strong> invited you to join <strong>${newsletterName}</strong> on ${meta.name} as a <strong>${role}</strong>.</p>
     <p><a href="${dashboardUrl}">sign in to accept the invite</a></p>
     <p>— ${meta.name}</p>
   `;
 
   const result = await sendSystemEmail({
     to: email,
-    subject: `You've been invited to ${projectName} on ${meta.name}`,
+    subject: `You've been invited to ${newsletterName} on ${meta.name}`,
     html,
   });
 
   if (!result.success) {
-    console.error("Failed to send project invite email:", result.error);
+    console.error("Failed to send newsletter invite email:", result.error);
   }
   return result;
 };
 
 export const sendUnsubscribeCofirmationEmail = async (
   email: string,
-  projectName: string,
+  newsletterName: string,
   confirmUrl: string
 ) => {
   const html = `
     <p>hi,</p>
-    <p>we got a request to unsubscribe <strong>${email}</strong> from <strong>${projectName}</strong>'s newsletter. confirm below:</p>
+    <p>we got a request to unsubscribe <strong>${email}</strong> from <strong>${newsletterName}</strong>'s newsletter. confirm below:</p>
     <p><a href="${confirmUrl}">confirm unsubscribe</a></p>
     <p>if you didn't request this, you can safely ignore this email — you'll stay subscribed.</p>
     <p>— ${meta.name}</p>
@@ -100,7 +100,7 @@ export const sendUnsubscribeCofirmationEmail = async (
 
   const result = await sendSystemEmail({
     to: email,
-    subject: `Confirm unsubscribe from ${projectName}`,
+    subject: `Confirm unsubscribe from ${newsletterName}`,
     html,
   });
 
@@ -116,7 +116,7 @@ export const sendUnsubscribeCofirmationEmail = async (
 export interface SubscriberLimitWarningOptions {
   ownerEmail: string;
   ownerName: string;
-  projectName: string;
+  newsletterName: string;
   planName: string;
   subscriberCount: number;
   subscriberCap: number;
@@ -127,7 +127,7 @@ export interface SubscriberLimitWarningOptions {
 }
 
 /**
- * Warns a project owner they're near or over their plan's subscriber cap.
+ * Warns a newsletter owner they're near or over their plan's subscriber cap.
  * Called from `services/limits.ts` whenever usage crosses a threshold —
  * see that file for the dedupe logic that keeps this from firing on every
  * single subscriber added.
@@ -138,7 +138,7 @@ export const sendSubscriberLimitWarningEmail = async (
   const {
     ownerEmail,
     ownerName,
-    projectName,
+    newsletterName,
     planName,
     subscriberCount,
     subscriberCap,
@@ -148,13 +148,13 @@ export const sendSubscriberLimitWarningEmail = async (
 
   const subject =
     status === "reached"
-      ? `${projectName} has hit its subscriber limit`
-      : `${projectName} is approaching its subscriber limit`;
+      ? `${newsletterName} has hit its subscriber limit`
+      : `${newsletterName} is approaching its subscriber limit`;
 
   const bodyLine =
     status === "reached"
-      ? `<strong>${projectName}</strong> has reached ${subscriberCount.toLocaleString()} subscribers — the limit included in your <strong>${planName}</strong> plan (${subscriberCap.toLocaleString()}). New subscribers can't be added until you upgrade.`
-      : `<strong>${projectName}</strong> is at ${subscriberCount.toLocaleString()} of the ${subscriberCap.toLocaleString()} subscribers included in your <strong>${planName}</strong> plan.`;
+      ? `<strong>${newsletterName}</strong> has reached ${subscriberCount.toLocaleString()} subscribers — the limit included in your <strong>${planName}</strong> plan (${subscriberCap.toLocaleString()}). New subscribers can't be added until you upgrade.`
+      : `<strong>${newsletterName}</strong> is at ${subscriberCount.toLocaleString()} of the ${subscriberCap.toLocaleString()} subscribers included in your <strong>${planName}</strong> plan.`;
 
   const html = `
     <p>hi ${ownerName},</p>

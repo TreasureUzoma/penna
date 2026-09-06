@@ -18,7 +18,7 @@ const envSchema = z.object({
   AWS_ACCESS_KEY_ID: z.string(),
   AWS_SECRET_ACCESS_KEY: z.string(),
   // Sender for system/transactional email (limit warnings, etc.) — distinct
-  // from NEWSLETTER_DOMAIN, which is per-project outbound newsletter mail.
+  // from NEWSLETTER_DOMAIN, which is per-newsletter outbound mail.
   // Must be a verified SES identity.
   SYSTEM_EMAIL_FROM: z.string().default("notifications@penna.dev"),
   // ARN of the SNS topic AWS SES publishes bounce/complaint notifications

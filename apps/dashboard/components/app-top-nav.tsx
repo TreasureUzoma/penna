@@ -17,7 +17,7 @@ import {
   AvatarImage,
 } from "@workspace/ui/components/avatar";
 import { usePathname, useParams } from "next/navigation";
-import { ProjectSwitcher } from "./project-switcher";
+import { NewsletterSwitcher } from "./newsletter-switcher";
 import { useSelectedLayoutSegments } from "next/navigation";
 
 export default function AppTopNav() {
@@ -25,9 +25,9 @@ export default function AppTopNav() {
   const pathname = usePathname();
   const params = useParams();
   const segments = useSelectedLayoutSegments();
-  const isProjectRoute =
-    segments[0] === "projects" && !!segments[1] && segments[1] !== "new";
-  const projectSlug = isProjectRoute ? segments[1] : null;
+  const isNewsletterRoute =
+    segments[0] === "newsletters" && !!segments[1] && segments[1] !== "new";
+  const newsletterSlug = isNewsletterRoute ? segments[1] : null;
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -39,49 +39,49 @@ export default function AppTopNav() {
   }, []);
 
   const globalTabs = [
-    { label: "Projects", value: "projects", href: "/projects" },
+    { label: "Newsletters", value: "newsletters", href: "/newsletters" },
     { label: "Settings", value: "settings", href: "/settings" },
     { label: "Docs", value: "docs", href: "/docs" },
   ];
 
-  const projectTabs = projectSlug
+  const newsletterTabs = newsletterSlug
     ? [
         {
           label: "Overview",
           value: "overview",
-          href: `/projects/${projectSlug}`,
+          href: `/newsletters/${newsletterSlug}`,
         },
         {
           label: "Posts",
           value: "posts",
-          href: `/projects/${projectSlug}/posts`,
+          href: `/newsletters/${newsletterSlug}/posts`,
         },
         {
           label: "Analytics",
           value: "analytics",
-          href: `/projects/${projectSlug}/analytics`,
+          href: `/newsletters/${newsletterSlug}/analytics`,
         },
         {
           label: "Subscribers",
           value: "subscribers",
-          href: `/projects/${projectSlug}/subscribers`,
+          href: `/newsletters/${newsletterSlug}/subscribers`,
         },
         {
           label: "Settings",
           value: "settings",
-          href: `/projects/${projectSlug}/settings`,
+          href: `/newsletters/${newsletterSlug}/settings`,
         },
       ]
     : [];
 
-  const tabs = isProjectRoute ? projectTabs : globalTabs;
+  const tabs = isNewsletterRoute ? newsletterTabs : globalTabs;
 
   let activeTabValue: string;
 
-  if (isProjectRoute) {
+  if (isNewsletterRoute) {
     activeTabValue = segments[2] || "overview";
   } else {
-    activeTabValue = segments[0] || "projects";
+    activeTabValue = segments[0] || "newsletters";
   }
 
   const { data: profileData, isLoading: profileLoading } = useGetProfile();
@@ -98,7 +98,7 @@ export default function AppTopNav() {
             ease: "linear",
           }}
         >
-          <Link href="/projects">
+          <Link href="/newsletters">
             <Logo />
           </Link>
         </motion.div>
@@ -133,7 +133,7 @@ export default function AppTopNav() {
               )}
             </div>
 
-            {isProjectRoute && (
+            {isNewsletterRoute && (
               <>
                 <Separator
                   orientation="vertical"
@@ -141,7 +141,7 @@ export default function AppTopNav() {
                     "h-7 w-[2px] rotate-[12deg] origin-center bg-muted-foreground/20 transition-all duration-500"
                   )}
                 />
-                <ProjectSwitcher />
+                <NewsletterSwitcher />
               </>
             )}
           </div>

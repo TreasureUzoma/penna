@@ -5,7 +5,7 @@ import { toast } from "sonner";
 export interface Invoice {
   serial: number;
   userId: string;
-  projectId: string | null;
+  newsletterId: string | null;
   provider: string;
   amount: number;
   currency: string;

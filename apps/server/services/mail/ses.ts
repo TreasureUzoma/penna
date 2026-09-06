@@ -32,8 +32,8 @@ const sesV2Client = new SESv2Client({
 });
 
 export interface SendNewsletterOptions {
-  projectId: string;
-  projectSlug: string;
+  newsletterId: string;
+  newsletterSlug: string;
   recipientEmail: string;
   subject: string;
   html: string;
@@ -43,7 +43,7 @@ export interface SendNewsletterOptions {
 }
 
 export interface SendBulkNewsletterOptions {
-  project: { id: string; slug: string };
+  newsletter: { id: string; slug: string };
   recipientEmails: string[];
   subject: string;
   html: string;
@@ -59,8 +59,8 @@ export const sendNewsletterEmail = async (
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
   try {
     const {
-      projectId,
-      projectSlug,
+      newsletterId,
+      newsletterSlug,
       recipientEmail,
       subject,
       html,
@@ -69,23 +69,23 @@ export const sendNewsletterEmail = async (
     } = options;
 
     // Per-recipient: the token embedded in both the visible footer link and
-    // the List-Unsubscribe header is signed for this exact (project, email)
+    // the List-Unsubscribe header is signed for this exact (newsletter, email)
     // pair, so it can't be reused to unsubscribe someone else.
     const { unsubscribeUrl, header } = await buildListUnsubscribeHeaders(
-      projectId,
+      newsletterId,
       recipientEmail
     );
     const htmlWithFooter = appendUnsubscribeFooter(html, unsubscribeUrl);
 
     const command = new SendEmailV2Command({
       // {slug}@newsletter.penna.dev — not newsletter@{slug}.newsletter.penna.dev.
-      // The onboarding UI (create-project-form.tsx, username-form.tsx) has
+      // The onboarding UI (create-newsletter-form.tsx) has
       // always shown subscribers this short, non-repetitive form; this was
       // the one place still sending from the longer one.
-      // `fromDomain` overrides this with the project's own verified domain
+      // `fromDomain` overrides this with the newsletter's own verified domain
       // (services/domains.ts) when it has one — same {slug}@ local part,
       // just on their domain instead of the shared one.
-      FromEmailAddress: `${projectSlug}@${fromDomain || envConfig.NEWSLETTER_DOMAIN}`,
+      FromEmailAddress: `${newsletterSlug}@${fromDomain || envConfig.NEWSLETTER_DOMAIN}`,
       Destination: {
         ToAddresses: [recipientEmail],
       },
@@ -143,7 +143,7 @@ export const sendBulkNewsletterEmails = async (
   failed: number;
   errors?: Array<{ email: string; error: string }>;
 }> => {
-  const { project, recipientEmails, subject, html, replyTo, fromDomain } =
+  const { newsletter, recipientEmails, subject, html, replyTo, fromDomain } =
     options;
   const results = {
     sent: 0,
@@ -157,8 +157,8 @@ export const sendBulkNewsletterEmails = async (
   for (const email of recipientEmails) {
     try {
       const result = await sendNewsletterEmail({
-        projectId: project.id,
-        projectSlug: project.slug,
+        newsletterId: newsletter.id,
+        newsletterSlug: newsletter.slug,
         recipientEmail: email,
         subject,
         html,
@@ -202,7 +202,7 @@ export interface SendSystemEmailOptions {
 /**
  * Send a transactional/system email (limit warnings, account notices,
  * etc.) from `SYSTEM_EMAIL_FROM`, as opposed to `sendNewsletterEmail`,
- * which sends from a project's own `{slug}@{NEWSLETTER_DOMAIN}` identity.
+ * which sends from a newsletter's own `{slug}@{NEWSLETTER_DOMAIN}` identity.
  */
 export const sendSystemEmail = async (
   options: SendSystemEmailOptions

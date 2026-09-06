@@ -34,7 +34,7 @@ export const subscriberStatusEnum = pgEnum("subscriber_status", [
   "pending",
   "bounced",
 ]);
-export const projectRoleEnum = pgEnum("project_role", [
+export const newsletterRoleEnum = pgEnum("newsletter_role", [
   "owner",
   "admin",
   "editor",
@@ -46,7 +46,7 @@ export const userSubscriptionEnum = pgEnum("user_subscription", [
   "enterprise",
 ]);
 
-export const projects = pgTable("projects", {
+export const newsletters = pgTable("newsletters", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
   name: text("name").notNull(),
@@ -62,7 +62,7 @@ export const projects = pgTable("projects", {
 export const emails = pgTable("emails", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
-  projectId: uuid("project_id").notNull(),
+  newsletterId: uuid("newsletter_id").notNull(),
   subject: text("subject").notNull(),
   body: text("body").notNull(),
   sentAt: timestamp("sent_at").defaultNow().notNull(),
@@ -72,7 +72,7 @@ export const emails = pgTable("emails", {
 export const subscribers = pgTable("subscribers", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
-  projectId: uuid("project_id").notNull(),
+  newsletterId: uuid("newsletter_id").notNull(),
   name: text("name"),
   email: text("email").notNull(),
   status: subscriberStatusEnum("status").default("subscribed").notNull(),
@@ -80,12 +80,12 @@ export const subscribers = pgTable("subscribers", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const projectMembers = pgTable("project_members", {
+export const newsletterMembers = pgTable("newsletter_members", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
-  projectId: uuid("project_id").notNull(),
+  newsletterId: uuid("newsletter_id").notNull(),
   userId: uuid("user_id").notNull(),
-  role: projectRoleEnum("role").default("viewer").notNull(),
+  role: newsletterRoleEnum("role").default("viewer").notNull(),
   joinedAt: timestamp("joined_at").defaultNow(),
 });
 

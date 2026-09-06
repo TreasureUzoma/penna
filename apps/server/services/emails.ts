@@ -32,13 +32,13 @@ const triggerSendIfPublished = async (
 const encryptionKey = envConfig.ENCRYPTION_KEY!;
 
 export const getEmails = async (
-  projectId: string
+  newsletterId: string
 ): Promise<ServiceResponse> => {
   try {
     const data = await db
       .select()
       .from(emails)
-      .where(eq(emails.projectId, projectId))
+      .where(eq(emails.newsletterId, newsletterId))
       .orderBy(desc(emails.sentAt));
 
     // Decrypt bodies
@@ -69,14 +69,14 @@ export const getEmails = async (
 };
 
 export const getEmail = async (
-  projectId: string,
+  newsletterId: string,
   emailId: string
 ): Promise<ServiceResponse> => {
   try {
     const [email] = await db
       .select()
       .from(emails)
-      .where(and(eq(emails.projectId, projectId), eq(emails.id, emailId)));
+      .where(and(eq(emails.newsletterId, newsletterId), eq(emails.id, emailId)));
 
     if (!email) {
       return {
@@ -111,7 +111,7 @@ export const getEmail = async (
 };
 
 export const createEmail = async (
-  projectId: string,
+  newsletterId: string,
   subject: string,
   body: string,
   status: "published" | "draft" = "draft",
@@ -123,7 +123,7 @@ export const createEmail = async (
     const [newEmail] = await db
       .insert(emails)
       .values({
-        projectId,
+        newsletterId,
         subject,
         body: encryptedBody,
         status,
@@ -163,13 +163,13 @@ export const createEmail = async (
 };
 
 export const deleteEmail = async (
-  projectId: string,
+  newsletterId: string,
   emailId: string
 ): Promise<ServiceResponse> => {
   try {
     const [deletedEmail] = await db
       .delete(emails)
-      .where(and(eq(emails.projectId, projectId), eq(emails.id, emailId)))
+      .where(and(eq(emails.newsletterId, newsletterId), eq(emails.id, emailId)))
       .returning();
 
     if (!deletedEmail) {
@@ -198,7 +198,7 @@ export const deleteEmail = async (
 };
 
 export const updateEmail = async (
-  projectId: string,
+  newsletterId: string,
   emailId: string,
   subject?: string,
   body?: string,
@@ -225,7 +225,7 @@ export const updateEmail = async (
     const [updatedEmail] = await db
       .update(emails)
       .set(updateValues)
-      .where(and(eq(emails.projectId, projectId), eq(emails.id, emailId)))
+      .where(and(eq(emails.newsletterId, newsletterId), eq(emails.id, emailId)))
       .returning();
 
     if (!updatedEmail) {
@@ -288,12 +288,12 @@ const excerptOf = (markdown: string, length = 200): string =>
     .slice(0, length);
 
 /**
- * Published, already-sent posts for a project's public archive — backs the
- * unauthenticated project page (routes/api/v1/public/projects.ts). Drafts
+ * Published, already-sent posts for a newsletter's public archive — backs the
+ * unauthenticated newsletter page (routes/api/v1/public/newsletters.ts). Drafts
  * and posts scheduled for the future are never included.
  */
 export const getPublicEmails = async (
-  projectId: string,
+  newsletterId: string,
   page = 1,
   limit = 10
 ): Promise<ServiceResponse> => {
@@ -310,7 +310,7 @@ export const getPublicEmails = async (
       .from(emails)
       .where(
         and(
-          eq(emails.projectId, projectId),
+          eq(emails.newsletterId, newsletterId),
           eq(emails.status, "published"),
           lte(emails.sentAt, new Date())
         )
@@ -349,7 +349,7 @@ export const getPublicEmails = async (
 
 /** A single published post's rendered HTML, for the public single-post page. */
 export const getPublicEmail = async (
-  projectId: string,
+  newsletterId: string,
   emailId: string
 ): Promise<ServiceResponse> => {
   try {
@@ -358,7 +358,7 @@ export const getPublicEmail = async (
       .from(emails)
       .where(
         and(
-          eq(emails.projectId, projectId),
+          eq(emails.newsletterId, newsletterId),
           eq(emails.id, emailId),
           eq(emails.status, "published"),
           lte(emails.sentAt, new Date())

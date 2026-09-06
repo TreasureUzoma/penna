@@ -1,13 +1,9 @@
 import { routeStatus } from "@/lib/utils";
-import {
-  getProfileDataById,
-  getProfileDataByUsername,
-  updateUserProfile,
-} from "@/services/profile";
+import { getProfileDataById, updateUserProfile } from "@/services/profile";
 import type { AuthType } from "@/types";
 import { validationErrorResponse } from "@/utils/validation-error-response";
 import { zValidator } from "@hono/zod-validator";
-import { isValidUsername, updateProfileSchema } from "@workspace/validations";
+import { updateProfileSchema } from "@workspace/validations";
 import { Hono, type Context } from "hono";
 
 const profileRoutes = new Hono();
@@ -23,24 +19,6 @@ profileRoutes.get("/", async (c: Context) => {
 
   return c.json(serviceData);
 });
-
-profileRoutes.get(
-  "/:username",
-  zValidator("param", isValidUsername, (result, c) => {
-    if (!result.success) {
-      return validationErrorResponse(c, result.error);
-    }
-  }),
-  async (c) => {
-    const { username } = c.req.valid("param");
-    const serviceData = await getProfileDataByUsername(username);
-    if (!serviceData.success) {
-      return c.json(serviceData, 404);
-    }
-
-    return c.json(serviceData);
-  }
-);
 
 profileRoutes.patch(
   "/",
