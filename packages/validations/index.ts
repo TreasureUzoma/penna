@@ -178,6 +178,9 @@ export const updateNewsletterSchema = z.object({
   description: z.string().max(255).optional(),
   isPublic: z.boolean().optional(),
   removeBranding: z.boolean().optional(),
+  // Empty string clears it back to the initials fallback — see
+  // updateNewsletter in apps/server/services/newsletters.ts.
+  avatarUrl: z.string().url().optional().or(z.literal("")),
 });
 
 export type UpdateNewsletter = z.infer<typeof updateNewsletterSchema>;

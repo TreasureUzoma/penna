@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PublicPost, PublicNewsletter } from "@/lib/public-newsletters";
 import { SubscribeForm } from "./subscribe-form";
+import { EntityAvatar } from "@workspace/ui/components/entity-avatar";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -21,7 +22,14 @@ export function NewsletterView({
   return (
     <div className="max-w-2xl mx-auto px-4 md:px-5 pt-16 md:pt-24 pb-20">
       <div className="space-y-3 mb-10">
-        <h1 className="text-3xl md:text-4xl font-bold">{newsletter.name}</h1>
+        <div className="flex items-center gap-3">
+          <EntityAvatar
+            name={newsletter.name}
+            imageUrl={newsletter.avatarUrl}
+            className="size-12"
+          />
+          <h1 className="text-3xl md:text-4xl font-bold">{newsletter.name}</h1>
+        </div>
         {newsletter.description && (
           <p className="text-muted-foreground leading-relaxed">
             {newsletter.description}

@@ -13,6 +13,7 @@ export interface PublicNewsletter {
   slug: string;
   name: string;
   description: string | null;
+  avatarUrl: string | null;
 }
 
 export interface PublicPost {

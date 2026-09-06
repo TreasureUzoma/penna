@@ -77,6 +77,7 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs";
 import Link from "next/link";
+import { SubscriberAvatar } from "@/components/subscriber-avatar";
 
 export default function NewsletterSubscribersPage() {
   const params = useParams();
@@ -331,7 +332,15 @@ export default function NewsletterSubscribersPage() {
                 <TableBody>
                   {subscribers.map((subscriber) => (
                     <TableRow key={subscriber.id}>
-                      <TableCell>{subscriber.email}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <SubscriberAvatar
+                            name={subscriber.name}
+                            email={subscriber.email}
+                          />
+                          {subscriber.email}
+                        </div>
+                      </TableCell>
                       <TableCell>{subscriber.name || "-"}</TableCell>
                       <TableCell>
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">

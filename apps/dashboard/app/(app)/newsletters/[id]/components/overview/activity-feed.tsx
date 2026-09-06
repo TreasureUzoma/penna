@@ -4,7 +4,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { UserPlus, Send, AlertCircle, FileEdit } from "lucide-react";
+import { Send, AlertCircle, FileEdit } from "lucide-react";
+import { SubscriberAvatar } from "@/components/subscriber-avatar";
 
 interface ActivityFeedProps {
   activities?: Array<{
@@ -18,10 +19,10 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ activities }: ActivityFeedProps) {
+  // Subscriber entries render a SubscriberAvatar instead (see below), so
+  // this only ever needs to cover the non-subscriber types.
   const getIcon = (type: string) => {
     switch (type) {
-      case "subscriber":
-        return UserPlus;
       case "email":
         return Send;
       case "draft":
@@ -65,9 +66,16 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
             return (
               <div key={activity.id} className="flex gap-4">
                 <div className="mt-1">
-                  <div className="p-2 rounded-full bg-neutral-100">
-                    <Icon className="h-4 w-4 text-neutral-600" />
-                  </div>
+                  {activity.type === "subscriber" ? (
+                    <SubscriberAvatar
+                      name={activity.name}
+                      email={activity.email}
+                    />
+                  ) : (
+                    <div className="p-2 rounded-full bg-neutral-100">
+                      <Icon className="h-4 w-4 text-neutral-600" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 space-y-1">
                   <p className="text-sm font-medium leading-tight">

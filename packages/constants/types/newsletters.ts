@@ -4,4 +4,5 @@ export type Newsletter = {
   name: string;
   description: string;
   isPublicAt: string | null;
+  config?: { avatarUrl?: string | null; removeBranding?: boolean } | null;
 };

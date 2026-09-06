@@ -137,7 +137,7 @@ export const updateNewsletter = async (
       updateValues.isPrivateAt = data.isPublic ? null : new Date();
     }
 
-    if (data.removeBranding !== undefined) {
+    if (data.removeBranding !== undefined || data.avatarUrl !== undefined) {
       if (data.removeBranding) {
         const allowed = await canRemoveBranding(newsletterId);
         if (!allowed) {
@@ -155,10 +155,19 @@ export const updateNewsletter = async (
         .from(newsletters)
         .where(eq(newsletters.id, newsletterId));
 
-      updateValues.config = {
+      const mergedConfig = {
         ...((existing?.config as Record<string, unknown>) || {}),
-        removeBranding: data.removeBranding,
       };
+      if (data.removeBranding !== undefined) {
+        mergedConfig.removeBranding = data.removeBranding;
+      }
+      if (data.avatarUrl !== undefined) {
+        // Empty string clears it back to the initials fallback — same
+        // "unset by writing empty" convention used for other optional
+        // profile-ish fields (e.g. profile.ts's avatarUrl).
+        mergedConfig.avatarUrl = data.avatarUrl || null;
+      }
+      updateValues.config = mergedConfig;
     }
 
     if (Object.keys(updateValues).length === 0) {
@@ -426,6 +435,7 @@ export const getPublicNewsletterBySlug = async (slug: string) => {
       name: newsletters.name,
       description: newsletters.description,
       isPrivateAt: newsletters.isPrivateAt,
+      config: newsletters.config,
     })
     .from(newsletters)
     .where(eq(newsletters.slug, slug));
@@ -454,6 +464,9 @@ export const getPublicNewsletterBySlug = async (slug: string) => {
       slug: newsletter.slug,
       name: newsletter.name,
       description: newsletter.description,
+      avatarUrl:
+        (newsletter.config as Record<string, unknown> | null)?.avatarUrl ??
+        null,
     },
     success: true,
     message: "Newsletter fetched successfully",
@@ -473,6 +486,7 @@ export const getNewslettersByUser = (
       slug: newsletters.slug,
       name: newsletters.name,
       description: newsletters.description,
+      config: newsletters.config,
       createdAt: newsletters.createdAt,
       updatedAt: newsletters.updatedAt,
       role: newsletterMembers.role,
@@ -490,6 +504,7 @@ export const getNewslettersByUser = (
       newsletters.slug,
       newsletters.name,
       newsletters.description,
+      newsletters.config,
       newsletters.createdAt,
       newsletters.updatedAt,
       newsletterMembers.role

@@ -43,6 +43,7 @@ import { ApiKeysTab as NewsletterApiKeysTab } from "./api-keys-tab";
 import { MembersTab } from "./members-tab";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { NewsletterIdTab } from "./newsletter-id-tab";
+import { EntityAvatar } from "@workspace/ui/components/entity-avatar";
 
 interface SettingsTabProps {
   newsletter: {
@@ -52,7 +53,7 @@ interface SettingsTabProps {
     description: string;
     isPublic: boolean;
     isPrivateAt: string | null;
-    config?: { removeBranding?: boolean } | null;
+    config?: { removeBranding?: boolean; avatarUrl?: string | null } | null;
     /** Computed server-side from the newsletter owner's plan — see routes/api/v1/newsletters.ts's `/slug/:slug`. */
     canRemoveBranding: boolean;
     /** Same gate as `canRemoveBranding` — governs the custom-domains tab, not this newsletter's own URL (see the Public URL field below, unconditional for every plan). */
@@ -76,6 +77,7 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
       slug: newsletter.slug,
       description: newsletter?.description,
       isPublic: !newsletter.isPrivateAt,
+      avatarUrl: newsletter.config?.avatarUrl || "",
     },
   });
 
@@ -84,6 +86,11 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
   // this is the whole URL — no username prefix, no plan gate.
   const watchedSlug = useWatch({ control: form.control, name: "slug" });
   const watchedIsPublic = useWatch({ control: form.control, name: "isPublic" });
+  const watchedName = useWatch({ control: form.control, name: "name" });
+  const watchedAvatarUrl = useWatch({
+    control: form.control,
+    name: "avatarUrl",
+  });
   const previewUrl = `${WEB_URL}/${watchedSlug || newsletter.slug}`;
 
   function onSubmit(values: UpdateNewsletter) {
@@ -130,6 +137,34 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
               className="space-y-6"
               id="newsletter-settings-form"
             >
+              <FormField
+                control={form.control}
+                name="avatarUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Logo</FormLabel>
+                    <div className="flex items-center gap-4">
+                      <EntityAvatar
+                        name={watchedName || newsletter.name}
+                        imageUrl={watchedAvatarUrl}
+                        className="size-14"
+                      />
+                      <FormControl>
+                        <Input
+                          placeholder="https://example.com/logo.png"
+                          {...field}
+                        />
+                      </FormControl>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      A direct image URL. Leave blank to use your initials
+                      instead.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="name"

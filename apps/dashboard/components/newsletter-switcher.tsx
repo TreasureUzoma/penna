@@ -21,6 +21,7 @@ import {
 } from "@workspace/ui/components/popover";
 import { useNewsletters } from "@/hooks/use-newsletters";
 import { useRouter, useParams } from "next/navigation";
+import { EntityAvatar } from "@workspace/ui/components/entity-avatar";
 
 export function NewsletterSwitcher() {
   const [open, setOpen] = React.useState(false);
@@ -41,7 +42,12 @@ export function NewsletterSwitcher() {
           className="justify-between max-w-[110px] md:max-w-[150px] !px-0"
         >
           {selectedNewsletter ? (
-            <span className="flex items-center truncate">
+            <span className="flex items-center gap-2 truncate">
+              <EntityAvatar
+                name={selectedNewsletter.name}
+                imageUrl={selectedNewsletter.config?.avatarUrl}
+                className="size-5 shrink-0"
+              />
               <span className="truncate">{selectedNewsletter.name}</span>
             </span>
           ) : (
@@ -63,9 +69,14 @@ export function NewsletterSwitcher() {
                     router.push(`/newsletters/${newsletter.slug}`);
                     setOpen(false);
                   }}
-                  className="text-sm"
+                  className="text-sm gap-2"
                 >
-                  {newsletter.name}
+                  <EntityAvatar
+                    name={newsletter.name}
+                    imageUrl={newsletter.config?.avatarUrl}
+                    className="size-5 shrink-0"
+                  />
+                  <span className="truncate">{newsletter.name}</span>
                   <Check
                     className={cn(
                       "ml-auto h-4 w-4",
