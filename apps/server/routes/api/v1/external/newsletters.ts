@@ -14,6 +14,7 @@ import { moderateNewsletterContent } from "@/services/moderation";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
+import type { ApiKeyScope } from "@workspace/validations";
 
 type ExternalNewsletterContext = {
   Variables: {
@@ -23,6 +24,7 @@ type ExternalNewsletterContext = {
       name: string;
       slug: string;
       keyType: "public" | "private";
+      scopes: string[];
     };
   };
 };
@@ -31,8 +33,28 @@ const externalNewslettersRoute = new Hono<ExternalNewsletterContext>().use(
   newsletterApiKey,
 );
 
+// A key missing a scope it needs gets a 403 (it's a real, valid key — just
+// not granted this capability), distinct from the 401s the middleware
+// already returns for a missing/invalid/revoked key.
+function requireScope(
+  newsletterData: { scopes: string[] },
+  scope: ApiKeyScope,
+) {
+  if (!newsletterData.scopes?.includes(scope)) {
+    return {
+      success: false as const,
+      message: `Unauthorized: this API key is not scoped for "${scope}".`,
+    };
+  }
+  return null;
+}
+
 externalNewslettersRoute.post("/subscriber/new", async (c) => {
   const newsletterData = c.get("newsletter");
+
+  const scopeError = requireScope(newsletterData, "subscribers:write");
+  if (scopeError) return c.json(scopeError, 403);
+
   const { email } = await c.req.json();
   const serviceData = await createNewsletterSubscriber({
     newsletterId: newsletterData.id,
@@ -50,6 +72,9 @@ externalNewslettersRoute.get("/subscribers", async (c) => {
       401,
     );
   }
+
+  const scopeError = requireScope(newsletterData, "subscribers:read");
+  if (scopeError) return c.json(scopeError, 403);
 
   const { page, limit } = c.req.query();
   const pageNumber = page ? parseInt(page) : 1;
@@ -99,6 +124,9 @@ externalNewslettersRoute.post(
           401,
         );
       }
+
+      const scopeError = requireScope(newsletterData, "newsletter:send");
+      if (scopeError) return c.json(scopeError, 403);
 
       const { subject, content, recipientEmails, segmentIds } =
         c.req.valid("json");

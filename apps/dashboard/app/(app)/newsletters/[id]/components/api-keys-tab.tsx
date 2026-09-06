@@ -14,7 +14,8 @@ import {
 } from "@workspace/ui/components/card";
 import { CopyButton } from "@workspace/ui/components/copy-button";
 import { Input } from "@workspace/ui/components/input";
-import { Loader2, Plus, Trash2, Eye, EyeOff } from "lucide-react";
+import { Badge } from "@workspace/ui/components/badge";
+import { Loader2, Plus, Trash2, Eye, EyeOff, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -23,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
 } from "@workspace/ui/components/dialog";
 import {
   AlertDialog,
@@ -36,6 +38,29 @@ import {
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
 import { Label } from "@workspace/ui/components/label";
+import { cn } from "@workspace/ui/lib/utils";
+import { API_KEY_SCOPES, type ApiKeyScope } from "@workspace/validations";
+
+const SCOPE_INFO: Record<
+  ApiKeyScope,
+  { label: string; description: string }
+> = {
+  "subscribers:write": {
+    label: "Add subscribers",
+    description:
+      "Add new subscribers to this newsletter — the scope a public signup form needs.",
+  },
+  "subscribers:read": {
+    label: "Read subscribers",
+    description:
+      "List this newsletter's subscribers. Requires the private key half of the pair.",
+  },
+  "newsletter:send": {
+    label: "Send newsletters",
+    description:
+      "Send a newsletter to your subscribers. The most powerful scope — requires the private key half, since it can email your whole list.",
+  },
+};
 
 export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
   const { data: apiKeys, isLoading } = useNewsletterApiKeys(newsletterId);
@@ -45,11 +70,25 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
     useDeleteNewsletterApiKey(newsletterId);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedScopes, setSelectedScopes] = useState<ApiKeyScope[]>([
+    ...API_KEY_SCOPES,
+  ]);
+
+  const toggleScope = (scope: ApiKeyScope) => {
+    setSelectedScopes((prev) =>
+      prev.includes(scope)
+        ? prev.filter((s) => s !== scope)
+        : [...prev, scope]
+    );
+  };
 
   const handleCreate = () => {
-    createApiKey(undefined, {
+    createApiKey(selectedScopes, {
       onSuccess: (data) => {
         setNewKey(data.secretKey);
+        setIsCreateDialogOpen(false);
+        setSelectedScopes([...API_KEY_SCOPES]);
       },
     });
   };
@@ -72,61 +111,133 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
               Manage your API keys for accessing the Penna API. Each key
               created below is a pair: a Public Key you can use in
               client-side code, and a Private Key for privileged,
-              server-only requests.
+              server-only requests — scoped to only what you grant it.
             </CardDescription>
           </div>
-          <Button
-            onClick={handleCreate}
-            disabled={isCreating}
-            className="w-full sm:w-auto"
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
           >
-            {isCreating ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4 mr-2" />
-            )}
-            Create New Key
-          </Button>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Key
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create API Key</DialogTitle>
+                <DialogDescription>
+                  Choose what this key is allowed to do. You can't change
+                  this later — delete the key and create a new one instead.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 py-2">
+                {API_KEY_SCOPES.map((scope) => {
+                  const info = SCOPE_INFO[scope];
+                  const isSelected = selectedScopes.includes(scope);
+                  return (
+                    <div
+                      key={scope}
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      tabIndex={0}
+                      onClick={() => toggleScope(scope)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleScope(scope);
+                        }
+                      }}
+                      className={cn(
+                        "cursor-pointer border rounded-lg p-3 flex items-start gap-3 transition-all hover:border-primary/50",
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "bg-card"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                          isSelected
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "border-input"
+                        )}
+                      >
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium">{info.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {info.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={handleCreate}
+                  disabled={isCreating || selectedScopes.length === 0}
+                >
+                  {isCreating && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
+                  Create Key
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {apiKeys?.map((key) => (
-            <div key={key.id} className="flex items-center gap-2">
-              <div className="grid flex-1 gap-2">
-                <Label className="text-xs text-muted-foreground">
-                  Public Key
-                </Label>
-                <Input readOnly value={key.publicKey} className="font-mono" />
+            <div key={key.id} className="flex flex-col gap-2 border-b pb-4 last:border-0 last:pb-0">
+              <div className="flex items-center gap-2">
+                <div className="grid flex-1 gap-2">
+                  <Label className="text-xs text-muted-foreground">
+                    Public Key
+                  </Label>
+                  <Input readOnly value={key.publicKey} className="font-mono" />
+                </div>
+                <CopyButton
+                  content={key.publicKey}
+                  onCopy={() => toast.success("Copied to clipboard")}
+                />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete this API key? This action
+                        cannot be undone and will immediately revoke access for
+                        any application using this key.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteApiKey(key.id)}
+                        className="bg-destructive text-white hover:bg-destructive/90"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
-              <CopyButton
-                content={key.publicKey}
-                onCopy={() => toast.success("Copied to clipboard")}
-              />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="icon">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete API Key</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this API key? This action
-                      cannot be undone and will immediately revoke access for
-                      any application using this key.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => deleteApiKey(key.id)}
-                      className="bg-destructive text-white hover:bg-destructive/90"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <div className="flex flex-wrap gap-1.5">
+                {(key.scopes ?? []).map((scope) => (
+                  <Badge key={scope} variant="secondary" className="text-xs">
+                    {SCOPE_INFO[scope]?.label ?? scope}
+                  </Badge>
+                ))}
+              </div>
             </div>
           ))}
           {(!apiKeys || apiKeys.length === 0) && (

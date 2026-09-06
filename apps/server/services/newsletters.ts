@@ -1,4 +1,4 @@
-import { decryptDataSubtle, encryptDataSubtle } from "@/lib/encrypt";
+import { encryptDataSubtle } from "@/lib/encrypt";
 import { generateApiKeys } from "@/lib/utils";
 import type { InsertApiKey } from "@/types";
 import { db } from "@workspace/db";
@@ -10,6 +10,7 @@ import {
 } from "@workspace/db/schema";
 import type { NewsletterRoles, ServiceResponse } from "@workspace/types";
 import type {
+  ApiKeyScope,
   NewNewsletter,
   NewNewsletterInvite,
   UpdateNewsletter,
@@ -41,12 +42,10 @@ export const createNewsletter = async (
       userId: userId,
       role: "owner",
     });
-    const { publicKey, secretKey } = generateApiKeys();
-    await createNewsletterApiKeys({
-      publicKey,
-      encryptedSecretKey: secretKey,
-      newsletterId: newsletter!.id,
-    });
+    // No API key is generated here anymore — the owner creates their own
+    // from the newsletter's Settings > API Keys tab, choosing which scopes
+    // to grant it there instead of getting a full-access key by default
+    // that they never explicitly asked for.
     return {
       data: {
         newsletter,
@@ -65,8 +64,7 @@ export const createNewsletter = async (
     return {
       data: null,
       success: false,
-      message:
-        "Something went wrong creating the newsletter and its initial keys.",
+      message: "Something went wrong creating the newsletter.",
     };
   }
 };
@@ -267,7 +265,8 @@ export const createNewsletterApiKeys = async (
 };
 
 export const generateAndCreateNewsletterApiKey = async (
-  newsletterId: string
+  newsletterId: string,
+  scopes: ApiKeyScope[]
 ): Promise<ServiceResponse> => {
   try {
     const { publicKey, secretKey } = generateApiKeys();
@@ -280,6 +279,7 @@ export const generateAndCreateNewsletterApiKey = async (
         newsletterId,
         publicKey,
         encryptedSecretKey: encryptedSecret,
+        scopes,
       })
       .returning();
 
@@ -525,8 +525,20 @@ export const getNewsletterApiKeys = async (
   newsletterId: string
 ): Promise<ServiceResponse> => {
   try {
+    // Deliberately excludes encryptedSecretKey — the private key is only
+    // ever meant to be seen once, at creation time (see
+    // generateAndCreateNewsletterApiKey's one-time `secretKey` in its
+    // response). Selecting and decrypting it here meant every load of the
+    // API Keys tab shipped every key's private half in the response body,
+    // even though the frontend's `ApiKey` type never declared that field.
     const apiKeys = await db
-      .select()
+      .select({
+        id: newsletterApiKeys.id,
+        publicKey: newsletterApiKeys.publicKey,
+        scopes: newsletterApiKeys.scopes,
+        lastUsedAt: newsletterApiKeys.lastUsedAt,
+        createdAt: newsletterApiKeys.createdAt,
+      })
       .from(newsletterApiKeys)
       .where(
         and(
@@ -535,13 +547,6 @@ export const getNewsletterApiKeys = async (
         )
       )
       .orderBy(desc(newsletterApiKeys.createdAt));
-
-    for (const key of apiKeys) {
-      key.encryptedSecretKey = await decryptDataSubtle(
-        key.encryptedSecretKey,
-        encryptionKey
-      );
-    }
 
     return {
       success: true,

@@ -77,6 +77,7 @@ export const newsletterApiKey: MiddlewareHandler = async (c, next) => {
         name: keyRecord.newsletter.name,
         slug: keyRecord.newsletter.slug,
         keyType: "private",
+        scopes: keyRecord.scopes,
       });
     } catch (err) {
       return c.json(
@@ -95,6 +96,7 @@ export const newsletterApiKey: MiddlewareHandler = async (c, next) => {
       name: keyRecord.newsletter.name,
       slug: keyRecord.newsletter.slug,
       keyType: "public",
+      scopes: keyRecord.scopes,
     });
   }
 

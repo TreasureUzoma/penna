@@ -36,6 +36,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import {
   acceptNewsletterInviteSchema,
+  createApiKeySchema,
   createNewsletterSchema,
   inviteUserToNewsletterSchema,
   isValidUUID,
@@ -97,8 +98,12 @@ newslettersRoute.post(
   zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
+  zValidator("json", createApiKeySchema, (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
+    const { scopes } = c.req.valid("json");
     const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
       "owner",
       "admin",
@@ -106,7 +111,10 @@ newslettersRoute.post(
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
-    const serviceData = await generateAndCreateNewsletterApiKey(newsletter.id);
+    const serviceData = await generateAndCreateNewsletterApiKey(
+      newsletter.id,
+      scopes
+    );
     return c.json(serviceData, routeStatus(serviceData));
   }
 );

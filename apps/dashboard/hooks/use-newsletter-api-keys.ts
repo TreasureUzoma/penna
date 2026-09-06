@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import { toast } from "sonner";
+import type { ApiKeyScope } from "@workspace/validations";
 
 export interface ApiKey {
   id: string;
   publicKey: string;
   createdAt: string;
   lastUsedAt: string | null;
+  scopes: ApiKeyScope[];
 }
 
 export function useNewsletterApiKeys(newsletterId: string) {
@@ -26,9 +28,10 @@ export function useCreateNewsletterApiKey(newsletterId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (scopes: ApiKeyScope[]) => {
       const res = await api.post<{ data: ApiKey & { secretKey: string } }>(
-        `/newsletters/api/${newsletterId}`
+        `/newsletters/api/${newsletterId}`,
+        { scopes }
       );
       return res.data.data;
     },
