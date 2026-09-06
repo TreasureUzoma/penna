@@ -118,6 +118,30 @@ export const isUserOnPaidPlan = async (userId: string): Promise<boolean> => {
   return !!user && user.subscriptionType !== "free";
 };
 
+/**
+ * The project owner's username — used to build the `/u/{username}/{slug}`
+ * public URL shown in project settings (see the `canUseCustomDomain` flag
+ * from the same `/slug/:slug` route for which URL shape is canonical).
+ * `null` if the project has no owner member (see `getPublicProjectBySlug`'s
+ * note on the ownerless-project case).
+ */
+export const getProjectOwnerUsername = async (
+  projectId: string
+): Promise<string | null> => {
+  const [owner] = await db
+    .select({ username: users.username })
+    .from(projectMembers)
+    .innerJoin(users, eq(projectMembers.userId, users.id))
+    .where(
+      and(
+        eq(projectMembers.projectId, projectId),
+        eq(projectMembers.role, "owner")
+      )
+    );
+
+  return owner?.username ?? null;
+};
+
 export const updateProject = async (
   projectId: string,
   data: Partial<UpdateProject>

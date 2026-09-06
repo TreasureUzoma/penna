@@ -4,8 +4,6 @@ import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
 import { Metadata } from "next";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
 
 const fontSans = Geist({
   subsets: ["latin"],
@@ -21,6 +19,11 @@ export const metadata: Metadata = {
   title: "penna - opensoure alternative to buttondown",
 };
 
+// No Header/Footer here — those are marketing-site chrome and only belong
+// on the marketing pages (see app/(marketing)/layout.tsx). Public project
+// pages (app/u/[username]/[slug] and app/[slug]) render bare, with just
+// their own small "Powered by Penna" line, since a subscriber's own
+// newsletter page shouldn't be wrapped in Penna's nav and sitemap footer.
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,9 +35,7 @@ export default function RootLayout({
         className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased has-grain`}
       >
         <Providers>
-          <Header />
           <main>{children}</main>
-          <Footer />
           <Toaster />
         </Providers>
       </body>

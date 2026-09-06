@@ -4,7 +4,8 @@
       "mcp__plugin_paddle_paddle-sandbox__search",
       "mcp__plugin_paddle_paddle-sandbox__execute",
       "mcp__plugin_paddle_paddle-docs__search_paddle_knowledge_sources",
-      "mcp__plugin_paddle_paddle-sandbox__report_missing_tool"
+      "mcp__plugin_paddle_paddle-sandbox__report_missing_tool",
+      "Bash(npx next *)"
     ]
   }
 }

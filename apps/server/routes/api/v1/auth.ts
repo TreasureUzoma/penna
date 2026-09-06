@@ -21,6 +21,8 @@ import {
   changePassword,
   getActiveSessions,
   revokeSession,
+  revokeAllOtherSessions,
+  getSessionIdByToken,
   SIGNUPS_CLOSED_MESSAGE,
 } from "@/services/auth";
 import { getSignedCookie } from "hono/cookie";
@@ -313,6 +315,30 @@ authRoute.delete("/sessions/:id", async (c) => {
 
   const sessionId = c.req.param("id");
   const serviceData = await revokeSession(sessionId, user.id);
+  return c.json(serviceData, routeStatus(serviceData));
+});
+
+// "Sign out everywhere else" — keeps the session making this request,
+// revokes every other one. Needs the raw cookie (not just c.get("user"),
+// which carries no session id) to know which row is "this" session.
+authRoute.post("/sessions/revoke-others", async (c) => {
+  const user = c.get("user") as AuthType;
+
+  const refreshToken = await getSignedCookie(
+    c,
+    envConfig.JWT_REFRESH_SECRET,
+    "pennaRefreshToken"
+  );
+  if (!refreshToken) {
+    return c.json({ success: false, message: "No active session found" }, 401);
+  }
+
+  const currentSessionId = await getSessionIdByToken(refreshToken, user.id);
+  if (!currentSessionId) {
+    return c.json({ success: false, message: "Session not found" }, 404);
+  }
+
+  const serviceData = await revokeAllOtherSessions(currentSessionId, user.id);
   return c.json(serviceData, routeStatus(serviceData));
 });
 

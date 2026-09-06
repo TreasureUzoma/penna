@@ -21,7 +21,7 @@ export function PostView({
   basePath: string;
 }) {
   return (
-    <article className="max-w-2xl mx-auto px-4 md:px-5 pt-32 md:pt-40 pb-20">
+    <article className="max-w-2xl mx-auto px-4 md:px-5 pt-16 md:pt-24 pb-20">
       <Link
         href={basePath}
         className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"

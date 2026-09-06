@@ -457,6 +457,24 @@ export const getActiveSessions = async (userId: string) => {
   };
 };
 
+/**
+ * Looks up a session's row id from its raw refresh-token cookie value —
+ * there's no session id in the JWT itself, so this is how a route figures
+ * out "which row is *this* request" for something like "sign out every
+ * other session" (see the /sessions/revoke-others route).
+ */
+export const getSessionIdByToken = async (
+  token: string,
+  userId: string
+): Promise<string | null> => {
+  const [row] = await db
+    .select({ id: refreshTokens.id })
+    .from(refreshTokens)
+    .where(and(eq(refreshTokens.token, token), eq(refreshTokens.userId, userId)));
+
+  return row?.id ?? null;
+};
+
 export const revokeSession = async (sessionId: string, userId: string) => {
   await db
     .update(refreshTokens)

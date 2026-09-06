@@ -47,3 +47,24 @@ export function useRevokeSession() {
     },
   });
 }
+
+/** Signs out every session except the one making this request. */
+export function useRevokeOtherSessions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const res = await api.post("/auth/sessions/revoke-others");
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["active-sessions"] });
+      toast.success("Signed out of all other sessions");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Failed to sign out other sessions"
+      );
+    },
+  });
+}

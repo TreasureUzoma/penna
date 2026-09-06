@@ -26,7 +26,7 @@ export function ProjectView({
   basePath: string;
 }) {
   return (
-    <div className="max-w-2xl mx-auto px-4 md:px-5 pt-32 md:pt-40 pb-20">
+    <div className="max-w-2xl mx-auto px-4 md:px-5 pt-16 md:pt-24 pb-20">
       <div className="space-y-3 mb-10">
         <h1 className="text-3xl md:text-4xl font-bold">{project.name}</h1>
         {project.description && (

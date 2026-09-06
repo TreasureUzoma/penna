@@ -25,6 +25,7 @@ import {
   useChangePassword,
   useActiveSessions,
   useRevokeSession,
+  useRevokeOtherSessions,
 } from "@/hooks/use-security";
 import {
   Loader2,
@@ -42,6 +43,8 @@ export default function SecuritySettingsPage(): React.JSX.Element {
     useChangePassword();
   const { data: sessions, isLoading: isLoadingSessions } = useActiveSessions();
   const { mutate: revokeSession } = useRevokeSession();
+  const { mutate: revokeOtherSessions, isPending: isRevokingOthers } =
+    useRevokeOtherSessions();
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -215,11 +218,27 @@ export default function SecuritySettingsPage(): React.JSX.Element {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Active Sessions</CardTitle>
-            <CardDescription>
-              Manage your active sessions across devices.
-            </CardDescription>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
+            <div>
+              <CardTitle>Active Sessions</CardTitle>
+              <CardDescription>
+                Manage your active sessions across devices.
+              </CardDescription>
+            </div>
+            {sessions && sessions.length > 1 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => revokeOtherSessions()}
+                disabled={isRevokingOthers}
+                className="w-full sm:w-auto"
+              >
+                {isRevokingOthers && (
+                  <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                )}
+                Sign out other sessions
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoadingSessions ? (

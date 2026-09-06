@@ -22,10 +22,12 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form";
 import { Input } from "@workspace/ui/components/input";
+import { CopyButton } from "@workspace/ui/components/copy-button";
 import { cn } from "@workspace/ui/lib/utils";
 import { Globe, Loader2, Lock, Sparkles, Trash2 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +47,7 @@ import { ProjectIdTab } from "./project-id-tab";
 interface SettingsTabProps {
   project: {
     id: string;
+    slug: string;
     name: string;
     description: string;
     isPublic: boolean;
@@ -52,10 +55,27 @@ interface SettingsTabProps {
     config?: { removeBranding?: boolean } | null;
     /** Computed server-side from the project owner's plan — see routes/api/v1/projects.ts's `/slug/:slug`. */
     canRemoveBranding: boolean;
+    /** Same gate as `canRemoveBranding` — also doubles as whether this project qualifies for the clean `/{slug}` public URL. */
+    canUseCustomDomain: boolean;
+    /** null if the project has no owner member — see getProjectOwnerUsername. */
+    ownerUsername: string | null;
   };
 }
 
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
+
+/** Mirrors the gating in apps/web's app/[slug]/page.tsx — the clean URL only actually resolves for a Pro+ owner. */
+function publicProjectUrl(
+  slug: string,
+  ownerUsername: string | null,
+  hasCleanUrl: boolean
+) {
+  if (hasCleanUrl) return `${WEB_URL}/${slug}`;
+  return `${WEB_URL}/u/${ownerUsername ?? "?"}/${slug}`;
+}
+
 export function SettingsTab({ project }: SettingsTabProps) {
+  const router = useRouter();
   const { mutate: updateProject, isPending: isUpdating } = useUpdateProject(
     project.id
   );
@@ -65,13 +85,35 @@ export function SettingsTab({ project }: SettingsTabProps) {
     resolver: zodResolver(updateProjectSchema),
     defaultValues: {
       name: project.name,
+      slug: project.slug,
       description: project?.description,
       isPublic: !project.isPrivateAt,
     },
   });
 
+  // Live-updates the public URL preview below as the owner edits the slug
+  // or visibility, before they've even saved.
+  const watchedSlug = useWatch({ control: form.control, name: "slug" });
+  const watchedIsPublic = useWatch({ control: form.control, name: "isPublic" });
+  const previewUrl = publicProjectUrl(
+    watchedSlug || project.slug,
+    project.ownerUsername,
+    project.canUseCustomDomain
+  );
+
   function onSubmit(values: UpdateProject) {
-    updateProject(values);
+    const nextSlug = values.slug;
+    updateProject(values, {
+      onSuccess: () => {
+        // The current URL's `[id]` segment is the *old* slug (see
+        // getProjectOrFail, which resolves it as slug-or-uuid) — once it
+        // changes server-side, that segment 404s on the next fetch, so
+        // move the address bar to match before that happens.
+        if (nextSlug && nextSlug !== project.slug) {
+          router.replace(`/projects/${nextSlug}/settings`);
+        }
+      },
+    });
   }
 
   function toggleBranding(removeBranding: boolean) {
@@ -114,6 +156,24 @@ export function SettingsTab({ project }: SettingsTabProps) {
 
               <FormField
                 control={form.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Slug</FormLabel>
+                    <FormControl>
+                      <Input placeholder="my-awesome-project" {...field} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      Changes this project's URLs, including its public page.
+                      Saving redirects you here to match.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
@@ -147,7 +207,8 @@ export function SettingsTab({ project }: SettingsTabProps) {
                           Public
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Anyone can view this project.
+                          Anyone can view this project, including its public
+                          page at the URL below.
                         </p>
                       </div>
 
@@ -165,7 +226,8 @@ export function SettingsTab({ project }: SettingsTabProps) {
                           Private
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Only you and your team can view this.
+                          Only you and your team can view this — its public
+                          page is taken down too.
                         </p>
                       </div>
                     </div>
@@ -173,6 +235,31 @@ export function SettingsTab({ project }: SettingsTabProps) {
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Public URL</p>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={previewUrl} className="font-mono text-xs sm:text-sm" />
+                  <CopyButton content={previewUrl} />
+                </div>
+                {!watchedIsPublic ? (
+                  <p className="text-xs text-muted-foreground">
+                    Set to Public above for this to actually be visible.
+                  </p>
+                ) : !project.canUseCustomDomain ? (
+                  <p className="text-xs text-muted-foreground">
+                    Includes your username since this project's owner is on
+                    the free plan.{" "}
+                    <Link
+                      href="/settings/billing"
+                      className="text-primary underline underline-offset-4 hover:opacity-80"
+                    >
+                      Upgrade
+                    </Link>{" "}
+                    for the clean, username-free URL.
+                  </p>
+                ) : null}
+              </div>
             </form>
           </Form>
         </CardContent>
