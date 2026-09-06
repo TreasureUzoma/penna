@@ -15,7 +15,7 @@ import { google } from "googleapis";
 import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
 import { passwordResets, refreshTokens, users } from "@workspace/db/schema";
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, desc, eq, gt, lt, ne } from "drizzle-orm";
 import { sendForgottenPasswordEmail, sendWelcomeEmail } from "./mail/internal";
 import { type ChangePasswordData } from "@workspace/validations";
 
@@ -421,6 +421,19 @@ export const changePassword = async (
 };
 
 export const getActiveSessions = async (userId: string) => {
+  const now = new Date();
+
+  // Every login (including each silent refresh-cookie rotation in
+  // withAuth) has inserted a row here with nothing to ever prune it —
+  // `revoked` only flips true from an explicit logout/revoke, so a token
+  // that just expired on its own after 7 days stayed listed as "active"
+  // forever. Delete this user's expired rows opportunistically on read —
+  // there's no scheduled job doing it, so whoever next opens this page is
+  // the cleanup — then only return what's actually still usable.
+  await db
+    .delete(refreshTokens)
+    .where(and(eq(refreshTokens.userId, userId), lt(refreshTokens.expiresAt, now)));
+
   const sessions = await db
     .select({
       id: refreshTokens.id,
@@ -429,7 +442,11 @@ export const getActiveSessions = async (userId: string) => {
     })
     .from(refreshTokens)
     .where(
-      and(eq(refreshTokens.userId, userId), eq(refreshTokens.revoked, false))
+      and(
+        eq(refreshTokens.userId, userId),
+        eq(refreshTokens.revoked, false),
+        gt(refreshTokens.expiresAt, now)
+      )
     )
     .orderBy(desc(refreshTokens.expiresAt));
 

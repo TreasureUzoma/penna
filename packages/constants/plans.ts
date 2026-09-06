@@ -69,34 +69,40 @@ export const plans: Plan[] = [
       "project transfer between teams",
     ],
   },
-  {
-    tier: 3,
-    slug: "enterprise",
-    name: "enterprise",
-    subscribers: null,
-    newslettersPerDay: null,
-    price: null,
-    priceLabel: "custom",
-    description: "for large organizations with advanced requirements",
-    features: [
-      "unlimited subscribers",
-      "advanced analytics",
-      "dedicated support",
-      "custom domain",
-      "remove branding",
-      "api access",
-      "team collaboration",
-      "add members to project",
-      "project transfer between teams",
-      "sla guarantee",
-      "custom integrations",
-    ],
-  },
+  // Enterprise is temporarily pulled from the lineup — not deleted, just
+  // not offered right now. `PlanSlug` and the checkout route
+  // (subscriptions-paddle.ts) still know about "enterprise" so an existing
+  // enterprise account keeps working; it just can't be self-serve-selected
+  // here. To bring it back, restore this entry:
+  // {
+  //   tier: 3,
+  //   slug: "enterprise",
+  //   name: "enterprise",
+  //   subscribers: null,
+  //   newslettersPerDay: null,
+  //   price: null,
+  //   priceLabel: "custom",
+  //   description: "for large organizations with advanced requirements",
+  //   features: [
+  //     "unlimited subscribers",
+  //     "advanced analytics",
+  //     "dedicated support",
+  //     "custom domain",
+  //     "remove branding",
+  //     "api access",
+  //     "team collaboration",
+  //     "add members to project",
+  //     "project transfer between teams",
+  //     "sla guarantee",
+  //     "custom integrations",
+  //   ],
+  // },
 ];
 
 /**
- * The smallest plan whose subscriber cap covers `count`. Falls back to
- * enterprise (unlimited) if nothing else fits. Shared by the pricing
+ * The smallest plan whose subscriber cap covers `count`. Falls back to the
+ * highest-tier plan on offer if nothing else fits (business, currently —
+ * see the note above `plans` about enterprise). Shared by the pricing
  * calculator on the marketing site and the subscriber-cap enforcement on
  * the server, so both always agree on where the lines are.
  */
