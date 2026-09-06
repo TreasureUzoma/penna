@@ -38,7 +38,7 @@ export function ProjectSwitcher() {
           variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="justify-between max-w-[110px] md:max-w-[150px] px-0"
+          className="justify-between max-w-[110px] md:max-w-[150px] !px-0"
         >
           {selectedProject ? (
             <span className="flex items-center truncate">
