@@ -9,6 +9,7 @@ import {
   NewsletterSendLimitError,
 } from "@/services/limits";
 import { logNewsletterSend } from "@/services/newsletter-send-log";
+import { recordSentNewsletterPost } from "@/services/posts";
 import { moderateNewsletterContent } from "@/services/moderation";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
@@ -209,6 +210,15 @@ externalNewslettersRoute.post(
         subject,
         htmlContent,
       );
+
+      // The send already happened and can't be undone, so a failure here
+      // shouldn't turn a successful send into an error response — just log
+      // it. See recordSentNewsletterPost's doc comment for why this exists.
+      try {
+        await recordSentNewsletterPost(newsletterData.id, subject, content);
+      } catch (err) {
+        console.error("Failed to record sent newsletter as a post:", err);
+      }
 
       await logNewsletterSend({
         newsletterId: newsletterData.id,

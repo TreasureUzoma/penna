@@ -122,6 +122,31 @@ export const updateNewsletterPost = async (
   }
 };
 
+/**
+ * Records a newsletter sent through the external API as a published post,
+ * so it shows up in the dashboard's post history the same as one sent
+ * through the app. Without this, the external `/send` endpoint only ever
+ * wrote to `newsletterSendLogs` (an audit log, not shown on the Posts
+ * page) — the email genuinely went out, but there was no record of it as
+ * a post.
+ */
+export const recordSentNewsletterPost = async (
+  newsletterId: string,
+  subject: string,
+  content: string
+): Promise<void> => {
+  const encryptedBody = await encryptDataSubtle(
+    content,
+    envConfig.ENCRYPTION_KEY || ""
+  );
+  await db.insert(emails).values({
+    newsletterId,
+    subject,
+    body: encryptedBody,
+    status: "published",
+  });
+};
+
 export const getAllNewsletterPosts = async (
   userId: string
 ): Promise<ServiceResponse<InsertPost[]>> => {
