@@ -1,9 +1,10 @@
 import { envConfig } from "@/config";
 import { decryptDataSubtle, encryptDataSubtle } from "@/lib/encrypt";
+import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { db } from "@workspace/db";
 import { emails } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, lte } from "drizzle-orm";
 import { start } from "workflow/api";
 import { emailCampaignWorkflow } from "./workflows/email-campaign";
 
@@ -271,6 +272,121 @@ export const updateEmail = async (
         err instanceof Error
           ? err.message
           : "Something went wrong updating email",
+      data: null,
+    };
+  }
+};
+
+/** Loose Markdown-to-plaintext strip for a public archive teaser — doesn't need to be exact, just readable. */
+const excerptOf = (markdown: string, length = 200): string =>
+  markdown
+    .replace(/[#*_`>~-]/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, length);
+
+/**
+ * Published, already-sent posts for a project's public archive — backs the
+ * unauthenticated project page (routes/api/v1/public/projects.ts). Drafts
+ * and posts scheduled for the future are never included.
+ */
+export const getPublicEmails = async (
+  projectId: string,
+  page = 1,
+  limit = 10
+): Promise<ServiceResponse> => {
+  try {
+    const offset = (page - 1) * limit;
+
+    const rows = await db
+      .select({
+        id: emails.id,
+        subject: emails.subject,
+        body: emails.body,
+        sentAt: emails.sentAt,
+      })
+      .from(emails)
+      .where(
+        and(
+          eq(emails.projectId, projectId),
+          eq(emails.status, "published"),
+          lte(emails.sentAt, new Date())
+        )
+      )
+      .orderBy(desc(emails.sentAt))
+      .limit(limit)
+      .offset(offset);
+
+    const posts = await Promise.all(
+      rows.map(async (row) => {
+        let excerpt = "";
+        try {
+          const decrypted = await decryptDataSubtle(row.body, encryptionKey);
+          excerpt = excerptOf(decrypted);
+        } catch (e) {
+          console.error(`Failed to decrypt email body for ${row.id}`, e);
+        }
+        return { id: row.id, subject: row.subject, sentAt: row.sentAt, excerpt };
+      })
+    );
+
+    return {
+      success: true,
+      message: "Fetched posts successfully",
+      data: posts,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message:
+        err instanceof Error ? err.message : "Something went wrong fetching posts",
+      data: null,
+    };
+  }
+};
+
+/** A single published post's rendered HTML, for the public single-post page. */
+export const getPublicEmail = async (
+  projectId: string,
+  emailId: string
+): Promise<ServiceResponse> => {
+  try {
+    const [row] = await db
+      .select()
+      .from(emails)
+      .where(
+        and(
+          eq(emails.projectId, projectId),
+          eq(emails.id, emailId),
+          eq(emails.status, "published"),
+          lte(emails.sentAt, new Date())
+        )
+      );
+
+    if (!row) {
+      return { success: false, message: "Post not found", data: null };
+    }
+
+    let html = "<p>Failed to load content.</p>";
+    try {
+      const decrypted = await decryptDataSubtle(row.body, encryptionKey);
+      html = renderNewsletterMarkdown(decrypted);
+    } catch (e) {
+      console.error(`Failed to decrypt email body for ${row.id}`, e);
+    }
+
+    return {
+      success: true,
+      message: "Fetched post successfully",
+      data: { id: row.id, subject: row.subject, sentAt: row.sentAt, html },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message:
+        err instanceof Error ? err.message : "Something went wrong fetching post",
       data: null,
     };
   }

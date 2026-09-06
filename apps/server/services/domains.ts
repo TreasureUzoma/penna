@@ -1,7 +1,7 @@
 import { db } from "@workspace/db";
 import { domains, projectMembers, projects } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull, or } from "drizzle-orm";
 import {
   SESv2Client,
   CreateEmailIdentityCommand,
@@ -9,7 +9,11 @@ import {
   DeleteEmailIdentityCommand,
 } from "@aws-sdk/client-sesv2";
 import { envConfig } from "@/config";
-import { canUseCustomDomain } from "./projects";
+import {
+  canUseCustomDomain,
+  getUserProjectRole,
+  isUserOnPaidPlan,
+} from "./projects";
 
 const sesv2 = new SESv2Client({
   region: envConfig.AWS_REGION,
@@ -18,6 +22,8 @@ const sesv2 = new SESv2Client({
     secretAccessKey: envConfig.AWS_SECRET_ACCESS_KEY,
   },
 });
+
+const MANAGE_ROLES = ["owner", "admin"] as const;
 
 /** A CNAME record a customer needs to add at their DNS provider. */
 export interface DnsCnameRecord {
@@ -73,50 +79,38 @@ const toDomainView = (row: typeof domains.$inferSelect) => ({
 
 export type DomainView = ReturnType<typeof toDomainView>;
 
-export const listProjectDomains = async (
-  projectId: string
-): Promise<ServiceResponse> => {
-  try {
-    const rows = await db
-      .select()
-      .from(domains)
-      .where(eq(domains.projectId, projectId));
-
-    return {
-      success: true,
-      message: "Fetched domains successfully",
-      data: rows.map(toDomainView),
-    };
-  } catch (err) {
-    return {
-      success: false,
-      message: err instanceof Error ? err.message : "Failed to fetch domains",
-      data: null,
-    };
-  }
-};
-
 /**
- * Every domain across every project the user belongs to, each tagged with
- * its project's name/slug — backs the account-wide Domains page (root
- * sidebar), as opposed to `listProjectDomains` which backs the per-project
- * one. Same underlying rows, just not scoped to a single project.
+ * Every domain visible to a user: ones attached to a project they belong
+ * to, plus ones they've verified themselves but haven't assigned to a
+ * project yet. Backs both the account-wide Domains page (unfiltered) and
+ * a single project's Domains tab (`projectId` filter) — same query either
+ * way, just narrowed.
  */
 export const listUserDomains = async (
-  userId: string
+  userId: string,
+  projectId?: string
 ): Promise<ServiceResponse> => {
   try {
     const rows = await db
-      .select({
-        domain: domains,
-        projectId: projects.id,
-        projectSlug: projects.slug,
-        projectName: projects.name,
-      })
+      .select({ domain: domains, project: projects })
       .from(domains)
-      .innerJoin(projects, eq(domains.projectId, projects.id))
-      .innerJoin(projectMembers, eq(projectMembers.projectId, projects.id))
-      .where(eq(projectMembers.userId, userId))
+      .leftJoin(projects, eq(domains.projectId, projects.id))
+      .leftJoin(
+        projectMembers,
+        and(
+          eq(projectMembers.projectId, domains.projectId),
+          eq(projectMembers.userId, userId)
+        )
+      )
+      .where(
+        and(
+          or(
+            eq(projectMembers.userId, userId),
+            and(isNull(domains.projectId), eq(domains.createdByUserId, userId))
+          ),
+          projectId ? eq(domains.projectId, projectId) : undefined
+        )
+      )
       .orderBy(desc(domains.createdAt));
 
     return {
@@ -124,7 +118,9 @@ export const listUserDomains = async (
       message: "Fetched domains successfully",
       data: rows.map((row) => ({
         ...toDomainView(row.domain),
-        project: { id: row.projectId, slug: row.projectSlug, name: row.projectName },
+        project: row.project
+          ? { id: row.project.id, slug: row.project.slug, name: row.project.name }
+          : null,
       })),
     };
   } catch (err) {
@@ -138,24 +134,51 @@ export const listUserDomains = async (
 
 /**
  * Registers a sending domain with SES (Easy DKIM) and stores the CNAME
- * records the owner needs to add. The domain starts unverified — SES
- * detects the DNS records asynchronously, so `refreshDomainVerification`
- * (polled from the dashboard's "Recheck" button) is what flips it to
- * verified.
+ * records to show the owner. The domain starts unverified — SES detects
+ * the DNS records asynchronously, so `refreshDomainVerification` (polled
+ * from the dashboard's "Recheck" button) is what flips it to verified.
+ *
+ * `projectId` is optional: pass it to add a domain straight into a project
+ * (requires the caller to manage that project — checked here since these
+ * routes aren't nested under `/projects/:id`), or omit it to verify a
+ * domain first and attach it to a project later via `assignDomainToProject`
+ * — the account-wide Domains page's flow.
  */
-export const addProjectDomain = async (
-  projectId: string,
-  name: string
+export const addDomain = async (
+  userId: string,
+  name: string,
+  projectId?: string
 ): Promise<ServiceResponse> => {
   try {
-    const allowed = await canUseCustomDomain(projectId);
-    if (!allowed) {
-      return {
-        success: false,
-        message:
-          "Custom domains are a Pro feature. Upgrade the project owner's plan to enable it.",
-        data: null,
-      };
+    if (projectId) {
+      const roleRes = await getUserProjectRole(projectId, userId);
+      const role = roleRes.data?.role;
+      if (!role || !MANAGE_ROLES.includes(role as any)) {
+        return {
+          success: false,
+          message: "You don't have enough permissions on that project.",
+          data: null,
+        };
+      }
+
+      const allowed = await canUseCustomDomain(projectId);
+      if (!allowed) {
+        return {
+          success: false,
+          message:
+            "Custom domains are a Pro feature. Upgrade the project owner's plan to enable it.",
+          data: null,
+        };
+      }
+    } else {
+      const allowed = await isUserOnPaidPlan(userId);
+      if (!allowed) {
+        return {
+          success: false,
+          message: "Custom domains are a Pro feature. Upgrade your plan to enable it.",
+          data: null,
+        };
+      }
     }
 
     const [existing] = await db
@@ -194,7 +217,8 @@ export const addProjectDomain = async (
     const [row] = await db
       .insert(domains)
       .values({
-        projectId,
+        projectId: projectId ?? null,
+        createdByUserId: userId,
         name,
         verified: identity.VerifiedForSendingStatus ?? false,
         dkimKey: serializeDkim(dkim),
@@ -217,20 +241,45 @@ export const addProjectDomain = async (
   }
 };
 
+/**
+ * Whether `userId` may verify/remove `domainId` — ownership on an
+ * unassigned domain, or owner/admin membership once it's attached to a
+ * project. Shared by `refreshDomainVerification` and `removeDomain` since
+ * both routes sit at `/domains/:id`, outside any `/projects/:id` nesting
+ * that would otherwise carry this check.
+ */
+const authorizeDomainAccess = async (
+  userId: string,
+  domainId: string
+): Promise<
+  | { ok: true; domain: typeof domains.$inferSelect }
+  | { ok: false; message: string }
+> => {
+  const [row] = await db.select().from(domains).where(eq(domains.id, domainId));
+  if (!row) return { ok: false, message: "Domain not found" };
+
+  if (row.projectId) {
+    const roleRes = await getUserProjectRole(row.projectId, userId);
+    const role = roleRes.data?.role;
+    if (!role || !MANAGE_ROLES.includes(role as any)) {
+      return { ok: false, message: "You don't have enough permissions" };
+    }
+  } else if (row.createdByUserId !== userId) {
+    return { ok: false, message: "You don't have enough permissions" };
+  }
+
+  return { ok: true, domain: row };
+};
+
 /** Re-checks a domain's DKIM/verification status against SES and persists any change. */
 export const refreshDomainVerification = async (
-  projectId: string,
+  userId: string,
   domainId: string
 ): Promise<ServiceResponse> => {
   try {
-    const [row] = await db
-      .select()
-      .from(domains)
-      .where(and(eq(domains.id, domainId), eq(domains.projectId, projectId)));
-
-    if (!row) {
-      return { success: false, message: "Domain not found", data: null };
-    }
+    const authz = await authorizeDomainAccess(userId, domainId);
+    if (!authz.ok) return { success: false, message: authz.message, data: null };
+    const { domain: row } = authz;
 
     let identity;
     try {
@@ -284,19 +333,14 @@ export const refreshDomainVerification = async (
   }
 };
 
-export const removeProjectDomain = async (
-  projectId: string,
+export const removeDomain = async (
+  userId: string,
   domainId: string
 ): Promise<ServiceResponse> => {
   try {
-    const [row] = await db
-      .select()
-      .from(domains)
-      .where(and(eq(domains.id, domainId), eq(domains.projectId, projectId)));
-
-    if (!row) {
-      return { success: false, message: "Domain not found", data: null };
-    }
+    const authz = await authorizeDomainAccess(userId, domainId);
+    if (!authz.ok) return { success: false, message: authz.message, data: null };
+    const { domain: row } = authz;
 
     try {
       await sesv2.send(
@@ -318,6 +362,81 @@ export const removeProjectDomain = async (
     return {
       success: false,
       message: err instanceof Error ? err.message : "Failed to remove domain",
+      data: null,
+    };
+  }
+};
+
+/**
+ * Attaches an already-verified, unassigned domain to a project — the
+ * "verify now, add to a project later" flow from the account-wide Domains
+ * page. Only the person who verified it can assign it, and only onto a
+ * project they manage whose owner is on a paid plan (same gate as adding
+ * a domain directly from that project).
+ */
+export const assignDomainToProject = async (
+  userId: string,
+  domainId: string,
+  projectId: string
+): Promise<ServiceResponse> => {
+  try {
+    const [row] = await db.select().from(domains).where(eq(domains.id, domainId));
+    if (!row) {
+      return { success: false, message: "Domain not found", data: null };
+    }
+
+    if (row.projectId) {
+      return {
+        success: false,
+        message:
+          "This domain is already assigned to a project. Remove it there first to move it.",
+        data: null,
+      };
+    }
+
+    if (row.createdByUserId !== userId) {
+      return {
+        success: false,
+        message: "You don't have enough permissions",
+        data: null,
+      };
+    }
+
+    const roleRes = await getUserProjectRole(projectId, userId);
+    const role = roleRes.data?.role;
+    if (!role || !MANAGE_ROLES.includes(role as any)) {
+      return {
+        success: false,
+        message: "You don't have enough permissions on that project.",
+        data: null,
+      };
+    }
+
+    const allowed = await canUseCustomDomain(projectId);
+    if (!allowed) {
+      return {
+        success: false,
+        message:
+          "Custom domains are a Pro feature. Upgrade the project owner's plan to enable it.",
+        data: null,
+      };
+    }
+
+    const [updated] = await db
+      .update(domains)
+      .set({ projectId, updatedAt: new Date() })
+      .where(eq(domains.id, domainId))
+      .returning();
+
+    return {
+      success: true,
+      message: "Domain assigned to project",
+      data: toDomainView(updated!),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Failed to assign domain",
       data: null,
     };
   }

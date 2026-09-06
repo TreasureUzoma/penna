@@ -18,6 +18,7 @@ import dashboardRoute from "./routes/api/v1/dashboard";
 import emailsRoute from "./routes/api/v1/emails";
 import segmentRoutes from "./routes/api/v1/segments";
 import domainsRoute from "./routes/api/v1/domains";
+import publicProjectsRoute from "./routes/api/v1/public/projects";
 import { start } from "workflow/api";
 import { myTestWorkflow } from "./tests/workflow";
 
@@ -69,6 +70,14 @@ v1.route("/unsubscribe", unsubscribeRoutes.use(rateLimiter(60 * 1000, 5)));
 v1.route(
   "/external/projects",
   externalProjectRoutes.use(rateLimiter(60 * 1000, 9)),
+);
+
+// Public project pages (apps/web) — no auth, no ownership check beyond
+// "not private". Subscribe is the sensitive one here, so it gets the
+// tighter limit; the read endpoints share a looser one.
+v1.route(
+  "/public/projects",
+  publicProjectsRoute.use(rateLimiter(60 * 1000, 60)),
 );
 
 // Paddle webhook — public, verified via Paddle's own signature instead of

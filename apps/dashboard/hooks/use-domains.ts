@@ -7,121 +7,54 @@ export interface DnsCnameRecord {
   value: string;
 }
 
-export interface ProjectDomain {
+export interface DomainRecord {
   id: string;
-  projectId: string;
+  projectId: string | null;
   name: string;
   verified: boolean;
   createdAt: string;
   dnsRecords: DnsCnameRecord[];
-}
-
-/** A domain plus which project it belongs to — what the account-wide Domains page lists. */
-export interface AccountDomain extends ProjectDomain {
-  project: { id: string; slug: string; name: string };
-}
-
-/** Every domain across every project the user belongs to — backs the root-sidebar Domains page. */
-export function useAllDomains() {
-  return useQuery({
-    queryKey: ["account-domains"],
-    queryFn: async () => {
-      const res = await api.get<{ data: AccountDomain[] }>("/domains");
-      return res.data.data;
-    },
-  });
+  /** null when the domain has been verified but not assigned to a project yet. */
+  project: { id: string; slug: string; name: string } | null;
 }
 
 /**
- * Verify/delete for the account-wide page, which lists domains from many
- * projects at once — unlike the per-project hooks below, projectId comes
- * in with each call instead of being fixed at hook-creation time.
+ * Domains visible to the current user. Pass `projectId` for a single
+ * project's Domains tab; omit it for the account-wide Domains page, which
+ * also picks up domains the user has verified but not assigned yet.
  */
-export function useVerifyAnyDomain() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      domainId,
-    }: {
-      projectId: string;
-      domainId: string;
-    }) => {
-      const res = await api.post<{ data: ProjectDomain; message: string }>(
-        `/projects/${projectId}/domains/${domainId}/verify`
-      );
-      return res.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["account-domains"] });
-      toast[data.data?.verified ? "success" : "info"](
-        data.message || "Checked domain status"
-      );
-    },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to check domain status"
-      );
-    },
-  });
-}
-
-export function useDeleteAnyDomain() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      domainId,
-    }: {
-      projectId: string;
-      domainId: string;
-    }) => {
-      const res = await api.delete(
-        `/projects/${projectId}/domains/${domainId}`
-      );
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["account-domains"] });
-      toast.success("Domain removed");
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to remove domain");
-    },
-  });
-}
-
-export function useProjectDomains(projectId: string) {
+export function useDomains(projectId?: string) {
   return useQuery({
-    queryKey: ["project-domains", projectId],
+    queryKey: ["domains", projectId ?? "all"],
     queryFn: async () => {
-      const res = await api.get<{ data: ProjectDomain[] }>(
-        `/projects/${projectId}/domains`
-      );
+      const res = await api.get<{ data: DomainRecord[] }>("/domains", {
+        params: projectId ? { projectId } : undefined,
+      });
       return res.data.data;
     },
-    enabled: !!projectId,
   });
 }
 
-export function useAddProjectDomain(projectId: string) {
+/** Adds a domain — pass `projectId` to add it straight into a project, or omit it to verify first and assign later. */
+export function useAddDomain() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (name: string) => {
-      const res = await api.post<{ data: ProjectDomain; message: string }>(
-        `/projects/${projectId}/domains`,
-        { name }
+    mutationFn: async ({
+      name,
+      projectId,
+    }: {
+      name: string;
+      projectId?: string;
+    }) => {
+      const res = await api.post<{ data: DomainRecord; message: string }>(
+        "/domains",
+        { name, projectId }
       );
       return res.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["project-domains", projectId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["account-domains"] });
+      queryClient.invalidateQueries({ queryKey: ["domains"] });
       toast.success(data.message || "Domain added");
     },
     onError: (error: any) => {
@@ -130,21 +63,18 @@ export function useAddProjectDomain(projectId: string) {
   });
 }
 
-export function useVerifyProjectDomain(projectId: string) {
+export function useVerifyDomain() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (domainId: string) => {
-      const res = await api.post<{ data: ProjectDomain; message: string }>(
-        `/projects/${projectId}/domains/${domainId}/verify`
+      const res = await api.post<{ data: DomainRecord; message: string }>(
+        `/domains/${domainId}/verify`
       );
       return res.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["project-domains", projectId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["account-domains"] });
+      queryClient.invalidateQueries({ queryKey: ["domains"] });
       toast[data.data?.verified ? "success" : "info"](
         data.message || "Checked domain status"
       );
@@ -157,21 +87,44 @@ export function useVerifyProjectDomain(projectId: string) {
   });
 }
 
-export function useDeleteProjectDomain(projectId: string) {
+/** Attaches an already-verified, unassigned domain to a project. */
+export function useAssignDomain() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      domainId,
+      projectId,
+    }: {
+      domainId: string;
+      projectId: string;
+    }) => {
+      const res = await api.post<{ data: DomainRecord; message: string }>(
+        `/domains/${domainId}/assign`,
+        { projectId }
+      );
+      return res.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["domains"] });
+      toast.success(data.message || "Domain assigned");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to assign domain");
+    },
+  });
+}
+
+export function useDeleteDomain() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (domainId: string) => {
-      const res = await api.delete(
-        `/projects/${projectId}/domains/${domainId}`
-      );
+      const res = await api.delete(`/domains/${domainId}`);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["project-domains", projectId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["account-domains"] });
+      queryClient.invalidateQueries({ queryKey: ["domains"] });
       toast.success("Domain removed");
     },
     onError: (error: any) => {

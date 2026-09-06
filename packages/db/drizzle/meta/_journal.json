@@ -29,6 +29,13 @@
       "when": 1786733633872,
       "tag": "0003_unknown_aqueduct",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788694131215,
+      "tag": "0004_add_domain_ownership",
+      "breakpoints": true
     }
   ]
 }

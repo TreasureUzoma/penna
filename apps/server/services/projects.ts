@@ -103,6 +103,21 @@ export const canRemoveBranding = isProjectOwnerOnPaidPlan;
 /** See `isProjectOwnerOnPaidPlan` — same gate, kept as a named alias at each call site for readability. */
 export const canUseCustomDomain = isProjectOwnerOnPaidPlan;
 
+/**
+ * Same "any paid plan" gate as `isProjectOwnerOnPaidPlan`, but for a domain
+ * that isn't attached to any project yet (see the account-wide Domains
+ * page) — there's no project owner to check yet, so this checks the
+ * verifying user's own plan instead.
+ */
+export const isUserOnPaidPlan = async (userId: string): Promise<boolean> => {
+  const [user] = await db
+    .select({ subscriptionType: users.subscriptionType })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  return !!user && user.subscriptionType !== "free";
+};
+
 export const updateProject = async (
   projectId: string,
   data: Partial<UpdateProject>
@@ -386,6 +401,63 @@ export const getProjectBySlug = async (slug: string) => {
 
   return {
     data: project,
+    success: true,
+    message: "Project fetched successfully",
+  };
+};
+
+/**
+ * A project's public-facing data, for the unauthenticated project page
+ * (routes/api/v1/public/projects.ts) — `null` for a private project, one
+ * with no `owner` member (see the ownerless-project issue this app has
+ * hit before), or one that just doesn't exist, so a 404 doesn't leak which
+ * case it was. `hasCleanUrl` is what the dashboard's `/{slug}` route uses
+ * to decide whether to render or redirect to the `/u/{username}/{slug}`
+ * fallback — same "owner on a paid plan" gate as branding/custom domains.
+ */
+export const getPublicProjectBySlug = async (slug: string) => {
+  const [project] = await db
+    .select({
+      id: projects.id,
+      slug: projects.slug,
+      name: projects.name,
+      description: projects.description,
+      isPrivateAt: projects.isPrivateAt,
+    })
+    .from(projects)
+    .where(eq(projects.slug, slug));
+
+  if (!project || project.isPrivateAt) {
+    return { data: null, success: false, message: "Project not found." };
+  }
+
+  const [owner] = await db
+    .select({
+      username: users.username,
+      subscriptionType: users.subscriptionType,
+    })
+    .from(projectMembers)
+    .innerJoin(users, eq(projectMembers.userId, users.id))
+    .where(
+      and(
+        eq(projectMembers.projectId, project.id),
+        eq(projectMembers.role, "owner")
+      )
+    );
+
+  if (!owner || !owner.username) {
+    return { data: null, success: false, message: "Project not found." };
+  }
+
+  return {
+    data: {
+      id: project.id,
+      slug: project.slug,
+      name: project.name,
+      description: project.description,
+      ownerUsername: owner.username,
+      hasCleanUrl: owner.subscriptionType !== "free",
+    },
     success: true,
     message: "Project fetched successfully",
   };

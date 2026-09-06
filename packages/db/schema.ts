@@ -191,9 +191,19 @@ export const domains = pgTable(
   "domains",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    projectId: uuid("project_id")
+    // Nullable: a domain can be verified before it's attached to any
+    // project (see the account-wide Domains page) and assigned to one
+    // later — see `assignDomainToProject` in services/domains.ts.
+    projectId: uuid("project_id").references(() => projects.id, {
+      onDelete: "cascade",
+    }),
+    // Who verified this domain. Doubles as the permission check for an
+    // unassigned domain (no project members to check yet) and stays set
+    // after assignment for provenance, though project membership takes
+    // over as the actual permission check at that point.
+    createdByUserId: uuid("created_by_user_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => users.id, { onDelete: "cascade" }),
 
     name: varchar("name", { length: 255 }).notNull().unique(), // e.g. "blog.john.dev"
     verified: boolean("verified").default(false).notNull(),
@@ -461,6 +471,10 @@ export const domainRelations = relations(domains, ({ one }) => ({
   project: one(projects, {
     fields: [domains.projectId],
     references: [projects.id],
+  }),
+  createdBy: one(users, {
+    fields: [domains.createdByUserId],
+    references: [users.id],
   }),
 }));
 

@@ -2,15 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useAllDomains, useVerifyAnyDomain, useDeleteAnyDomain } from "@/hooks/use-domains";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
+  useDomains,
+  useAddDomain,
+  useVerifyDomain,
+  useAssignDomain,
+  useDeleteDomain,
+} from "@/hooks/use-domains";
+import { useProjects } from "@/hooks/use-projects";
 import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@workspace/ui/components/table";
 import { cn } from "@workspace/ui/lib/utils";
 import {
   AlertDialog,
@@ -30,70 +46,169 @@ import {
   Trash2,
   CheckCircle2,
   Clock,
-  ArrowUpRight,
+  Plus,
 } from "lucide-react";
 
 export default function AccountDomainsPage() {
-  const { data: domains, isLoading } = useAllDomains();
-  const { mutate: verifyDomain, isPending: isVerifying } = useVerifyAnyDomain();
-  const { mutate: deleteDomain, isPending: isDeleting } = useDeleteAnyDomain();
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const { data: domains, isLoading } = useDomains();
+  const { data: projects } = useProjects();
+  const { mutate: addDomain, isPending: isAdding } = useAddDomain();
+  const { mutate: verifyDomain, isPending: isVerifying } = useVerifyDomain();
+  const { mutate: assignDomain, isPending: isAssigning } = useAssignDomain();
+  const { mutate: deleteDomain, isPending: isDeleting } = useDeleteDomain();
 
-  function handleVerify(projectId: string, domainId: string) {
+  const [name, setName] = useState("");
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  // Per-row "assign to project" picks, keyed by domain id.
+  const [assignPicks, setAssignPicks] = useState<Record<string, string>>({});
+
+  function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    addDomain({ name: name.trim() }, { onSuccess: () => setName("") });
+  }
+
+  function handleVerify(domainId: string) {
     setPendingId(domainId);
-    verifyDomain({ projectId, domainId }, { onSettled: () => setPendingId(null) });
+    verifyDomain(domainId, { onSettled: () => setPendingId(null) });
+  }
+
+  function handleAssign(domainId: string) {
+    const projectId = assignPicks[domainId];
+    if (!projectId) return;
+    setPendingId(domainId);
+    assignDomain(
+      { domainId, projectId },
+      { onSettled: () => setPendingId(null) }
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen px-4 py-6 md:px-8 md:py-8 space-y-6">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Domains</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Every custom sending domain across all your projects, in one place.
-          To add a new one, open a project and go to its Domains tab.
+          Verify a domain here, then assign it to a project whenever you're
+          ready — or add one straight from a project's Domains tab.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Domains</CardTitle>
-          <CardDescription>
-            Recheck verification or remove a domain without switching
-            projects.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {isLoading && (
-            <div className="flex justify-center p-8">
-              <Loader2 className="w-6 h-6 animate-spin" />
-            </div>
+      <form
+        onSubmit={handleAdd}
+        className="flex flex-col sm:flex-row gap-2 sm:items-center"
+      >
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="news.yoursite.com"
+          disabled={isAdding}
+          className="flex-1"
+        />
+        <Button
+          type="submit"
+          disabled={isAdding || !name.trim()}
+          className="w-full sm:w-auto"
+        >
+          {isAdding ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Plus className="w-4 h-4 mr-2" />
           )}
+          Verify Domain
+        </Button>
+      </form>
 
-          {!isLoading && (!domains || domains.length === 0) && (
-            <div className="text-center py-10 space-y-3">
-              <Globe className="w-8 h-8 text-muted-foreground mx-auto" />
-              <p className="text-sm text-muted-foreground">
-                No custom domains yet. Add one from a project's Domains tab.
-              </p>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/projects">Go to Projects</Link>
-              </Button>
-            </div>
-          )}
+      {isLoading && (
+        <div className="flex justify-center p-8">
+          <Loader2 className="w-6 h-6 animate-spin" />
+        </div>
+      )}
 
-          {domains?.map((domain) => (
-            <div
-              key={domain.id}
-              className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium truncate">{domain.name}</span>
+      {!isLoading && (!domains || domains.length === 0) && (
+        <div className="text-center py-12 space-y-2">
+          <Globe className="w-6 h-6 text-muted-foreground mx-auto" />
+          <p className="text-sm text-muted-foreground">
+            No custom domains yet. Add one above.
+          </p>
+        </div>
+      )}
+
+      {!isLoading && domains && domains.length > 0 && (
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Domain</TableHead>
+                <TableHead>Project</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {domains.map((domain) => (
+                <TableRow key={domain.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      {domain.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {domain.project ? (
+                      <Link
+                        href={`/projects/${domain.project.slug}/domains`}
+                        className="text-muted-foreground hover:text-foreground hover:underline"
+                      >
+                        {domain.project.name}
+                      </Link>
+                    ) : domain.verified ? (
+                      <div className="flex items-center gap-1.5">
+                        <Select
+                          value={assignPicks[domain.id] ?? ""}
+                          onValueChange={(value) =>
+                            setAssignPicks((picks) => ({
+                              ...picks,
+                              [domain.id]: value,
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="h-8 w-[160px]">
+                            <SelectValue placeholder="Assign to…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {projects?.map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={
+                            !assignPicks[domain.id] ||
+                            (isAssigning && pendingId === domain.id)
+                          }
+                          onClick={() => handleAssign(domain.id)}
+                        >
+                          {isAssigning && pendingId === domain.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            "Assign"
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Unassigned
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0",
+                        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
                         domain.verified
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
                           : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
@@ -106,69 +221,67 @@ export default function AccountDomainsPage() {
                       )}
                       {domain.verified ? "Verified" : "Pending"}
                     </span>
-                  </div>
-                  <Link
-                    href={`/projects/${domain.project.slug}/domains`}
-                    className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mt-0.5"
-                  >
-                    {domain.project.name}
-                    <ArrowUpRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                {!domain.verified && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleVerify(domain.project.id, domain.id)}
-                    disabled={isVerifying && pendingId === domain.id}
-                  >
-                    {isVerifying && pendingId === domain.id ? (
-                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                    )}
-                    Recheck
-                  </Button>
-                )}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled={isDeleting}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Remove domain</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Remove <strong>{domain.name}</strong> from{" "}
-                        <strong>{domain.project.name}</strong>? Newsletters
-                        will go back to sending from the shared Penna domain.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() =>
-                          deleteDomain({
-                            projectId: domain.project.id,
-                            domainId: domain.id,
-                          })
-                        }
-                        className="bg-destructive text-white hover:bg-destructive/90"
-                      >
-                        Remove
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      {!domain.verified && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Recheck"
+                          onClick={() => handleVerify(domain.id)}
+                          disabled={isVerifying && pendingId === domain.id}
+                        >
+                          {isVerifying && pendingId === domain.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={isDeleting}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove domain</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Remove <strong>{domain.name}</strong>?
+                              {domain.project && (
+                                <>
+                                  {" "}
+                                  Newsletters will go back to sending from the
+                                  shared Penna domain.
+                                </>
+                              )}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteDomain(domain.id)}
+                              className="bg-destructive text-white hover:bg-destructive/90"
+                            >
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

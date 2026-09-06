@@ -17,12 +17,6 @@ import {
   canUseCustomDomain,
 } from "@/services/projects";
 import {
-  listProjectDomains,
-  addProjectDomain,
-  refreshDomainVerification,
-  removeProjectDomain,
-} from "@/services/domains";
-import {
   getSubscribers,
   createSubscriber,
   deleteSubscriber,
@@ -42,7 +36,6 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import {
   acceptProjectInviteSchema,
-  addDomainSchema,
   createProjectSchema,
   inviteUserToProjectSchema,
   isValidUUID,
@@ -282,94 +275,11 @@ projectsRoute.get(
   }
 );
 
-// list a project's custom sending domains
-projectsRoute.get(
-  "/:id/domains",
-  zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
-    if (!result.success) return validationErrorResponse(c, result.error);
-  }),
-  async (c) => {
-    const { id: projectId } = c.req.valid("param");
-    const projectOrRes = await getProjectOrFail(c, projectId);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
-
-    const serviceData = await listProjectDomains(project.id);
-    return c.json(serviceData, routeStatus(serviceData));
-  }
-);
-
-// add a custom sending domain (kicks off SES verification)
-projectsRoute.post(
-  "/:id/domains",
-  zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
-    if (!result.success) return validationErrorResponse(c, result.error);
-  }),
-  zValidator("json", addDomainSchema, (result, c) => {
-    if (!result.success) return validationErrorResponse(c, result.error);
-  }),
-  async (c) => {
-    const { id: projectId } = c.req.valid("param");
-    const { name } = c.req.valid("json");
-    const projectOrRes = await getProjectOrFail(c, projectId, [
-      "owner",
-      "admin",
-    ]);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
-
-    const serviceData = await addProjectDomain(project.id, name);
-    return c.json(serviceData, routeStatus(serviceData));
-  }
-);
-
-// re-check a domain's DNS/verification status against SES
-projectsRoute.post(
-  "/:id/domains/:domainId/verify",
-  zValidator(
-    "param",
-    z.object({ id: z.string().min(1), domainId: z.string().uuid() }),
-    (result, c) => {
-      if (!result.success) return validationErrorResponse(c, result.error);
-    }
-  ),
-  async (c) => {
-    const { id: projectId, domainId } = c.req.valid("param");
-    const projectOrRes = await getProjectOrFail(c, projectId, [
-      "owner",
-      "admin",
-    ]);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
-
-    const serviceData = await refreshDomainVerification(project.id, domainId);
-    return c.json(serviceData, routeStatus(serviceData));
-  }
-);
-
-// remove a custom sending domain
-projectsRoute.delete(
-  "/:id/domains/:domainId",
-  zValidator(
-    "param",
-    z.object({ id: z.string().min(1), domainId: z.string().uuid() }),
-    (result, c) => {
-      if (!result.success) return validationErrorResponse(c, result.error);
-    }
-  ),
-  async (c) => {
-    const { id: projectId, domainId } = c.req.valid("param");
-    const projectOrRes = await getProjectOrFail(c, projectId, [
-      "owner",
-      "admin",
-    ]);
-    if (projectOrRes instanceof Response) return projectOrRes;
-    const project = projectOrRes;
-
-    const serviceData = await removeProjectDomain(project.id, domainId);
-    return c.json(serviceData, routeStatus(serviceData));
-  }
-);
+// Custom sending domains live under the flat /domains route (see
+// routes/api/v1/domains.ts) rather than nested here — a domain can be
+// verified before it's assigned to any project, so it can't always be
+// reached via a /:id project param. The dashboard's per-project Domains
+// tab calls that route with a `projectId` filter/body field instead.
 
 // transfer project ownership to another existing member
 projectsRoute.post(

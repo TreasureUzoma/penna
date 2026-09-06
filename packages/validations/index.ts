@@ -5,25 +5,31 @@ const USERNAME_REGEX = /^[a-z0-9_-]+$/;
 export const BANNED_USERNAMES = [
   "about",
   "account",
+  "activity",
   "admin",
   "api",
   "app",
   "auth",
   "billing",
+  "billings",
   "blog",
   "contact",
   "dashboard",
   "developer",
   "developers",
   "docs",
+  "domains",
   "email",
   "emails",
   "external",
+  "forgot-password",
   "help",
   "legal",
   "penna",
   "login",
   "logout",
+  "new",
+  "onboarding",
   "payments",
   "post",
   "posts",
@@ -32,6 +38,7 @@ export const BANNED_USERNAMES = [
   "profile",
   "projects",
   "register",
+  "reset-password",
   "root",
   "route",
   "safety",
@@ -41,8 +48,11 @@ export const BANNED_USERNAMES = [
   "status",
   "support",
   "terms",
+  "u",
   "user",
+  "username",
   "users",
+  "verify-email",
   "www",
 ];
 
@@ -339,6 +349,15 @@ export const addDomainSchema = z.object({
     .regex(/^(?!:\/\/)([a-z0-9-]+\.)+[a-z]{2,}$/, {
       message: "Enter a valid domain, e.g. news.yoursite.com",
     }),
+  // Optional — omit to verify the domain first and assign it to a project
+  // later (see the account-wide Domains page + `assignDomainSchema` below).
+  projectId: z.string().uuid().optional(),
 });
 
 export type AddDomain = z.infer<typeof addDomainSchema>;
+
+export const assignDomainSchema = z.object({
+  projectId: z.string().uuid("Pick a project"),
+});
+
+export type AssignDomain = z.infer<typeof assignDomainSchema>;
