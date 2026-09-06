@@ -69,7 +69,10 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
           <div className="space-y-1">
             <CardTitle>API Keys</CardTitle>
             <CardDescription>
-              Manage your API keys for accessing the Penna API.
+              Manage your API keys for accessing the Penna API. Each key
+              created below is a pair: a Public Key you can use in
+              client-side code, and a Private Key for privileged,
+              server-only requests.
             </CardDescription>
           </div>
           <Button
@@ -89,6 +92,9 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
           {apiKeys?.map((key) => (
             <div key={key.id} className="flex items-center gap-2">
               <div className="grid flex-1 gap-2">
+                <Label className="text-xs text-muted-foreground">
+                  Public Key
+                </Label>
                 <Input readOnly value={key.publicKey} className="font-mono" />
               </div>
               <CopyButton
@@ -134,13 +140,14 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
           <DialogHeader>
             <DialogTitle>API Key Created</DialogTitle>
             <DialogDescription>
-              Your new API key has been created. Please copy it now as you will
-              not be able to see it again.
+              Your new key pair has been created. The Public Key is saved in
+              the list below, but this Private Key is shown only once — copy
+              it now, as you won&apos;t be able to see it again.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Secret Key</Label>
+              <Label>Private Key</Label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Input
@@ -164,7 +171,7 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
                 </div>
                 <CopyButton
                   content={newKey || ""}
-                  onCopy={() => toast.success("Secret key copied")}
+                  onCopy={() => toast.success("Private key copied")}
                 />
               </div>
             </div>

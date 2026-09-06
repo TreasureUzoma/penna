@@ -33,7 +33,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
       description: "Set up a home for your newsletter or blog.",
       icon: Layout,
       completed: false,
-      href: "/newsletters/new",
+      href: "/new",
     },
     {
       title: "Add your first subscriber",

@@ -62,11 +62,34 @@ export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
     if (err instanceof SubscriberLimitError) {
       return { success: false, data: null, message: err.message };
     }
+
+    // Duplicate email for this newsletter trips the
+    // subscribers_newsletter_email_idx unique constraint — surface a
+    // friendly message instead of the raw SQL error (which otherwise leaks
+    // table/column names and query params to callers of the public API).
+    // Drizzle wraps the driver error in a DrizzleQueryError whose own
+    // `.message` is just "Failed query: ...\nparams: ..." — the real
+    // Postgres error (code 23505, "duplicate key value violates unique
+    // constraint ...") lives on `.cause`, so check both.
+    const cause = (err as { cause?: { code?: string; message?: string } })
+      ?.cause;
+    const isDuplicate =
+      cause?.code === "23505" ||
+      cause?.message?.includes("duplicate key") ||
+      (err instanceof Error && err.message.includes("duplicate key"));
+
+    if (isDuplicate) {
+      return {
+        success: false,
+        data: null,
+        message: "This email is already subscribed to this newsletter.",
+      };
+    }
+
     return {
       success: false,
       data: null,
-      message:
-        err instanceof Error ? err.message : "Failed to create subscriber.",
+      message: "Failed to create subscriber.",
     };
   }
 };
