@@ -6,7 +6,7 @@ import { useCreateEmail } from "@/hooks/use-emails";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { MarkdownSplitEditor } from "@/components/markdown-split-editor";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import {
@@ -29,15 +29,30 @@ export default function NewPostPage(): React.JSX.Element {
   const [scheduledDate, setScheduledDate] = useState<string>("");
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
 
-  const handleSchedule = () => {
+  // "YYYY-MM-DDTHH:mm" in local time, for the datetime-local input's `min` —
+  // stops the popover from accepting a "scheduled" time that's already in
+  // the past, which is the same confusing overlap Publish Now exists to
+  // avoid: scheduling should always mean "later," never "right now."
+  const toLocalDatetimeValue = (date: Date) => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+  const minScheduleValue = toLocalDatetimeValue(new Date());
+
+  const validateFields = () => {
     if (!subject) {
       toast.error("Subject is required");
-      return;
+      return false;
     }
     if (!content) {
       toast.error("Content is required");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleSchedule = () => {
+    if (!validateFields()) return;
     if (!scheduledDate) return;
 
     createEmail(
@@ -50,21 +65,35 @@ export default function NewPostPage(): React.JSX.Element {
       {
         onSuccess: () => {
           setIsScheduleOpen(false);
+          toast.success(
+            `Post scheduled for ${new Date(scheduledDate).toLocaleString()}`,
+          );
           router.push(`/newsletters/${newsletterId}/posts`);
         },
       },
     );
   };
 
-  const handleSave = () => {
-    if (!subject) {
-      toast.error("Subject is required");
-      return;
-    }
-    if (!content) {
-      toast.error("Content is required");
-      return;
-    }
+  const handlePublishNow = () => {
+    if (!validateFields()) return;
+
+    createEmail(
+      {
+        subject,
+        body: content,
+        status: "published",
+      },
+      {
+        onSuccess: () => {
+          toast.success("Post published — sending now");
+          router.push(`/newsletters/${newsletterId}/posts`);
+        },
+      },
+    );
+  };
+
+  const handleSaveDraft = () => {
+    if (!validateFields()) return;
 
     createEmail(
       {
@@ -73,7 +102,7 @@ export default function NewPostPage(): React.JSX.Element {
       },
       {
         onSuccess: () => {
-          toast.success("Post created successfully");
+          toast.success("Draft saved");
           router.push(`/newsletters/${newsletterId}/posts`);
         },
       },
@@ -93,11 +122,20 @@ export default function NewPostPage(): React.JSX.Element {
           >
             Cancel
           </Button>
+          <Button
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isCreating}
+          >
+            {isCreating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Save className="w-4 h-4 mr-2" />
+            Save as Draft
+          </Button>
           <Popover open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" disabled={isCreating}>
                 <CalendarIcon className="w-4 h-4 mr-2" />
-                Schedule
+                Schedule for later
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80" align="end">
@@ -105,12 +143,18 @@ export default function NewPostPage(): React.JSX.Element {
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">Schedule Post</h4>
                   <p className="text-sm text-muted-foreground">
-                    Choose a date and time to publish this post.
+                    Pick a future date and time — the post sends
+                    automatically then. To send right away, use{" "}
+                    <span className="font-medium text-foreground">
+                      Publish Now
+                    </span>{" "}
+                    instead.
                   </p>
                 </div>
                 <div className="grid gap-2">
                   <Input
                     type="datetime-local"
+                    min={minScheduleValue}
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
                   />
@@ -127,10 +171,10 @@ export default function NewPostPage(): React.JSX.Element {
               </div>
             </PopoverContent>
           </Popover>
-          <Button onClick={handleSave} disabled={isCreating}>
+          <Button onClick={handlePublishNow} disabled={isCreating}>
             {isCreating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            <Save className="w-4 h-4 mr-2" />
-            Create Draft
+            <Send className="w-4 h-4 mr-2" />
+            Publish Now
           </Button>
         </div>
       </div>

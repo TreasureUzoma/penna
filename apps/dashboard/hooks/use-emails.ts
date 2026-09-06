@@ -56,8 +56,9 @@ export function useCreateEmail(newsletterId: string) {
       return res.data.data;
     },
     onSuccess: () => {
+      // No generic toast here — draft/schedule/publish-now are different
+      // enough outcomes that each caller shows its own accurate message.
       queryClient.invalidateQueries({ queryKey: ["emails", newsletterId] });
-      toast.success("Post created successfully");
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to create post");
@@ -86,8 +87,10 @@ export function useUpdateEmail(newsletterId: string) {
       return res.data;
     },
     onSuccess: (data) => {
+      // Same reasoning as useCreateEmail: draft/schedule/publish-now read
+      // very differently, so each caller shows its own accurate message
+      // instead of one generic "Post updated successfully" for all three.
       if (data.success) {
-        toast.success("Post updated successfully");
         queryClient.invalidateQueries({ queryKey: ["emails", newsletterId] });
       } else {
         toast.error(data.message || "Failed to update post");

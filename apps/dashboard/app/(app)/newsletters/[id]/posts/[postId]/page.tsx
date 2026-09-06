@@ -6,7 +6,7 @@ import { useEmail, useUpdateEmail } from "@/hooks/use-emails";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { MarkdownSplitEditor } from "@/components/markdown-split-editor";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import {
@@ -44,7 +44,30 @@ export default function EditPostPage(): React.JSX.Element {
     }
   }, [email]);
 
+  // "YYYY-MM-DDTHH:mm" in local time, for the datetime-local input's `min` —
+  // stops "scheduling" a time that's already in the past, which is the same
+  // confusing overlap Publish Now exists to avoid: scheduling should always
+  // mean "later," never "right now."
+  const toLocalDatetimeValue = (date: Date) => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+  const minScheduleValue = toLocalDatetimeValue(new Date());
+
+  const validateFields = () => {
+    if (!subject) {
+      toast.error("Subject is required");
+      return false;
+    }
+    if (!content) {
+      toast.error("Content is required");
+      return false;
+    }
+    return true;
+  };
+
   const handleSchedule = () => {
+    if (!validateFields()) return;
     if (!scheduledDate) return;
 
     updateEmail(
@@ -58,6 +81,28 @@ export default function EditPostPage(): React.JSX.Element {
       {
         onSuccess: () => {
           setIsScheduleOpen(false);
+          toast.success(
+            `Post scheduled for ${new Date(scheduledDate).toLocaleString()}`,
+          );
+          router.push(`/newsletters/${newsletterId}/posts`);
+        },
+      },
+    );
+  };
+
+  const handlePublishNow = () => {
+    if (!validateFields()) return;
+
+    updateEmail(
+      {
+        emailId: postId,
+        status: "published",
+        subject,
+        body: content,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Post published — sending now");
           router.push(`/newsletters/${newsletterId}/posts`);
         },
       },
@@ -65,14 +110,7 @@ export default function EditPostPage(): React.JSX.Element {
   };
 
   const handleSave = () => {
-    if (!subject) {
-      toast.error("Subject is required");
-      return;
-    }
-    if (!content) {
-      toast.error("Content is required");
-      return;
-    }
+    if (!validateFields()) return;
 
     updateEmail(
       {
@@ -82,7 +120,7 @@ export default function EditPostPage(): React.JSX.Element {
       },
       {
         onSuccess: () => {
-          // Toast is handled in the hook
+          toast.success("Changes saved");
           router.push(`/newsletters/${newsletterId}/posts`);
         },
       },
@@ -110,13 +148,13 @@ export default function EditPostPage(): React.JSX.Element {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] -m-8 px-8 py-4 gap-4">
-      <div className="flex items-center justify-between shrink-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
             {isAlreadySent ? "View Post" : "Edit Post"}
           </h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             onClick={() => router.push(`/newsletters/${newsletterId}/posts`)}
@@ -125,11 +163,22 @@ export default function EditPostPage(): React.JSX.Element {
           </Button>
           {!isAlreadySent && (
             <>
+              <Button
+                variant="outline"
+                onClick={handleSave}
+                disabled={isUpdating}
+              >
+                {isUpdating && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                )}
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </Button>
               <Popover open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" disabled={isUpdating}>
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    Schedule
+                    Schedule for later
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80" align="end">
@@ -137,12 +186,18 @@ export default function EditPostPage(): React.JSX.Element {
                     <div className="space-y-2">
                       <h4 className="font-medium leading-none">Schedule Post</h4>
                       <p className="text-sm text-muted-foreground">
-                        Choose a date and time to publish this post.
+                        Pick a future date and time — the post sends
+                        automatically then. To send right away, use{" "}
+                        <span className="font-medium text-foreground">
+                          Publish Now
+                        </span>{" "}
+                        instead.
                       </p>
                     </div>
                     <div className="grid gap-2">
                       <Input
                         type="datetime-local"
+                        min={minScheduleValue}
                         value={scheduledDate}
                         onChange={(e) => setScheduledDate(e.target.value)}
                       />
@@ -159,10 +214,10 @@ export default function EditPostPage(): React.JSX.Element {
                   </div>
                 </PopoverContent>
               </Popover>
-              <Button onClick={handleSave} disabled={isUpdating}>
+              <Button onClick={handlePublishNow} disabled={isUpdating}>
                 {isUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                <Save className="w-4 h-4 mr-2" />
-                Save Draft
+                <Send className="w-4 h-4 mr-2" />
+                Publish Now
               </Button>
             </>
           )}
