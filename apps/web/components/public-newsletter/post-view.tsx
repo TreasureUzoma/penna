@@ -1,5 +1,8 @@
 import Link from "next/link";
-import type { PublicPostDetail, PublicNewsletter } from "@/lib/public-newsletters";
+import type {
+  PublicPostDetail,
+  PublicNewsletter,
+} from "@/lib/public-newsletters";
 import styles from "./post-content.module.css";
 
 function formatDate(iso: string) {

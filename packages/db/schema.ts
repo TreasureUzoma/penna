@@ -164,6 +164,12 @@ export const newsletterApiKeys = pgTable(
     encryptedSecretKey: varchar("encrypted_secret_key", { length: 256 })
       .notNull()
       .unique(), // stored as encrypted
+    // See API_KEY_SCOPES in packages/validations — defaults to full access
+    // so keys created before this column existed keep working unchanged.
+    scopes: jsonb("scopes")
+      .$type<string[]>()
+      .notNull()
+      .default(["subscribers:write", "subscribers:read", "newsletter:send"]),
     lastUsedAt: timestamp("last_used_at"),
     createdAt: timestamp("created_at").defaultNow(),
     revokedAt: timestamp("revoked_at"),

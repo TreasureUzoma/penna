@@ -156,6 +156,29 @@ export const createNewsletterSchema = z.object({
 
 export type NewNewsletter = z.infer<typeof createNewsletterSchema>;
 
+// One key pair (public + private) can be scoped down to only the
+// capabilities it actually needs — e.g. a key embedded in a public signup
+// form only ever needs `subscribers:write`, and should never also be able
+// to read the subscriber list or send to it. Matches the 3 endpoints the
+// external API actually exposes today (routes/api/v1/external/newsletters.ts).
+export const API_KEY_SCOPES = [
+  "subscribers:write",
+  "subscribers:read",
+  "newsletter:send",
+] as const;
+
+export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
+
+export const apiKeyScopeSchema = z.enum(API_KEY_SCOPES);
+
+export const createApiKeySchema = z.object({
+  scopes: z
+    .array(apiKeyScopeSchema)
+    .min(1, "Select at least one scope"),
+});
+
+export type CreateApiKey = z.infer<typeof createApiKeySchema>;
+
 export const updateNewsletterSchema = z.object({
   name: z.string().min(1).max(35).optional(),
   slug: z

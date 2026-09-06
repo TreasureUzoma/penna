@@ -1,0 +1,1 @@
+ALTER TABLE "newsletter_api_keys" ADD COLUMN "scopes" jsonb DEFAULT '["subscribers:write","subscribers:read","newsletter:send"]'::jsonb NOT NULL;

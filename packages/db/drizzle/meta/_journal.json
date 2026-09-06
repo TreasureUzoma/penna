@@ -43,6 +43,13 @@
       "when": 1788780531215,
       "tag": "0005_rename_projects_to_newsletters",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788736246770,
+      "tag": "0006_grey_shocker",
+      "breakpoints": true
     }
   ]
 }
