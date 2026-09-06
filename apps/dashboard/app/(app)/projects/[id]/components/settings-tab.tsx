@@ -105,6 +105,11 @@ export function SettingsTab({ project }: SettingsTabProps) {
     const nextSlug = values.slug;
     updateProject(values, {
       onSuccess: () => {
+        // Re-baseline so "Save Changes" goes back to disabled — isDirty
+        // otherwise keeps comparing against the values the form mounted
+        // with, not what was just saved.
+        form.reset(values);
+
         // The current URL's `[id]` segment is the *old* slug (see
         // getProjectOrFail, which resolves it as slug-or-uuid) — once it
         // changes server-side, that segment 404s on the next fetch, so
@@ -267,7 +272,7 @@ export function SettingsTab({ project }: SettingsTabProps) {
           <Button
             type="submit"
             form="project-settings-form"
-            disabled={isUpdating}
+            disabled={isUpdating || !form.formState.isDirty}
           >
             {isUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Save Changes
