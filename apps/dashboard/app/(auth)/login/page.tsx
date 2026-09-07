@@ -20,7 +20,7 @@ export default async function LoginPage({
   };
   const error = (await searchParams).error;
   return (
-    <div className="flex min-h-screen md:min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+    <div className="flex min-h-screen md:min-h-svh flex-col items-center justify-center gap-6 p-5 md:p-10">
       <div className="flex w-full flex-col gap-6 flex-center">
         {error && OAUTH_ERROR_MESSAGES[error] && (
           <Alert variant="destructive">
