@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { plans } from "@workspace/constants/plans";
+import type { PlanSlug } from "@workspace/constants/plans";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -12,11 +13,15 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
-import { useGetProfile } from "@/hooks/use-auth";
+import { useTeams } from "@/hooks/use-teams";
+import {
+  useTeamSubscription,
+  useCancelTeamSubscription,
+  useCreateTeamCheckout,
+} from "@/hooks/use-team-billing";
 import { SettingsLayout } from "../../components/settings-layout";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import api from "@workspace/axios";
 import { toast } from "sonner";
 
 export default function SubscribePage(): React.ReactNode {
@@ -31,79 +36,108 @@ function SubscribePageContent(): React.ReactNode {
   const searchParams = useSearchParams();
   const router = useRouter();
   const planSlug = searchParams.get("plan");
-  const { data: profile, isLoading: profileLoading } = useGetProfile();
+  const teamSlug = searchParams.get("team");
+
+  const { data: teams, isLoading: isLoadingTeams } = useTeams();
+  const activeTeam =
+    (teamSlug ? teams?.find((t) => t.slug === teamSlug) : undefined) ?? teams?.[0];
+
+  const { data: billing, isLoading: isLoadingBilling } = useTeamSubscription(
+    activeTeam?.id ?? ""
+  );
+  const { mutate: createCheckout } = useCreateTeamCheckout(activeTeam?.id ?? "");
+  const { mutate: cancelSubscription } = useCancelTeamSubscription(
+    activeTeam?.id ?? ""
+  );
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const profileLoading = isLoadingTeams || isLoadingBilling;
   const selectedPlan = plans.find((p) => p.slug === planSlug);
-  const currentPlan = plans.find((p) => p.slug === profile?.plan) || plans[0]!;
+  const currentPlan = plans.find((p) => p.slug === billing?.plan.slug) || plans[0]!;
+  const isOwnerOrAdmin = activeTeam?.role === "owner" || activeTeam?.role === "admin";
 
   // Redirect if no plan selected or invalid plan
   useEffect(() => {
-    if (!planSlug || !selectedPlan) {
+    if (!profileLoading && (!planSlug || !selectedPlan)) {
       router.push("/settings/billing");
     }
-  }, [planSlug, selectedPlan, router]);
+  }, [profileLoading, planSlug, selectedPlan, router]);
 
   // Redirect if already on this plan
   useEffect(() => {
-    if (profile && selectedPlan && profile.plan === selectedPlan.slug) {
+    if (billing && selectedPlan && billing.plan.slug === selectedPlan.slug) {
       router.push("/settings/billing");
     }
-  }, [profile, selectedPlan, router]);
+  }, [billing, selectedPlan, router]);
+
+  // Redirect if this member can't manage billing for the team
+  useEffect(() => {
+    if (!profileLoading && activeTeam && !isOwnerOrAdmin) {
+      toast.error("Only a team owner or admin can change billing");
+      router.push("/settings/billing");
+    }
+  }, [profileLoading, activeTeam, isOwnerOrAdmin, router]);
 
   const handleSubscribe = async () => {
-    if (!selectedPlan) return;
+    if (!selectedPlan || !activeTeam) return;
 
     setIsProcessing(true);
     setError(null);
 
     try {
-      // If upgrading to free plan, just downgrade
+      // Downgrading to the free plan is just a cancel — no checkout needed.
       if (selectedPlan.slug === "hobby") {
-        const response = await api.post("/subscriptions/cancel");
-        if (response.data.success) {
-          setSuccess(true);
-          toast.success("Subscription canceled successfully");
-          setTimeout(() => {
-            router.push("/settings/billing");
-            router.refresh();
-          }, 2000);
-        } else {
-          setError(response.data.message || "Failed to downgrade");
-          toast.error(response.data.message || "Failed to downgrade");
-        }
+        cancelSubscription(undefined, {
+          onSuccess: () => {
+            setSuccess(true);
+            setTimeout(() => {
+              router.push("/settings/billing");
+              router.refresh();
+            }, 2000);
+          },
+          onError: (err: any) => {
+            setError(err.response?.data?.message || "Failed to downgrade");
+          },
+          onSettled: () => setIsProcessing(false),
+        });
         return;
       }
 
-      // Create checkout session for paid plans
-      const response = await api.post("/subscriptions/checkout", {
-        planSlug: selectedPlan.slug,
-        successUrl: `${window.location.origin}/settings/billing?success=true`,
-        cancelUrl: `${window.location.origin}/settings/billing/subscribe?plan=${selectedPlan.slug}`,
-      });
-
-      if (response.data.success && response.data.data?.url) {
-        toast.success("Redirecting to checkout...");
-        // Redirect to Paddle checkout
-        window.location.href = response.data.data.url;
-      } else {
-        setError(response.data.message || "Failed to create checkout");
-        toast.error(response.data.message || "Failed to create checkout");
-      }
+      // Create a real per-seat checkout session for paid plans.
+      createCheckout(
+        {
+          planSlug: selectedPlan.slug as PlanSlug,
+          successUrl: `${window.location.origin}/settings/billing?success=true&team=${activeTeam.slug}`,
+          cancelUrl: `${window.location.origin}/settings/billing/subscribe?plan=${selectedPlan.slug}&team=${activeTeam.slug}`,
+        },
+        {
+          onSuccess: (response) => {
+            if (response.success && response.data?.url) {
+              toast.success("Redirecting to checkout...");
+              window.location.href = response.data.url;
+            } else {
+              setError(response.message || "Failed to create checkout");
+            }
+          },
+          onError: (err: any) => {
+            setError(err.response?.data?.message || "Failed to create checkout");
+          },
+          onSettled: () => setIsProcessing(false),
+        }
+      );
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to process subscription";
       setError(errorMessage);
       toast.error(errorMessage);
-    } finally {
       setIsProcessing(false);
     }
   };
 
-  if (profileLoading || !selectedPlan) {
+  if (profileLoading || !selectedPlan || !activeTeam) {
     return (
       <SettingsLayout>
         <div className="max-w-2xl space-y-6">
@@ -147,6 +181,7 @@ function SubscribePageContent(): React.ReactNode {
 
   const isUpgrade = selectedPlan.tier > (currentPlan?.tier || 0);
   const isDowngrade = selectedPlan.tier < (currentPlan?.tier || 0);
+  const seatCount = billing?.subscription?.quantity;
 
   return (
     <SettingsLayout>
@@ -156,7 +191,7 @@ function SubscribePageContent(): React.ReactNode {
           <CardHeader>
             <CardTitle>Confirm Subscription</CardTitle>
             <CardDescription>
-              Review your subscription details before proceeding
+              Review {activeTeam.name}'s subscription details before proceeding
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -170,7 +205,7 @@ function SubscribePageContent(): React.ReactNode {
                 <span className="text-sm text-muted-foreground">
                   {currentPlan.price === 0
                     ? "Free"
-                    : `$${currentPlan.price}/month`}
+                    : `$${currentPlan.price}/seat/month`}
                 </span>
               </div>
             </div>
@@ -190,7 +225,7 @@ function SubscribePageContent(): React.ReactNode {
                 <span className="text-sm font-semibold">
                   {selectedPlan.price === 0
                     ? "Free"
-                    : `$${selectedPlan.price}/month`}
+                    : `$${selectedPlan.price}/seat/month`}
                 </span>
               </div>
             </div>
@@ -215,11 +250,23 @@ function SubscribePageContent(): React.ReactNode {
               <div className="p-3 rounded-lg bg-muted/50 space-y-1">
                 <p className="text-sm">
                   <span className="text-muted-foreground">Billing: </span>
-                  <span className="font-medium">Monthly</span>
+                  <span className="font-medium">Monthly, per seat</span>
+                </p>
+                <p className="text-sm">
+                  <span className="text-muted-foreground">Seats: </span>
+                  <span className="font-medium">
+                    {seatCount ?? "current team size"}
+                  </span>
                 </p>
                 <p className="text-sm">
                   <span className="text-muted-foreground">Amount: </span>
-                  <span className="font-medium">${selectedPlan.price}/month</span>
+                  <span className="font-medium">
+                    ${selectedPlan.price}
+                    {seatCount
+                      ? ` × ${seatCount} = $${(selectedPlan.price ?? 0) * seatCount}`
+                      : ""}
+                    /month
+                  </span>
                 </p>
                 <p className="text-sm">
                   <span className="text-muted-foreground">Subscribers: </span>
@@ -279,12 +326,12 @@ function SubscribePageContent(): React.ReactNode {
 
             {/* Info Text */}
             <p className="text-xs text-muted-foreground text-center">
-              {isUpgrade && "Your new plan will be active immediately."}
+              {isUpgrade && "Your team's new plan will be active immediately."}
               {isDowngrade &&
-                "Your plan will be downgraded at the end of your current billing cycle."}
+                "Your team will be downgraded at the end of your current billing cycle."}
               {!isUpgrade &&
                 !isDowngrade &&
-                "Your subscription will be updated immediately."}
+                "Your team's subscription will be updated immediately."}
             </p>
           </CardContent>
         </Card>

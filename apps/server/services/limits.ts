@@ -1,10 +1,11 @@
 import { db } from "@workspace/db";
 import { newsletters, subscribers, teamMembers, users } from "@workspace/db/schema";
 import { and, count, eq } from "drizzle-orm";
-import { getPlanBySlug, type Plan } from "@workspace/constants/plans";
+import type { Plan } from "@workspace/constants/plans";
 import { envConfig } from "@/config";
 import { sendSubscriberLimitWarningEmail } from "./mail/internal";
 import { getRedis } from "@/lib/redis";
+import { getTeamPlan } from "./teams";
 
 export interface SubscriberUsage {
   newsletterId: string;
@@ -49,19 +50,22 @@ type NewsletterOwnerPlan = {
  * defensively rather than thrown, since this sits on hot paths (public
  * subscribe forms, external-API sends).
  */
-// Phase 1 has no team-level subscription yet (see the teams plan doc) —
-// this still resolves to an individual user's plan: the newsletter's
-// owning team's owner.
+// Resolves via the newsletter's owning team's real Paddle subscription
+// (getTeamPlan), falling back to the team owner's individual `users.plan`
+// for teams that haven't gone through team-level checkout yet — same
+// resolution every other plan gate uses (see canRemoveBranding in
+// services/newsletters.ts). Owner name/email are still looked up here
+// since they're needed for the subscriber-limit-warning email regardless
+// of which plan source won.
 const getNewsletterOwnerPlan = async (
   newsletterId: string
 ): Promise<NewsletterOwnerPlan | null> => {
   const [row] = await db
     .select({
       newsletterName: newsletters.name,
-      ownerId: users.id,
+      teamId: newsletters.teamId,
       ownerName: users.name,
       ownerEmail: users.email,
-      ownerPlan: users.plan,
     })
     .from(newsletters)
     .innerJoin(teamMembers, eq(teamMembers.teamId, newsletters.teamId))
@@ -77,7 +81,7 @@ const getNewsletterOwnerPlan = async (
 
   return {
     newsletterName: row.newsletterName,
-    plan: getPlanBySlug(row.ownerPlan),
+    plan: await getTeamPlan(row.teamId),
     ownerEmail: row.ownerEmail,
     ownerName: row.ownerName,
   };

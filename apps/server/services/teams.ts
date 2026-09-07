@@ -1,11 +1,20 @@
 import { db } from "@workspace/db";
-import { teams, teamMembers, teamInvites, users, newsletters } from "@workspace/db/schema";
+import {
+  teams,
+  teamMembers,
+  teamInvites,
+  teamSubscriptions,
+  users,
+  newsletters,
+} from "@workspace/db/schema";
 import type { ServiceResponse, TeamRoles } from "@workspace/types";
 import type { NewTeam, UpdateTeam } from "@workspace/validations";
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import crypto from "crypto";
 import { paginate } from "@/utils/pagination";
 import { sendTeamInviteEmail } from "./mail/internal";
+import { getPlanBySlug, type Plan } from "@workspace/constants/plans";
+import { syncTeamSeatQuantity } from "./team-billing";
 
 const INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -80,6 +89,97 @@ export const getUserTeamRole = async (teamId: string, userId: string) => {
     message: "Fetched user role successfully",
     data: membership,
   };
+};
+
+/**
+ * A team's effective billing plan. Checks for a real, live Paddle
+ * subscription first; falls back to the team owner's individual
+ * `users.plan` if there isn't one yet — this is the permanent path for
+ * every team created before real per-team billing existed (see the schema
+ * comment on `teamSubscriptions`), not just a temporary shim. We are not
+ * migrating/reassigning existing personal Paddle subscriptions to teams.
+ */
+export const getTeamPlan = async (teamId: string): Promise<Plan> => {
+  const [liveSub] = await db
+    .select({ planSlug: teamSubscriptions.planSlug })
+    .from(teamSubscriptions)
+    .where(
+      and(
+        eq(teamSubscriptions.teamId, teamId),
+        inArray(teamSubscriptions.status, ["active", "trialing"]),
+      ),
+    )
+    .orderBy(desc(teamSubscriptions.updatedAt))
+    .limit(1);
+
+  if (liveSub) {
+    return getPlanBySlug(liveSub.planSlug);
+  }
+
+  const [owner] = await db
+    .select({ plan: users.plan })
+    .from(teamMembers)
+    .innerJoin(users, eq(teamMembers.userId, users.id))
+    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.role, "owner")));
+
+  return getPlanBySlug(owner?.plan);
+};
+
+const getTeamMemberCount = async (teamId: string): Promise<number> => {
+  const [row] = await db
+    .select({ value: count() })
+    .from(teamMembers)
+    .where(eq(teamMembers.teamId, teamId));
+  return row?.value ?? 0;
+};
+
+/**
+ * Thrown by `assertTeamSeatCapacity` when adding a member would push a team
+ * past its plan's member cap. Only the free Hobby plan actually has one
+ * (see the `maxTeamMembers` comment in `packages/constants/plans.ts`) —
+ * every paid plan bills per seat, so there's nothing to block there.
+ * Callers should catch this the same way `SubscriberLimitError` is caught
+ * elsewhere: return `.message` to the caller as a clean 400 rather than a
+ * generic error.
+ */
+export class TeamSeatLimitError extends Error {
+  plan: Plan;
+  currentCount: number;
+
+  constructor(plan: Plan, currentCount: number) {
+    super(
+      `This team is at its ${plan.name} plan limit of ${plan.maxTeamMembers} members. Upgrade to add more.`
+    );
+    this.name = "TeamSeatLimitError";
+    this.plan = plan;
+    this.currentCount = currentCount;
+  }
+}
+
+/**
+ * Throws `TeamSeatLimitError` if adding `additionalCount` members would push
+ * a team past its plan's member cap. Callers should run this *before*
+ * actually adding a member — both when an invite is first sent (a soft
+ * check against the team's current size) and again right before an invite
+ * is accepted (a hard check, since the team's plan or size may have changed
+ * in the meantime — e.g. downgraded to Hobby while the invite sat pending).
+ *
+ * Deliberately does not evict anyone if a team is already over its cap
+ * (e.g. after downgrading) — same non-destructive philosophy as
+ * `assertSubscriberCapacity`: existing overage is grandfathered, only
+ * *growing* further is blocked.
+ */
+export const assertTeamSeatCapacity = async (
+  teamId: string,
+  additionalCount = 1
+): Promise<void> => {
+  const plan = await getTeamPlan(teamId);
+  if (plan.maxTeamMembers === null) return; // unlimited on this plan
+
+  const currentCount = await getTeamMemberCount(teamId);
+  if (currentCount + additionalCount > plan.maxTeamMembers) {
+    throw new TeamSeatLimitError(plan, currentCount);
+  }
 };
 
 export const getUserTeams = (userId: string, page = 1, limit = 20) => {
@@ -319,6 +419,12 @@ export const inviteToTeam = async (
   role: TeamRoles
 ): Promise<ServiceResponse> => {
   try {
+    // Soft check: blocks sending an invite that would obviously overshoot
+    // the cap given the team's size right now. The hard check that
+    // actually matters happens again in acceptTeamInvite, since the plan
+    // or team size can change while this invite sits pending.
+    await assertTeamSeatCapacity(teamId);
+
     const normalizedEmail = email.trim().toLowerCase();
 
     const [existingUser] = await db
@@ -464,11 +570,26 @@ export const acceptTeamInvite = async (
       .where(and(eq(teamMembers.teamId, invite.teamId), eq(teamMembers.userId, acceptingUserId)));
 
     if (!existingMember) {
+      // Hard check: the team's plan or size may have changed since this
+      // invite was sent (e.g. downgraded to Hobby while it sat pending).
+      // Deliberately checked again here, not just at invite-send time.
+      await assertTeamSeatCapacity(invite.teamId);
+
       await db.insert(teamMembers).values({
         teamId: invite.teamId,
         userId: acceptingUserId,
         role: invite.role,
       });
+      // Fire-and-forget: a new seat joined. No-ops if this team has no live
+      // Paddle subscription yet (still on the Phase-1 fallback plan), and
+      // shouldn't block the invite accepting just because a Paddle call is
+      // slow/fails — the membership row is what actually matters here.
+      void syncTeamSeatQuantity(invite.teamId).catch((err) =>
+        console.error(
+          `Failed to sync seat quantity for team ${invite.teamId} after invite accept:`,
+          err,
+        ),
+      );
     }
 
     const [updatedInvite] = await db
@@ -509,6 +630,53 @@ export const revokeTeamInvite = async (inviteId: string): Promise<ServiceRespons
       data: null,
       success: false,
       message: err instanceof Error ? err.message : "Something went wrong revoking the invitation.",
+    };
+  }
+};
+
+/**
+ * Removes a member from a team — didn't exist before Phase 2. Per-seat
+ * billing without a way to reduce seats only ever charges more, never
+ * less, so this ships alongside seat-quantity sync rather than after.
+ * The owner can't be removed this way — transfer ownership first.
+ */
+export const removeTeamMember = async (
+  teamId: string,
+  targetUserId: string
+): Promise<ServiceResponse> => {
+  try {
+    const [target] = await db
+      .select()
+      .from(teamMembers)
+      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId)));
+
+    if (!target) {
+      return { data: null, success: false, message: "User is not a member of this team." };
+    }
+    if (target.role === "owner") {
+      return {
+        data: null,
+        success: false,
+        message: "Can't remove the team owner — transfer ownership first.",
+      };
+    }
+
+    await db
+      .delete(teamMembers)
+      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId)));
+
+    // Same fire-and-forget reasoning as the invite-accept path — a seat
+    // was freed, sync it, but don't fail the removal over a Paddle hiccup.
+    void syncTeamSeatQuantity(teamId).catch((err) =>
+      console.error(`Failed to sync seat quantity for team ${teamId} after member removal:`, err),
+    );
+
+    return { data: null, success: true, message: "Member removed successfully." };
+  } catch (err) {
+    return {
+      data: null,
+      success: false,
+      message: err instanceof Error ? err.message : "Something went wrong removing the member.",
     };
   }
 };

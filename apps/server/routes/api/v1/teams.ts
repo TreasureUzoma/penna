@@ -10,7 +10,14 @@ import {
   getUserTeamInvites,
   acceptTeamInvite,
   revokeTeamInvite,
+  removeTeamMember,
+  getTeamPlan,
 } from "@/services/teams";
+import {
+  getTeamSubscription,
+  createTeamCheckoutSession,
+  cancelTeamSubscription,
+} from "@/services/team-billing";
 import { getTeamOrFail } from "@/utils/team-access";
 import { routeStatus } from "@/lib/utils";
 import { validationErrorResponse } from "@/utils/validation-error-response";
@@ -25,6 +32,7 @@ import {
   transferTeamOwnershipSchema,
   inviteToTeamSchema,
   acceptTeamInviteSchema,
+  teamCheckoutSchema,
 } from "@workspace/validations";
 
 const teamsRoute = new Hono<AppBindings>();
@@ -178,6 +186,26 @@ teamsRoute.patch(
   }
 );
 
+// remove a member — owner/admin only, can't remove the owner (transfer first)
+teamsRoute.delete(
+  "/:id/members/:userId",
+  zValidator(
+    "param",
+    z.object({ id: z.string().min(1), userId: z.string().uuid() }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
+    }
+  ),
+  async (c) => {
+    const { id, userId } = c.req.valid("param");
+    const teamOrRes = await getTeamOrFail(c, id, ["owner", "admin"]);
+    if (teamOrRes instanceof Response) return teamOrRes;
+
+    const serviceData = await removeTeamMember(teamOrRes.id, userId);
+    return c.json(serviceData, routeStatus(serviceData));
+  }
+);
+
 // transfer ownership to another existing member
 teamsRoute.post(
   "/:id/transfer-ownership",
@@ -242,6 +270,83 @@ teamsRoute.delete(
     if (teamOrRes instanceof Response) return teamOrRes;
 
     const serviceData = await revokeTeamInvite(inviteId);
+    return c.json(serviceData, routeStatus(serviceData));
+  }
+);
+
+// current live subscription for a team (backs Settings > Billing) — any
+// member can see the team's plan, same visibility as the team itself.
+// Includes the *resolved* effective plan alongside the raw Paddle
+// subscription row, since a team with no live subscription yet still has
+// an effective plan (the Phase-1 fallback via getTeamPlan) — the dashboard
+// shouldn't have to know about that fallback itself.
+teamsRoute.get(
+  "/:id/subscription",
+  zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const teamOrRes = await getTeamOrFail(c, id, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
+    if (teamOrRes instanceof Response) return teamOrRes;
+
+    const [serviceData, plan] = await Promise.all([
+      getTeamSubscription(teamOrRes.id),
+      getTeamPlan(teamOrRes.id),
+    ]);
+    return c.json(
+      { ...serviceData, data: { subscription: serviceData.data, plan } },
+      routeStatus(serviceData)
+    );
+  }
+);
+
+// start a real per-seat Paddle checkout for this team — owner/admin only,
+// same gate as billing anywhere else in the app.
+teamsRoute.post(
+  "/:id/checkout",
+  zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  zValidator("json", teamCheckoutSchema, (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const { planSlug, successUrl } = c.req.valid("json");
+    const cookieUser = c.get("user") as AuthType;
+
+    const teamOrRes = await getTeamOrFail(c, id, ["owner", "admin"]);
+    if (teamOrRes instanceof Response) return teamOrRes;
+
+    const serviceData = await createTeamCheckoutSession({
+      teamId: teamOrRes.id,
+      planSlug,
+      successUrl,
+      initiatedByUserId: cookieUser.id,
+    });
+    return c.json(serviceData, routeStatus(serviceData));
+  }
+);
+
+// cancel this team's real Paddle subscription — scheduled for end of the
+// current billing period, owner/admin only.
+teamsRoute.post(
+  "/:id/cancel-subscription",
+  zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const teamOrRes = await getTeamOrFail(c, id, ["owner", "admin"]);
+    if (teamOrRes instanceof Response) return teamOrRes;
+
+    const serviceData = await cancelTeamSubscription(teamOrRes.id);
     return c.json(serviceData, routeStatus(serviceData));
   }
 );

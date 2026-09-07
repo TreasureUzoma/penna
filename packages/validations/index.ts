@@ -308,6 +308,16 @@ export const transferTeamOwnershipSchema = z.object({
 
 export type TransferTeamOwnership = z.infer<typeof transferTeamOwnershipSchema>;
 
+// `teamId` comes from the route param, not the body — same shape the old
+// (now retired) /subscriptions/checkout body had, minus the userId concept.
+export const teamCheckoutSchema = z.object({
+  planSlug: z.enum(["hobby", "professional", "business", "enterprise"]),
+  successUrl: z.string().url(),
+  cancelUrl: z.string().url(),
+});
+
+export type TeamCheckout = z.infer<typeof teamCheckoutSchema>;
+
 export const unsubscribeFromNewsletterSchema = z.object({
   newsletterId: z.string().min(1),
   email: z.string().email(),

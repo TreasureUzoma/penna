@@ -86,6 +86,17 @@ export const paymentProviderEnum = pgEnum("payment_provider", [
   "paddle",
   "manual",
 ]);
+// Paddle's own subscription status vocabulary, verbatim — not our own
+// invented enum. "canceled" is the terminal state; a subscription that's
+// scheduled to cancel at period end stays "active" with
+// teamSubscriptions.scheduledChange set instead (see that column).
+export const paddleSubscriptionStatusEnum = pgEnum("paddle_subscription_status", [
+  "active",
+  "trialing",
+  "past_due",
+  "paused",
+  "canceled",
+]);
 export const emailTypeEnum = pgEnum("email_type", ["email", "web", "both"]);
 export const newsletterSendStatusEnum = pgEnum("newsletter_send_status", [
   "sent",
@@ -424,6 +435,48 @@ export const payments = pgTable(
   }),
 );
 
+/**
+ * One row per real Paddle subscription for a team — per-seat billing,
+ * `quantity` tracks the team's member count. Deliberately not unique on
+ * `teamId` alone: if a team's subscription is ever fully replaced (rare —
+ * normally the same subscription is updated in place via
+ * `paddle.subscriptions.update`), the old row stays as history and
+ * `getTeamPlan` always reads "most recent active/trialing row for this
+ * team." A team with no row here yet has never gone through team-level
+ * checkout — see `getTeamPlan`'s fallback to the team owner's individual
+ * `users.plan`, which is what every team created before this feature
+ * still resolves through, permanently, unless it re-subscribes.
+ */
+export const teamSubscriptions = pgTable(
+  "team_subscriptions",
+  {
+    serial: serial("serial").primaryKey(),
+    id: uuid("id").defaultRandom().notNull().unique(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    paddleSubscriptionId: text("paddle_subscription_id").notNull().unique(),
+    paddleCustomerId: text("paddle_customer_id").notNull(),
+    // "professional" | "business" — reverse-mapped from priceId at webhook
+    // time (see PRICE_ID_TO_PLAN_SLUG in services/paddle.ts), not stored as
+    // a PlanSlug-typed enum here since this table shouldn't need a
+    // migration every time the plan catalog changes.
+    planSlug: text("plan_slug").notNull(),
+    priceId: text("price_id").notNull(),
+    status: paddleSubscriptionStatusEnum("status").notNull(),
+    quantity: integer("quantity").notNull().default(1),
+    // Raw {action, effectiveAt} from Paddle's `scheduledChange`, or null —
+    // e.g. "cancels at period end" without touching `status` early.
+    scheduledChange: jsonb("scheduled_change"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("team_subscriptions_team_idx").on(table.teamId),
+    statusIdx: index("team_subscriptions_status_idx").on(table.status),
+  }),
+);
+
 export const verification = pgTable("verification", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
@@ -613,7 +666,18 @@ export const teamRelations = relations(teams, ({ many }) => ({
   members: many(teamMembers),
   invites: many(teamInvites),
   newsletters: many(newsletters),
+  subscriptions: many(teamSubscriptions),
 }));
+
+export const teamSubscriptionRelations = relations(
+  teamSubscriptions,
+  ({ one }) => ({
+    team: one(teams, {
+      fields: [teamSubscriptions.teamId],
+      references: [teams.id],
+    }),
+  }),
+);
 
 export const teamMemberRelations = relations(teamMembers, ({ one }) => ({
   team: one(teams, {

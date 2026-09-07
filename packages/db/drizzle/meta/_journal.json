@@ -57,6 +57,13 @@
       "when": 1788792524582,
       "tag": "0007_mysterious_namora",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788801714536,
+      "tag": "0008_chunky_liz_osborn",
+      "breakpoints": true
     }
   ]
 }

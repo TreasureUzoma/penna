@@ -37,7 +37,9 @@
       "Read(//c/Users/ACER/.claude/plugins/cache/claude-community/paddle/de7fcd3f6cc4-ab82885f/skills/subscription-sync/**)",
       "Bash(npx dotenv *)",
       "Bash(bun run *)",
-      "Bash(rm \"/c/Users/ACER/lettera/apps/dashboard/app/\\(app\\)/newsletters/[id]/components/members-tab.tsx\" /c/Users/ACER/lettera/apps/dashboard/hooks/use-newsletter-members.ts && echo removed)"
+      "Bash(rm \"/c/Users/ACER/lettera/apps/dashboard/app/\\(app\\)/newsletters/[id]/components/members-tab.tsx\" /c/Users/ACER/lettera/apps/dashboard/hooks/use-newsletter-members.ts && echo removed)",
+      "Bash(find / -path /proc -prune -o -type d -name \"paddle-node-sdk\" -print 2>/dev/null)",
+      "Read(//c//**)"
     ],
     "additionalDirectories": [
       "C:\\Users\\ACER\\lettera\\apps\\dashboard\\app\\(app)\\newsletters\\[id]\\components"

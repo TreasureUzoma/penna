@@ -11,6 +11,7 @@ import {
   users,
 } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
+import { getTeamPlan } from "./teams";
 import type {
   ApiKeyScope,
   NewNewsletter,
@@ -82,19 +83,15 @@ export const createNewsletter = async (
 export const isNewsletterOwnerOnPaidPlan = async (
   newsletterId: string
 ): Promise<boolean> => {
-  const [owner] = await db
-    .select({ subscriptionType: users.subscriptionType })
+  const [newsletter] = await db
+    .select({ teamId: newsletters.teamId })
     .from(newsletters)
-    .innerJoin(teamMembers, eq(teamMembers.teamId, newsletters.teamId))
-    .innerJoin(users, eq(teamMembers.userId, users.id))
-    .where(
-      and(
-        eq(newsletters.id, newsletterId),
-        eq(teamMembers.role, "owner")
-      )
-    );
+    .where(eq(newsletters.id, newsletterId));
 
-  return !!owner && owner.subscriptionType !== "free";
+  if (!newsletter) return false;
+
+  const plan = await getTeamPlan(newsletter.teamId);
+  return plan.slug !== "hobby";
 };
 
 /** See `isNewsletterOwnerOnPaidPlan` — same gate, kept as a named alias at each call site for readability. */

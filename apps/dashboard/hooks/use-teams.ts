@@ -132,6 +132,24 @@ export function useUpdateTeamMemberRole(teamId: string) {
   });
 }
 
+export function useRemoveTeamMember(teamId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await api.delete(`/teams/${teamId}/members/${userId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team-members", teamId] });
+      toast.success("Member removed");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to remove member");
+    },
+  });
+}
+
 export function useTransferTeamOwnership(teamId: string) {
   const queryClient = useQueryClient();
 

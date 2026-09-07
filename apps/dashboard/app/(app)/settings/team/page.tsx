@@ -9,7 +9,9 @@ import {
   useTransferTeamOwnership,
   useInviteToTeam,
   useCreateTeam,
+  useRemoveTeamMember,
 } from "@/hooks/use-teams";
+import { useTeamSubscription } from "@/hooks/use-team-billing";
 import {
   Avatar,
   AvatarFallback,
@@ -52,7 +54,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { Crown, Loader2, Plus, UserPlus } from "lucide-react";
+import { AlertTriangle, Crown, Loader2, Plus, UserMinus, UserPlus } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import type { TeamRoles } from "@workspace/types";
 
 function CreateTeamDialog() {
@@ -162,6 +165,10 @@ function TeamSettingsContent() {
   const { mutate: inviteToTeam, isPending: isInviting } = useInviteToTeam(
     activeTeam?.id ?? ""
   );
+  const { mutate: removeMember, isPending: isRemoving } = useRemoveTeamMember(
+    activeTeam?.id ?? ""
+  );
+  const { data: billing } = useTeamSubscription(activeTeam?.id ?? "");
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -185,6 +192,12 @@ function TeamSettingsContent() {
 
   const isOwnerOrAdmin =
     activeTeam.role === "owner" || activeTeam.role === "admin";
+
+  const memberCap = billing?.plan.maxTeamMembers ?? null;
+  const isOverCap =
+    memberCap !== null && !!members && members.length > memberCap;
+  const isAtOrOverCap =
+    memberCap !== null && !!members && members.length >= memberCap;
 
   const handleInvite = () => {
     if (!inviteEmail.trim()) return;
@@ -228,6 +241,27 @@ function TeamSettingsContent() {
         <CreateTeamDialog />
       </div>
 
+      {isOverCap && (
+        <Alert variant="destructive">
+          <AlertTriangle className="w-4 h-4" />
+          <AlertTitle>Over the {billing?.plan.name} plan's member limit</AlertTitle>
+          <AlertDescription>
+            {activeTeam.name} has {members?.length} members, but its plan
+            only includes {memberCap}. Existing members keep their access,
+            but you can't invite anyone new until you remove a member{" "}
+            {isOwnerOrAdmin && (
+              <>
+                or{" "}
+                <a href="/settings/billing" className="underline">
+                  upgrade the plan
+                </a>
+              </>
+            )}
+            .
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
           <div>
@@ -240,7 +274,15 @@ function TeamSettingsContent() {
           {isOwnerOrAdmin && (
             <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto">
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={isAtOrOverCap}
+                  title={
+                    isAtOrOverCap
+                      ? `This team is at its ${billing?.plan.name} plan's limit of ${memberCap} members`
+                      : undefined
+                  }
+                >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Invite Member
                 </Button>
@@ -379,6 +421,39 @@ function TeamSettingsContent() {
                       <SelectItem value="viewer">Viewer</SelectItem>
                     </SelectContent>
                   </Select>
+                  {isOwnerOrAdmin && member.role !== "owner" && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={isRemoving}
+                          title="Remove from team"
+                        >
+                          <UserMinus className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remove member</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Remove <strong>{member.user.name}</strong> from{" "}
+                            {activeTeam.name}? They'll lose access to every
+                            newsletter this team owns. This also frees up a
+                            seat on the team's subscription, if it has one.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => removeMember(member.userId)}
+                          >
+                            Remove
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </div>
             ))

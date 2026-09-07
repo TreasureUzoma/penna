@@ -7,6 +7,15 @@ export type Plan = {
   /** Included subscriber cap. `null` means unlimited (enterprise only). */
   subscribers: number | null;
   /**
+   * Max team members a team on this plan can have. `null` means unlimited.
+   * Only Hobby (the free plan) has a real cap here — every paid plan bills
+   * per seat (see `apps/server/services/team-billing.ts`'s
+   * `syncTeamSeatQuantity`), so a bigger team on a paid plan just costs
+   * more, there's no free-riding risk that needs a hard ceiling. Hobby has
+   * no billing to scale with member count, so it needs one.
+   */
+  maxTeamMembers: number | null;
+  /**
    * Max external-API newsletter sends (`POST .../newsletters/send`) per
    * rolling 24h window. `null` means unlimited. Placeholder values — tune
    * once real usage patterns are known.
@@ -25,10 +34,16 @@ export const plans: Plan[] = [
     name: "hobby",
     subscribers: 100,
     newslettersPerDay: 3,
+    maxTeamMembers: 3,
     price: 0,
     priceLabel: "free",
     description: "perfect for getting started or testing your first newsletter",
-    features: ["up to 100 subscribers", "basic analytics", "email support"],
+    features: [
+      "up to 100 subscribers",
+      "basic analytics",
+      "email support",
+      "up to 3 team members",
+    ],
   },
   {
     tier: 1,
@@ -36,6 +51,7 @@ export const plans: Plan[] = [
     name: "professional",
     subscribers: 2500,
     newslettersPerDay: 20,
+    maxTeamMembers: null,
     price: 9,
     priceLabel: "$9",
     description: "for creators growing a serious audience",
@@ -54,6 +70,7 @@ export const plans: Plan[] = [
     name: "business",
     subscribers: 10000,
     newslettersPerDay: 100,
+    maxTeamMembers: null,
     price: 29,
     priceLabel: "$29",
     description: "for established newsletters and small teams",
@@ -80,6 +97,7 @@ export const plans: Plan[] = [
   //   name: "enterprise",
   //   subscribers: null,
   //   newslettersPerDay: null,
+  //   maxTeamMembers: null,
   //   price: null,
   //   priceLabel: "custom",
   //   description: "for large organizations with advanced requirements",
