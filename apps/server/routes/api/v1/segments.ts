@@ -30,7 +30,12 @@ segmentRoutes.get(
   ),
   async (c) => {
     const { newsletterId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -63,7 +68,11 @@ segmentRoutes.post(
   async (c) => {
     const { newsletterId } = c.req.valid("param");
     const { name, description, criteria } = c.req.valid("json");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -93,7 +102,12 @@ segmentRoutes.get(
   ),
   async (c) => {
     const { newsletterId, segmentId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -129,7 +143,11 @@ segmentRoutes.patch(
   async (c) => {
     const { newsletterId, segmentId } = c.req.valid("param");
     const updates = c.req.valid("json");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -153,7 +171,11 @@ segmentRoutes.delete(
   ),
   async (c) => {
     const { newsletterId, segmentId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -177,7 +199,12 @@ segmentRoutes.get(
   ),
   async (c) => {
     const { newsletterId, segmentId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -202,7 +229,11 @@ segmentRoutes.post(
   ),
   async (c) => {
     const { newsletterId, segmentId, subscriberId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -232,7 +263,11 @@ segmentRoutes.delete(
   ),
   async (c) => {
     const { newsletterId, segmentId, subscriberId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 

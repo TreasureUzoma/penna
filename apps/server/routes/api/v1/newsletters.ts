@@ -232,7 +232,12 @@ newslettersRoute.get(
   }),
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
     return c.json({ newsletter }, 200);
@@ -250,7 +255,12 @@ newslettersRoute.get(
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
     const { days } = c.req.query();
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -347,7 +357,12 @@ newslettersRoute.get(
   }),
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -383,7 +398,11 @@ newslettersRoute.post(
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
     const { email, name } = c.req.valid("json");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -439,7 +458,11 @@ newslettersRoute.delete(
   ),
   async (c) => {
     const { id: newsletterId, subscriberId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -458,7 +481,12 @@ newslettersRoute.get(
   }),
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -482,7 +510,12 @@ newslettersRoute.get(
   ),
   async (c) => {
     const { id: newsletterId, emailId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -516,7 +549,11 @@ newslettersRoute.post(
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
     const { subject, body, status, sentAt } = c.req.valid("json");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -560,7 +597,11 @@ newslettersRoute.patch(
   async (c) => {
     const { id: newsletterId, emailId } = c.req.valid("param");
     const { subject, body, status, sentAt } = c.req.valid("json");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
@@ -590,7 +631,11 @@ newslettersRoute.delete(
   ),
   async (c) => {
     const { id: newsletterId, emailId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 

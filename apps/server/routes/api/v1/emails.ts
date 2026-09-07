@@ -42,7 +42,11 @@ emailsRoute.post(
       const { subject, html, recipientEmails, replyTo } = c.req.valid("json");
 
       // Verify user has access to this newsletter
-      const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+      const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+        "owner",
+        "admin",
+        "editor",
+      ]);
       if (newsletterOrRes instanceof Response) return newsletterOrRes;
       const newsletter = newsletterOrRes;
 
@@ -109,7 +113,11 @@ emailsRoute.post(
       const { testEmail, subject, html } = c.req.valid("json");
 
       // Verify user has access to this newsletter
-      const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
+      const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+        "owner",
+        "admin",
+        "editor",
+      ]);
       if (newsletterOrRes instanceof Response) return newsletterOrRes;
       const newsletter = newsletterOrRes;
 

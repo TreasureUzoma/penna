@@ -85,7 +85,12 @@ teamsRoute.get(
   }),
   async (c) => {
     const { id } = c.req.valid("param");
-    const teamOrRes = await getTeamOrFail(c, id);
+    const teamOrRes = await getTeamOrFail(c, id, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (teamOrRes instanceof Response) return teamOrRes;
     return c.json({ team: teamOrRes }, 200);
   }
@@ -136,7 +141,12 @@ teamsRoute.get(
   }),
   async (c) => {
     const { id } = c.req.valid("param");
-    const teamOrRes = await getTeamOrFail(c, id);
+    const teamOrRes = await getTeamOrFail(c, id, [
+      "owner",
+      "admin",
+      "editor",
+      "viewer",
+    ]);
     if (teamOrRes instanceof Response) return teamOrRes;
 
     const serviceData = await getTeamMembers(teamOrRes.id);
