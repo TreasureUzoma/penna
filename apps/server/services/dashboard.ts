@@ -2,7 +2,7 @@ import { db } from "@workspace/db";
 import {
   emails,
   payments,
-  newsletterMembers,
+  teamMembers,
   newsletters,
   subscribers,
 } from "@workspace/db/schema";
@@ -33,8 +33,8 @@ export const getDashboardOverview = async (
     const userNewsletters = await db
       .select({ id: newsletters.id })
       .from(newsletters)
-      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
-      .where(eq(newsletterMembers.userId, userId));
+      .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
+      .where(eq(teamMembers.userId, userId));
 
     const newsletterIds = userNewsletters.map((p) => p.id);
 
@@ -84,7 +84,7 @@ export const getDashboardOverview = async (
     }
 
     // Build where conditions
-    const whereConditions = [eq(newsletterMembers.userId, userId)];
+    const whereConditions = [eq(teamMembers.userId, userId)];
 
     if (search && search.trim()) {
       whereConditions.push(
@@ -99,11 +99,11 @@ export const getDashboardOverview = async (
         description: newsletters.description,
         createdAt: newsletters.createdAt,
         updatedAt: newsletters.updatedAt,
-        role: newsletterMembers.role,
+        role: teamMembers.role,
         slug: newsletters.slug,
       })
       .from(newsletters)
-      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
+      .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
       .where(and(...whereConditions))
       .orderBy(orderBy)
       .limit(limit)
@@ -112,7 +112,7 @@ export const getDashboardOverview = async (
     const countQuery = db
       .select({ count: count() })
       .from(newsletters)
-      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
+      .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
       .where(and(...whereConditions));
 
     const newslettersData = await paginate(dbQuery, countQuery, page, limit);
@@ -156,8 +156,8 @@ export const getRecentActivity = async (
     const userNewsletters = await db
       .select({ id: newsletters.id })
       .from(newsletters)
-      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
-      .where(eq(newsletterMembers.userId, userId));
+      .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
+      .where(eq(teamMembers.userId, userId));
 
     const newsletterIds = userNewsletters.map((p) => p.id);
 
@@ -221,8 +221,8 @@ export const getAccountAnalytics = async (
     const userNewsletters = await db
       .select({ id: newsletters.id })
       .from(newsletters)
-      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
-      .where(eq(newsletterMembers.userId, userId));
+      .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
+      .where(eq(teamMembers.userId, userId));
 
     const newsletterIds = userNewsletters.map((p) => p.id);
 
@@ -275,7 +275,7 @@ export const getAccountAnalytics = async (
         subscriberCount: count(subscribers.id),
       })
       .from(newsletters)
-      .innerJoin(newsletterMembers, eq(newsletters.id, newsletterMembers.newsletterId))
+      .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
       .leftJoin(
         subscribers,
         and(
@@ -283,7 +283,7 @@ export const getAccountAnalytics = async (
           eq(subscribers.status, "subscribed")
         )
       )
-      .where(eq(newsletterMembers.userId, userId))
+      .where(eq(teamMembers.userId, userId))
       .groupBy(newsletters.id)
       .orderBy(desc(count(subscribers.id)))
       .limit(5);

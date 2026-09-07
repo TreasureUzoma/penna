@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip";
 import { useGetProfile } from "@/hooks/use-auth";
+import { TeamSwitcher } from "./team-switcher";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { useSelectedLayoutSegments } from "next/navigation";
 import api from "@workspace/axios";
@@ -206,6 +207,14 @@ export default function AppSidebar({
           </Button>
         </div>
       </div>
+
+      {!isCollapsed && (
+        <div className="px-3 pb-3">
+          <React.Suspense fallback={null}>
+            <TeamSwitcher />
+          </React.Suspense>
+        </div>
+      )}
 
       <Separator />
 

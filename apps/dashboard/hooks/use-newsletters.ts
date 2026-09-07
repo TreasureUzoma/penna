@@ -65,6 +65,29 @@ export function useUpdateNewsletter(newsletterId: string) {
   });
 }
 
+export function useTransferNewsletterToTeam(newsletterId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      const res = await api.post(`/newsletters/${newsletterId}/transfer-team`, {
+        teamId,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["newsletter"] });
+      queryClient.invalidateQueries({ queryKey: ["newsletters"] });
+      toast.success("Newsletter moved to the new team");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Failed to move newsletter to that team"
+      );
+    },
+  });
+}
+
 export function useDeleteNewsletter() {
   const queryClient = useQueryClient();
   const router = useRouter();

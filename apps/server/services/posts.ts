@@ -2,7 +2,7 @@ import { db } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { InsertPost } from "@workspace/validations";
 import type { ServiceResponse } from "@workspace/types";
-import { emails, newsletterMembers } from "@workspace/db/schema";
+import { emails, newsletters, teamMembers } from "@workspace/db/schema";
 import { decryptDataSubtle, encryptDataSubtle } from "@/lib/encrypt";
 import { envConfig } from "@/config";
 import { start } from "workflow/api";
@@ -162,8 +162,9 @@ export const getAllNewsletterPosts = async (
         status: emails.status,
       })
       .from(emails)
-      .innerJoin(newsletterMembers, eq(emails.newsletterId, newsletterMembers.newsletterId))
-      .where(eq(newsletterMembers.userId, userId));
+      .innerJoin(newsletters, eq(emails.newsletterId, newsletters.id))
+      .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
+      .where(eq(teamMembers.userId, userId));
 
     // decrypt all post bodies
     const decryptedPosts = await Promise.all(

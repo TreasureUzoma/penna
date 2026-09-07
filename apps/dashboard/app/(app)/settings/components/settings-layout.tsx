@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
-import { User, Shield, Mail, Bell } from "lucide-react";
+import { User, Shield, Mail, Bell, Users } from "lucide-react";
 import { Separator } from "@workspace/ui/components/separator";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,6 +24,11 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
       title: "Security",
       href: "/settings/security",
       icon: Shield,
+    },
+    {
+      title: "Team",
+      href: "/settings/team",
+      icon: Users,
     },
     {
       title: "Billing",

@@ -50,6 +50,13 @@
       "when": 1788736246770,
       "tag": "0006_grey_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788792524582,
+      "tag": "0007_mysterious_namora",
+      "breakpoints": true
     }
   ]
 }

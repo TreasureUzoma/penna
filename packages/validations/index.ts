@@ -133,6 +133,7 @@ export const verifyEmailSchema = z.object({
 export type VerifyEmail = z.infer<typeof verifyEmailSchema>;
 
 export const createNewsletterSchema = z.object({
+  teamId: z.string().uuid("Invalid team ID"),
   name: z.string().min(1).max(35),
   slug: z
     .string()
@@ -208,12 +209,15 @@ export const updateNewsletterSchema = z.object({
 
 export type UpdateNewsletter = z.infer<typeof updateNewsletterSchema>;
 
-export const transferNewsletterOwnershipSchema = z.object({
-  newOwnerUserId: z.string().uuid("Invalid user ID"),
+// Moves a newsletter to a different team the caller owns/admins — distinct
+// from transferTeamOwnershipSchema below (handing off the *owner* role
+// within the same team).
+export const transferNewsletterToTeamSchema = z.object({
+  teamId: z.string().uuid("Invalid team ID"),
 });
 
-export type TransferNewsletterOwnership = z.infer<
-  typeof transferNewsletterOwnershipSchema
+export type TransferNewsletterToTeam = z.infer<
+  typeof transferNewsletterToTeamSchema
 >;
 
 export const importSubscribersSchema = z.object({
@@ -234,31 +238,75 @@ export const isValidToken = z.object({
   token: z.string().min(60).max(900),
 });
 
-export const newNewsletterInviteSchema = z.object({
-  newsletterId: z.string().min(1),
-  invitedByUserId: z.string().uuid(),
-  invitedToUserId: z.string().uuid(),
+// Team schemas — replace the old per-newsletter member/invite schemas
+// above (newsletters no longer have their own member list, see the schema
+// comment above `teams` in packages/db/schema.ts).
+
+export const createTeamSchema = z.object({
+  name: z.string().min(1).max(35),
+  slug: z
+    .string()
+    .min(3, { message: "Slug must be at least 3 characters long." })
+    .max(30, { message: "Slug must be 30 characters or less." })
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9-]+$/, {
+      message:
+        "Slug must only contain lowercase letters, numbers, and hyphens (-).",
+    })
+    .refine(
+      (value) => !RESERVED_SET.has(value),
+      (value) => ({
+        message: `The slug '${value}' is reserved and cannot be used.`,
+      })
+    ),
 });
 
-export const updateNewsletterMemberRoleSchema = z.object({
-  newsletterId: z.string().min(1),
+export type NewTeam = z.infer<typeof createTeamSchema>;
+
+export const updateTeamSchema = z.object({
+  name: z.string().min(1).max(35).optional(),
+  slug: createTeamSchema.shape.slug.optional(),
+});
+
+export type UpdateTeam = z.infer<typeof updateTeamSchema>;
+
+const teamRoleValues = ["owner", "admin", "editor", "viewer"] as const;
+
+// One canonical invite schema at both the service and route layer — the
+// old newsletter invite schemas duplicated this (newNewsletterInviteSchema
+// vs inviteUserToNewsletterSchema, identical minus `role`) for no reason.
+export const inviteToTeamSchema = z.object({
+  teamId: z.string().uuid("Invalid team ID"),
+  email: z.string().email("Invalid email format"),
+  role: z.enum(teamRoleValues),
+});
+
+export type InviteToTeam = z.infer<typeof inviteToTeamSchema>;
+
+// Token-based (the emailed accept-link token), not inviteId+acceptingUserId
+// — the old acceptNewsletterInviteSchema trusted `acceptingUserId` straight
+// from the request body instead of the session; this derives the accepting
+// user from `c.get("user")` server-side instead, same as everything else.
+export const acceptTeamInviteSchema = z.object({
+  token: z.string().min(1),
+});
+
+export type AcceptTeamInvite = z.infer<typeof acceptTeamInviteSchema>;
+
+export const updateTeamMemberRoleSchema = z.object({
+  teamId: z.string().uuid("Invalid team ID"),
   targetUserId: z.string().uuid(),
-  role: z.enum(["owner", "admin", "editor", "viewer"]),
+  role: z.enum(teamRoleValues),
 });
 
-export type NewNewsletterInvite = z.infer<typeof newNewsletterInviteSchema>;
+export type UpdateTeamMemberRole = z.infer<typeof updateTeamMemberRoleSchema>;
 
-export const acceptNewsletterInviteSchema = z.object({
-  inviteId: z.string().uuid(),
-  acceptingUserId: z.string().uuid(),
+export const transferTeamOwnershipSchema = z.object({
+  newOwnerUserId: z.string().uuid("Invalid user ID"),
 });
 
-export const inviteUserToNewsletterSchema = z.object({
-  newsletterId: z.string().min(1),
-  invitedByUserId: z.string().uuid(),
-  invitedToUserId: z.string().uuid(),
-  role: z.enum(["owner", "admin", "editor", "viewer"]),
-});
+export type TransferTeamOwnership = z.infer<typeof transferTeamOwnershipSchema>;
 
 export const unsubscribeFromNewsletterSchema = z.object({
   newsletterId: z.string().min(1),

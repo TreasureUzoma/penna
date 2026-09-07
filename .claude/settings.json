@@ -32,7 +32,15 @@
       "Bash(mv components/public-newsletter/project-view.tsx components/public-newsletter/newsletter-view.tsx)",
       "Bash(sed -i -e 's#external/projects#external/newsletters#g' -e 's/\\\\bprojectId\\\\b/newsletterId/g' -e 's/\\\\bproject\\\\b/newsletter/g' -e 's/\\\\bProject\\\\b/Newsletter/g' content/docs/integrations/create.mdx content/docs/integrations/get.mdx)",
       "Bash(sed -i -e 's#external/projects/newsletters/send#external/newsletters/send#g' -e 's/\\\\bproject\\\\b/newsletter/g' -e 's/\\\\bProject\\\\b/Newsletter/g' -e 's/<project>/<newsletter>/' content/docs/integrations/send-newsletter.mdx)",
-      "Bash(git -c core.autocrlf=false diff --stat -- apps/server/lib/redis.ts apps/dashboard/components/footer.tsx apps/dashboard/components/animated-tabs.tsx)"
+      "Bash(git -c core.autocrlf=false diff --stat -- apps/server/lib/redis.ts apps/dashboard/components/footer.tsx apps/dashboard/components/animated-tabs.tsx)",
+      "Read(//c/Users/ACER/.claude/plugins/cache/claude-community/paddle/de7fcd3f6cc4-ab82885f/skills/subscription-cancel/**)",
+      "Read(//c/Users/ACER/.claude/plugins/cache/claude-community/paddle/de7fcd3f6cc4-ab82885f/skills/subscription-sync/**)",
+      "Bash(npx dotenv *)",
+      "Bash(bun run *)",
+      "Bash(rm \"/c/Users/ACER/lettera/apps/dashboard/app/\\(app\\)/newsletters/[id]/components/members-tab.tsx\" /c/Users/ACER/lettera/apps/dashboard/hooks/use-newsletter-members.ts && echo removed)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\ACER\\lettera\\apps\\dashboard\\app\\(app)\\newsletters\\[id]\\components"
     ]
   }
 }

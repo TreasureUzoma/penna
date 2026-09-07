@@ -1,21 +1,17 @@
 import {
-  acceptNewsletterInvite,
   createNewsletter,
   deleteNewsletter,
   getNewsletterApiKeys,
   getNewslettersByUser,
   getNewsletterBySlug,
-  getUserNewsletterInvites,
-  inviteUserToNewsletter,
   updateNewsletter,
-  updateNewsletterMemberRole,
-  getNewsletterMembers,
   generateAndCreateNewsletterApiKey,
   deleteNewsletterApiKey,
-  transferNewsletterOwnership,
+  transferNewsletterToTeam,
   canRemoveBranding,
   canUseCustomDomain,
 } from "@/services/newsletters";
+import { getTeamOrFail } from "@/utils/team-access";
 import {
   getSubscribers,
   createSubscriber,
@@ -35,12 +31,10 @@ import type { AppBindings, AuthType } from "@/types";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import {
-  acceptNewsletterInviteSchema,
   createApiKeySchema,
   createNewsletterSchema,
-  inviteUserToNewsletterSchema,
   isValidUUID,
-  updateNewsletterMemberRoleSchema,
+  transferNewsletterToTeamSchema,
   updateNewsletterSchema,
 } from "@workspace/validations";
 import { routeStatus } from "@/lib/utils";
@@ -143,16 +137,19 @@ newslettersRoute.delete(
   }
 );
 
-// create a newsletter
+// create a newsletter — the caller must be an owner/admin of the team
+// it's being created under.
 newslettersRoute.post(
   "/new",
   zValidator("json", createNewsletterSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
   async (c) => {
-    const cookieUser = c.get("user") as AuthType;
     const body = c.req.valid("json");
-    const serviceData = await createNewsletter(body, cookieUser.id);
+    const teamOrRes = await getTeamOrFail(c, body.teamId, ["owner", "admin"]);
+    if (teamOrRes instanceof Response) return teamOrRes;
+
+    const serviceData = await createNewsletter(body);
     return c.json(serviceData, routeStatus(serviceData));
   }
 );
@@ -264,24 +261,9 @@ newslettersRoute.get(
   }
 );
 
-// get newsletter members
-newslettersRoute.get(
-  "/:id/members",
-  zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
-    if (!result.success) {
-      return validationErrorResponse(c, result.error);
-    }
-  }),
-  async (c) => {
-    const { id: newsletterId } = c.req.valid("param");
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId);
-    if (newsletterOrRes instanceof Response) return newsletterOrRes;
-    const newsletter = newsletterOrRes;
-
-    const serviceData = await getNewsletterMembers(newsletter.id);
-    return c.json(serviceData, routeStatus(serviceData));
-  }
-);
+// Members now live at the team level — see routes/api/v1/teams.ts
+// (GET /teams/:id/members). Team membership grants access to every
+// newsletter that team owns, so there's no separate per-newsletter list.
 
 // Custom sending domains live under the flat /domains route (see
 // routes/api/v1/domains.ts) rather than nested here — a domain can be
@@ -289,36 +271,39 @@ newslettersRoute.get(
 // reached via a /:id newsletter param. The dashboard's per-newsletter Domains
 // tab calls that route with a `newsletterId` filter/body field instead.
 
-// transfer newsletter ownership to another existing member
+// Move a newsletter to a different team. Distinct from "transfer
+// ownership" (now a team-level action, see routes/api/v1/teams.ts) — this
+// is about which team owns the newsletter at all. Requires owner on the
+// newsletter's *current* team, and owner/admin on the *destination* team.
 newslettersRoute.post(
-  "/:id/transfer-ownership",
+  "/:id/transfer-team",
   zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
     if (!result.success) {
       return validationErrorResponse(c, result.error);
     }
   }),
-  zValidator(
-    "json",
-    z.object({ newOwnerUserId: z.string().uuid("Invalid user ID") }),
-    (result, c) => {
-      if (!result.success) {
-        return validationErrorResponse(c, result.error);
-      }
-    }
-  ),
+  zValidator("json", transferNewsletterToTeamSchema, (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
-    const { newOwnerUserId } = c.req.valid("json");
-    const cookieUser = c.get("user") as AuthType;
+    const { teamId: destinationTeamId } = c.req.valid("json");
 
-    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, ["owner"]);
+    const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
+      "owner",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
-    const serviceData = await transferNewsletterOwnership(
+    const destinationTeamOrRes = await getTeamOrFail(c, destinationTeamId, [
+      "owner",
+      "admin",
+    ]);
+    if (destinationTeamOrRes instanceof Response) return destinationTeamOrRes;
+
+    const serviceData = await transferNewsletterToTeam(
       newsletter.id,
-      cookieUser.id,
-      newOwnerUserId
+      destinationTeamId
     );
     return c.json(serviceData, routeStatus(serviceData));
   }
@@ -348,79 +333,9 @@ newslettersRoute.get("/", async (c) => {
   );
 });
 
-// newsletter roles
-
-// update newsletter roles
-newslettersRoute.patch(
-  "/roles/:id",
-  zValidator("json", updateNewsletterMemberRoleSchema, (result, c) => {
-    if (!result.success) return validationErrorResponse(c, result.error);
-  }),
-  async (c) => {
-    const body = c.req.valid("json");
-    const newsletterOrRes = await getNewsletterOrFail(c, body.newsletterId, [
-      "owner",
-      "admin",
-    ]);
-    if (newsletterOrRes instanceof Response) return newsletterOrRes;
-    const newsletter = newsletterOrRes;
-
-    const serviceData = await updateNewsletterMemberRole(
-      newsletter.id,
-      body.targetUserId,
-      body.role
-    );
-    return c.json(serviceData, routeStatus(serviceData));
-  }
-);
-
-// accept role invite
-newslettersRoute.post(
-  "/roles/accept",
-  zValidator("json", acceptNewsletterInviteSchema, (result, c) => {
-    if (!result.success) return validationErrorResponse(c, result.error);
-  }),
-  async (c) => {
-    const body = c.req.valid("json");
-    const serviceData = await acceptNewsletterInvite(
-      body.inviteId,
-      body.acceptingUserId
-    );
-    return c.json(serviceData, routeStatus(serviceData));
-  }
-);
-
-// get all user roles
-newslettersRoute.get("/roles", async (c) => {
-  const cookieUser = c.get("user") as AuthType;
-  const serviceData = await getUserNewsletterInvites(cookieUser.id);
-  return c.json(serviceData, routeStatus(serviceData));
-});
-
-//
-newslettersRoute.post(
-  "/roles/new",
-  zValidator("json", inviteUserToNewsletterSchema, (result, c) => {
-    if (!result.success) return validationErrorResponse(c, result.error);
-  }),
-  async (c) => {
-    const body = c.req.valid("json");
-    const newsletterOrRes = await getNewsletterOrFail(c, body.newsletterId, [
-      "owner",
-      "admin",
-    ]);
-    if (newsletterOrRes instanceof Response) return newsletterOrRes;
-    const newsletter = newsletterOrRes;
-
-    const serviceData = await inviteUserToNewsletter(
-      newsletter.id,
-      body.invitedByUserId,
-      body.invitedToUserId,
-      body.role
-    );
-    return c.json(serviceData, routeStatus(serviceData));
-  }
-);
+// Roles/invites now live at the team level — see routes/api/v1/teams.ts
+// (PATCH /teams/:id/members/:userId, POST /teams/:id/invites,
+// POST /invites/accept, GET /invites).
 
 // get newsletter subscribers
 newslettersRoute.get(

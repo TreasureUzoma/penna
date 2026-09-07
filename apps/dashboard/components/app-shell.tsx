@@ -6,6 +6,7 @@ import AppSidebar from "./app-sidebar";
 import { Footer } from "./footer";
 import Logo from "@workspace/ui/components/logo";
 import { Button } from "@workspace/ui/components/button";
+import Link from "next/link";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
@@ -36,7 +37,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <Menu className="w-5 h-5" />
           </Button>
-          <Logo />
+          <Link href="/newsletters">
+            <Logo />
+          </Link>
         </div>
 
         <div className="flex-1 overflow-y-auto">

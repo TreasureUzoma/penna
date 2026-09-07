@@ -10,7 +10,18 @@ import { toast } from "sonner";
 import type { OauthType } from "@workspace/types/auth";
 import { UserProfile } from "@workspace/types/res/user";
 
-export const useLoginMutation = () => {
+// `next` only ever comes from this app's own URLs (e.g. proxy.ts's
+// `?next=` on a protected-route bounce, or the accept-invite page's
+// "sign in" link) — restricted to same-origin relative paths so a
+// crafted `?next=https://evil.example` can't turn this into an open
+// redirect after a real login.
+const safeNextPath = (next?: string): string | null => {
+  if (!next) return null;
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+};
+
+export const useLoginMutation = (next?: string) => {
   const queryClint = useQueryClient();
   const router = useRouter();
   return useMutation({
@@ -18,7 +29,7 @@ export const useLoginMutation = () => {
     onSuccess: () => {
       queryClint.invalidateQueries({ queryKey: ["session"] });
       toast.success("Logged in successfully");
-      router.push("/dashboard");
+      router.push(safeNextPath(next) ?? "/dashboard");
     },
     onError: (err) => {
       toast.error(err?.message ?? "Failed to login");

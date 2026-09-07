@@ -18,7 +18,9 @@ export default async function LoginPage({
     auth_failed: "Something went wrong signing you in. Please try again.",
     signups_closed: "Signups are currently closed — check back after launch.",
   };
-  const error = (await searchParams).error;
+  const resolvedParams = await searchParams;
+  const error = resolvedParams.error;
+  const next = (resolvedParams as Record<string, string | undefined>).next;
   return (
     <div className="flex min-h-screen md:min-h-svh flex-col items-center justify-center gap-6 p-5 md:p-10">
       <div className="flex w-full flex-col gap-6 flex-center">
@@ -28,7 +30,7 @@ export default async function LoginPage({
             <AlertTitle>{OAUTH_ERROR_MESSAGES[error]}</AlertTitle>
           </Alert>
         )}
-        <AuthForm mode="login" />
+        <AuthForm mode="login" next={next} />
       </div>
     </div>
   );

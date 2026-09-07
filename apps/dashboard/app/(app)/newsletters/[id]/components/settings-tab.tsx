@@ -1,6 +1,11 @@
 "use client";
 
-import { useDeleteNewsletter, useUpdateNewsletter } from "@/hooks/use-newsletters";
+import {
+  useDeleteNewsletter,
+  useUpdateNewsletter,
+  useTransferNewsletterToTeam,
+} from "@/hooks/use-newsletters";
+import { useTeams } from "@/hooks/use-teams";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateNewsletterSchema } from "@workspace/validations";
 import type { UpdateNewsletter } from "@workspace/validations";
@@ -40,10 +45,18 @@ import {
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
 import { ApiKeysTab as NewsletterApiKeysTab } from "./api-keys-tab";
-import { MembersTab } from "./members-tab";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { NewsletterIdTab } from "./newsletter-id-tab";
 import { EntityAvatar } from "@workspace/ui/components/entity-avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import { Users } from "lucide-react";
+import { useState } from "react";
 
 interface SettingsTabProps {
   newsletter: {
@@ -58,6 +71,10 @@ interface SettingsTabProps {
     canRemoveBranding: boolean;
     /** Same gate as `canRemoveBranding` — governs the custom-domains tab, not this newsletter's own URL (see the Public URL field below, unconditional for every plan). */
     canUseCustomDomain: boolean;
+    /** The team that owns this newsletter — team membership is what grants access to it now, see routes/api/v1/newsletters.ts's `/slug/:slug`. */
+    teamId?: string;
+    teamName?: string;
+    teamSlug?: string;
   };
 }
 
@@ -69,6 +86,16 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
     useUpdateNewsletter(newsletter.id);
   const { mutate: deleteNewsletter, isPending: isDeleting } =
     useDeleteNewsletter();
+  const { mutate: transferToTeam, isPending: isTransferringTeam } =
+    useTransferNewsletterToTeam(newsletter.id);
+  const { data: myTeams } = useTeams();
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+
+  // Only teams the user owns/admins are valid destinations — the server
+  // re-checks this too, but no point offering options that would 403.
+  const transferableTeams = (myTeams ?? []).filter(
+    (t) => t.id !== newsletter.teamId && (t.role === "owner" || t.role === "admin")
+  );
 
   const form = useForm<UpdateNewsletter>({
     resolver: zodResolver(updateNewsletterSchema),
@@ -369,7 +396,79 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
 
       <NewsletterIdTab newsletterId={newsletter.id} />
       <NewsletterApiKeysTab newsletterId={newsletter.id} />
-      <MembersTab newsletterId={newsletter.id} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Team</CardTitle>
+          <CardDescription>
+            Team membership is what grants access to this newsletter — manage
+            who's on the team, and their roles, from the team's own settings.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between gap-3 border rounded-lg p-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 rounded-full bg-muted shrink-0">
+                <Users className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium truncate">
+                  {newsletter.teamName ?? "Unknown team"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Owns this newsletter
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" asChild>
+              <Link href={`/settings/team?team=${newsletter.teamSlug ?? ""}`}>
+                Manage team
+              </Link>
+            </Button>
+          </div>
+
+          {transferableTeams.length > 0 && (
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-sm font-medium pt-4">
+                Move this newsletter to a different team
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Only teams you own or admin are shown. This changes who has
+                access — members of the current team lose access, members of
+                the destination team gain it.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Choose a team..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {transferableTeams.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  disabled={!selectedTeamId || isTransferringTeam}
+                  onClick={() => {
+                    transferToTeam(selectedTeamId, {
+                      onSuccess: () => setSelectedTeamId(""),
+                    });
+                  }}
+                >
+                  {isTransferringTeam && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
+                  Move
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="border-destructive/50">
         <CardHeader>

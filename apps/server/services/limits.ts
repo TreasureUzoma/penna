@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { newsletterMembers, newsletters, subscribers, users } from "@workspace/db/schema";
+import { newsletters, subscribers, teamMembers, users } from "@workspace/db/schema";
 import { and, count, eq } from "drizzle-orm";
 import { getPlanBySlug, type Plan } from "@workspace/constants/plans";
 import { envConfig } from "@/config";
@@ -49,6 +49,9 @@ type NewsletterOwnerPlan = {
  * defensively rather than thrown, since this sits on hot paths (public
  * subscribe forms, external-API sends).
  */
+// Phase 1 has no team-level subscription yet (see the teams plan doc) —
+// this still resolves to an individual user's plan: the newsletter's
+// owning team's owner.
 const getNewsletterOwnerPlan = async (
   newsletterId: string
 ): Promise<NewsletterOwnerPlan | null> => {
@@ -60,13 +63,13 @@ const getNewsletterOwnerPlan = async (
       ownerEmail: users.email,
       ownerPlan: users.plan,
     })
-    .from(newsletterMembers)
-    .innerJoin(users, eq(newsletterMembers.userId, users.id))
-    .innerJoin(newsletters, eq(newsletterMembers.newsletterId, newsletters.id))
+    .from(newsletters)
+    .innerJoin(teamMembers, eq(teamMembers.teamId, newsletters.teamId))
+    .innerJoin(users, eq(teamMembers.userId, users.id))
     .where(
       and(
-        eq(newsletterMembers.newsletterId, newsletterId),
-        eq(newsletterMembers.role, "owner")
+        eq(newsletters.id, newsletterId),
+        eq(teamMembers.role, "owner")
       )
     );
 

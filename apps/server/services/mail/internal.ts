@@ -1,4 +1,4 @@
-import type { NewsletterRoles } from "@workspace/types";
+import type { NewsletterRoles, TeamRoles } from "@workspace/types";
 import { sendSystemEmail } from "./ses";
 import { meta } from "@workspace/constants/meta";
 import { envConfig } from "@/config";
@@ -81,6 +81,41 @@ export const sendNewsletterInviteEmail = async (
 
   if (!result.success) {
     console.error("Failed to send newsletter invite email:", result.error);
+  }
+  return result;
+};
+
+/**
+ * Unlike the old newsletter invite email, this links to a real accept page
+ * with the invite's token — no dashboard-invite-UI existed before teams to
+ * build this pattern from, so it's designed fresh instead of copying the
+ * old "no accept page exists yet" gap forward.
+ */
+export const sendTeamInviteEmail = async (
+  email: string,
+  inviterName: string,
+  teamName: string,
+  role: TeamRoles,
+  token: string
+) => {
+  const acceptUrl = `${envConfig.DASHBOARD_SITE}/accept-invite?token=${encodeURIComponent(token)}`;
+
+  const html = `
+    <p>hi,</p>
+    <p><strong>${inviterName}</strong> invited you to join <strong>${teamName}</strong> on ${meta.name} as a <strong>${role}</strong>.</p>
+    <p><a href="${acceptUrl}">accept the invite</a></p>
+    <p>if you don't have a ${meta.name} account yet, you'll be asked to create one first — the invite will still be there once you sign in.</p>
+    <p>— ${meta.name}</p>
+  `;
+
+  const result = await sendSystemEmail({
+    to: email,
+    subject: `You've been invited to ${teamName} on ${meta.name}`,
+    html,
+  });
+
+  if (!result.success) {
+    console.error("Failed to send team invite email:", result.error);
   }
   return result;
 };

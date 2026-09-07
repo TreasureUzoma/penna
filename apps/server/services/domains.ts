@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { domains, newsletterMembers, newsletters } from "@workspace/db/schema";
+import { domains, teamMembers, newsletters } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
 import { and, desc, eq, isNull, or } from "drizzle-orm";
 import {
@@ -96,16 +96,16 @@ export const listUserDomains = async (
       .from(domains)
       .leftJoin(newsletters, eq(domains.newsletterId, newsletters.id))
       .leftJoin(
-        newsletterMembers,
+        teamMembers,
         and(
-          eq(newsletterMembers.newsletterId, domains.newsletterId),
-          eq(newsletterMembers.userId, userId)
+          eq(teamMembers.teamId, newsletters.teamId),
+          eq(teamMembers.userId, userId)
         )
       )
       .where(
         and(
           or(
-            eq(newsletterMembers.userId, userId),
+            eq(teamMembers.userId, userId),
             and(isNull(domains.newsletterId), eq(domains.createdByUserId, userId))
           ),
           newsletterId ? eq(domains.newsletterId, newsletterId) : undefined

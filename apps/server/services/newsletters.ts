@@ -4,29 +4,32 @@ import type { InsertApiKey } from "@/types";
 import { db } from "@workspace/db";
 import {
   newsletterApiKeys,
-  newsletterInvites,
   newsletters,
   subscribers,
+  teamMembers,
+  teams,
+  users,
 } from "@workspace/db/schema";
-import type { NewsletterRoles, ServiceResponse } from "@workspace/types";
+import type { ServiceResponse } from "@workspace/types";
 import type {
   ApiKeyScope,
   NewNewsletter,
-  NewNewsletterInvite,
   UpdateNewsletter,
 } from "@workspace/validations";
-import { newsletterMembers, users } from "@workspace/db/schema";
 
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { paginate } from "@/utils/pagination";
 import { envConfig } from "@/config";
-import { sendNewsletterInviteEmail } from "./mail/internal";
 
 const encryptionKey = envConfig.ENCRYPTION_KEY!;
 
+// `data.teamId` — not a `userId` — is what a newsletter belongs to now:
+// team membership is what grants access to it (see getUserNewsletterRole
+// below), so there's no separate per-newsletter owner row to insert
+// anymore. The route calling this validates the caller is actually an
+// owner/admin of `data.teamId` before getting here.
 export const createNewsletter = async (
-  data: NewNewsletter,
-  userId: string
+  data: NewNewsletter
 ): Promise<ServiceResponse> => {
   try {
     const [newsletter] = await db
@@ -35,13 +38,9 @@ export const createNewsletter = async (
         name: data.name,
         slug: data.slug,
         description: data.description,
+        teamId: data.teamId,
       })
       .returning();
-    await db.insert(newsletterMembers).values({
-      newsletterId: newsletter!.id,
-      userId: userId,
-      role: "owner",
-    });
     // No API key is generated here anymore — the owner creates their own
     // from the newsletter's Settings > API Keys tab, choosing which scopes
     // to grant it there instead of getting a full-access key by default
@@ -70,25 +69,28 @@ export const createNewsletter = async (
 };
 
 /**
- * Whether a newsletter's owner is on any paid plan. Gates the coarse
+ * Whether a newsletter's owning team is on any paid plan. Gates the coarse
  * features that only distinguish "free" from "everything else" — see
  * `packages/constants/plans.ts`, where "remove branding" and "custom
- * domain" both appear starting at the professional tier. Checked against
- * the newsletter owner's plan (not just whoever happens to be toggling the
- * setting), and re-checked server-side on every use rather than trusted
- * from stored config, in case the owner downgrades later.
+ * domain" both appear starting at the professional tier.
+ *
+ * Phase 1 has no team-level subscription yet (that's Phase 2 — see the
+ * plan doc), so this is still keyed off an individual user's plan: the
+ * team owner's. Checked server-side on every use rather than trusted from
+ * stored config, in case the owner downgrades later.
  */
 export const isNewsletterOwnerOnPaidPlan = async (
   newsletterId: string
 ): Promise<boolean> => {
   const [owner] = await db
     .select({ subscriptionType: users.subscriptionType })
-    .from(newsletterMembers)
-    .innerJoin(users, eq(newsletterMembers.userId, users.id))
+    .from(newsletters)
+    .innerJoin(teamMembers, eq(teamMembers.teamId, newsletters.teamId))
+    .innerJoin(users, eq(teamMembers.userId, users.id))
     .where(
       and(
-        eq(newsletterMembers.newsletterId, newsletterId),
-        eq(newsletterMembers.role, "owner")
+        eq(newsletters.id, newsletterId),
+        eq(teamMembers.role, "owner")
       )
     );
 
@@ -195,6 +197,43 @@ export const updateNewsletter = async (
         err instanceof Error
           ? err.message
           : "Something went wrong updating newsletter",
+    };
+  }
+};
+
+/**
+ * Moves a newsletter to a different team. The route validates the caller
+ * is owner on the *current* team and owner/admin on the *destination*
+ * team before calling this — this just does the write.
+ */
+export const transferNewsletterToTeam = async (
+  newsletterId: string,
+  teamId: string
+): Promise<ServiceResponse> => {
+  try {
+    const [updated] = await db
+      .update(newsletters)
+      .set({ teamId })
+      .where(eq(newsletters.id, newsletterId))
+      .returning();
+
+    if (!updated) {
+      return { data: null, success: false, message: "Newsletter not found." };
+    }
+
+    return {
+      data: updated,
+      success: true,
+      message: "Newsletter transferred to the new team successfully.",
+    };
+  } catch (err) {
+    return {
+      data: null,
+      success: false,
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong transferring the newsletter.",
     };
   }
 };
@@ -340,6 +379,14 @@ export const deleteNewsletterApiKey = async (
   }
 };
 
+/**
+ * A newsletter's access control is now entirely delegated to its team —
+ * this resolves the newsletter's `teamId` and looks up the caller's role
+ * there (`teamMembers`), rather than the deprecated `newsletterMembers`
+ * table. Keeps the exact same `{success, data: {role}}` shape so
+ * `getNewsletterOrFail` (and everything built on it — ~40 route call
+ * sites) didn't need to change at all to become team-scoped.
+ */
 export const getUserNewsletterRole = async (
   newsletterId: string,
   userId: string
@@ -347,22 +394,20 @@ export const getUserNewsletterRole = async (
   try {
     const [membership] = await db
       .select({
-        newsletterId: newsletterMembers.newsletterId,
-        userId: newsletterMembers.userId,
-        role: newsletterMembers.role,
+        newsletterId: newsletters.id,
+        userId: teamMembers.userId,
+        role: teamMembers.role,
       })
-      .from(newsletterMembers)
+      .from(newsletters)
+      .innerJoin(teamMembers, eq(teamMembers.teamId, newsletters.teamId))
       .where(
-        and(
-          eq(newsletterMembers.newsletterId, newsletterId),
-          eq(newsletterMembers.userId, userId)
-        )
+        and(eq(newsletters.id, newsletterId), eq(teamMembers.userId, userId))
       );
 
     if (!membership) {
       return {
         success: false,
-        message: "User is not a member of this newsletter",
+        message: "User is not a member of this newsletter's team",
         data: null,
       };
     }
@@ -402,17 +447,22 @@ export const getValidNewsletter = async (newsletterId: string) => {
 };
 
 export const getNewsletterBySlug = async (slug: string) => {
-  const [newsletter] = await db
-    .select()
+  const [row] = await db
+    .select({
+      newsletter: newsletters,
+      teamName: teams.name,
+      teamSlug: teams.slug,
+    })
     .from(newsletters)
+    .innerJoin(teams, eq(teams.id, newsletters.teamId))
     .where(eq(newsletters.slug, slug));
 
-  if (!newsletter) {
+  if (!row) {
     return { data: null, success: false, message: "Newsletter not found." };
   }
 
   return {
-    data: newsletter,
+    data: { ...row.newsletter, teamName: row.teamName, teamSlug: row.teamSlug },
     success: true,
     message: "Newsletter fetched successfully",
   };
@@ -445,13 +495,11 @@ export const getPublicNewsletterBySlug = async (slug: string) => {
   }
 
   const [owner] = await db
-    .select({ userId: newsletterMembers.userId })
-    .from(newsletterMembers)
+    .select({ userId: teamMembers.userId })
+    .from(newsletters)
+    .innerJoin(teamMembers, eq(teamMembers.teamId, newsletters.teamId))
     .where(
-      and(
-        eq(newsletterMembers.newsletterId, newsletter.id),
-        eq(newsletterMembers.role, "owner")
-      )
+      and(eq(newsletters.id, newsletter.id), eq(teamMembers.role, "owner"))
     );
 
   if (!owner) {
@@ -489,16 +537,13 @@ export const getNewslettersByUser = (
       config: newsletters.config,
       createdAt: newsletters.createdAt,
       updatedAt: newsletters.updatedAt,
-      role: newsletterMembers.role,
+      role: teamMembers.role,
       subscriberCount: count(subscribers.id),
     })
     .from(newsletters)
-    .innerJoin(
-      newsletterMembers,
-      eq(newsletters.id, newsletterMembers.newsletterId)
-    )
+    .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
     .leftJoin(subscribers, eq(newsletters.id, subscribers.newsletterId))
-    .where(eq(newsletterMembers.userId, userId))
+    .where(eq(teamMembers.userId, userId))
     .groupBy(
       newsletters.id,
       newsletters.slug,
@@ -507,7 +552,7 @@ export const getNewslettersByUser = (
       newsletters.config,
       newsletters.createdAt,
       newsletters.updatedAt,
-      newsletterMembers.role
+      teamMembers.role
     )
     .orderBy(desc(newsletters.createdAt))
     .limit(limit)
@@ -515,8 +560,9 @@ export const getNewslettersByUser = (
 
   const countQuery = db
     .select({ count: count() })
-    .from(newsletterMembers)
-    .where(eq(newsletterMembers.userId, userId));
+    .from(newsletters)
+    .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
+    .where(eq(teamMembers.userId, userId));
 
   return paginate(dbQuery, countQuery, page, limit);
 };
@@ -565,409 +611,9 @@ export const getNewsletterApiKeys = async (
   }
 };
 
-export const inviteUserToNewsletter = async (
-  newsletterId: string,
-  invitedByUserId: string,
-  invitedToUserId: string,
-  role: NewsletterRoles
-): Promise<ServiceResponse> => {
-  try {
-    const [existingMember] = await db
-      .select()
-      .from(newsletterMembers)
-      .where(
-        and(
-          eq(newsletterMembers.newsletterId, newsletterId),
-          eq(newsletterMembers.userId, invitedToUserId)
-        )
-      );
-
-    if (existingMember) {
-      return {
-        data: null,
-        success: false,
-        message: "User is already a member of this newsletter.",
-      };
-    }
-
-    const [existingInvite] = await db
-      .select()
-      .from(newsletterInvites)
-      .where(
-        and(
-          eq(newsletterInvites.newsletterId, newsletterId),
-          eq(newsletterInvites.invitedToUserId, invitedToUserId),
-          isNull(newsletterInvites.acceptedAt)
-        )
-      );
-
-    if (existingInvite) {
-      return {
-        data: null,
-        success: false,
-        message: "An active invitation for this user already exists.",
-      };
-
-      // todo: send new invite if its been over 3 days n inite was sent
-    }
-
-    const [newInvite] = await db
-      .insert(newsletterInvites)
-      .values({
-        newsletterId,
-        invitedByUserId,
-        invitedToUserId,
-        role,
-      } as NewNewsletterInvite)
-      .returning();
-
-    const [newsletter] = await db
-      .select()
-      .from(newsletters)
-      .where(eq(newsletters.id, newsletterId));
-    const [inviter] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, invitedByUserId));
-    const [invitee] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, invitedToUserId));
-
-    if (invitee) {
-      await sendNewsletterInviteEmail(
-        invitee.email,
-        inviter?.name ?? "Someone",
-        newsletter?.name ?? "a newsletter",
-        role
-      );
-    }
-
-    return {
-      data: newInvite,
-      message: "User invited successfully",
-      success: true,
-    };
-  } catch (err) {
-    return {
-      data: null,
-      success: false,
-      message:
-        err instanceof Error
-          ? err.message
-          : "Something went wrong sending the newsletter invitation.",
-    };
-  }
-};
-
-export const getUserNewsletterInvites = async (
-  userId: string
-): Promise<ServiceResponse> => {
-  try {
-    const invites = await db
-      .select({
-        inviteId: newsletterInvites.id,
-        newsletterId: newsletterInvites.newsletterId,
-        newsletterName: newsletters.name,
-        invitedBy: newsletterInvites.invitedByUserId,
-        role: newsletterInvites.role,
-        createdAt: newsletterInvites.createdAt,
-      })
-      .from(newsletterInvites)
-      .innerJoin(newsletters, eq(newsletterInvites.newsletterId, newsletters.id))
-      .where(
-        and(
-          eq(newsletterInvites.invitedToUserId, userId),
-          isNull(newsletterInvites.acceptedAt)
-        )
-      )
-      .orderBy(desc(newsletterInvites.createdAt));
-
-    return {
-      data: invites,
-      message: "Fetched newsletter invites successfully",
-      success: true,
-    };
-  } catch (err) {
-    return {
-      data: null,
-      success: false,
-      message:
-        err instanceof Error
-          ? err.message
-          : "Something went wrong fetching newsletter invites.",
-    };
-  }
-};
-
-export const acceptNewsletterInvite = async (
-  inviteId: string,
-  acceptingUserId: string
-): Promise<ServiceResponse> => {
-  try {
-    const [invite] = await db
-      .select()
-      .from(newsletterInvites)
-      .where(eq(newsletterInvites.id, inviteId));
-
-    if (!invite) {
-      return {
-        data: null,
-        success: false,
-        message: "Invitation not found.",
-      };
-    }
-
-    if (invite.invitedToUserId !== acceptingUserId) {
-      return {
-        data: null,
-        success: false,
-        message: "You are not authorized to accept this invitation.",
-      };
-    }
-
-    if (invite.acceptedAt) {
-      return {
-        data: null,
-        success: false,
-        message: "This invitation has already been accepted.",
-      };
-    }
-
-    const [existingMember] = await db
-      .select()
-      .from(newsletterMembers)
-      .where(
-        and(
-          eq(newsletterMembers.newsletterId, invite.newsletterId),
-          eq(newsletterMembers.userId, acceptingUserId)
-        )
-      );
-
-    if (existingMember) {
-      await db
-        .update(newsletterInvites)
-        .set({ acceptedAt: new Date() })
-        .where(eq(newsletterInvites.id, inviteId));
-
-      return {
-        data: { newsletterId: invite.newsletterId },
-        success: true,
-        message:
-          "You are already a member of this newsletter. Invitation marked as accepted.",
-      };
-    }
-
-    await db.insert(newsletterMembers).values({
-      newsletterId: invite.newsletterId,
-      userId: acceptingUserId,
-      role: invite.role,
-    });
-
-    const [updatedInvite] = await db
-      .update(newsletterInvites)
-      .set({ acceptedAt: new Date() })
-      .where(eq(newsletterInvites.id, inviteId))
-      .returning();
-
-    return {
-      data: {
-        newsletterId: invite.newsletterId,
-        role: invite.role,
-        invite: updatedInvite,
-      },
-      message:
-        "Newsletter invitation accepted successfully. You are now a member.",
-      success: true,
-    };
-  } catch (err) {
-    return {
-      data: null,
-      success: false,
-      message:
-        err instanceof Error
-          ? err.message
-          : "Something went wrong accepting the newsletter invitation.",
-    };
-  }
-};
-
-export const updateNewsletterMemberRole = async (
-  newsletterId: string,
-  targetUserId: string,
-  newRole: NewsletterRoles
-): Promise<ServiceResponse> => {
-  try {
-    if (newRole === "owner") {
-      return {
-        data: null,
-        success: false,
-        message:
-          "Transferring newsletter ownership requires a dedicated function to ensure a new owner is designated.",
-      };
-    }
-
-    const [updatedMember] = await db
-      .update(newsletterMembers)
-      .set({
-        role: newRole,
-      })
-      .where(
-        and(
-          eq(newsletterMembers.newsletterId, newsletterId),
-          eq(newsletterMembers.userId, targetUserId)
-        )
-      )
-      .returning();
-
-    if (!updatedMember) {
-      return {
-        data: null,
-        success: false,
-        message: "User is not a member of this newsletter.",
-      };
-    }
-
-    return {
-      data: updatedMember,
-      success: true,
-      message: `User role updated to '${newRole}' successfully.`,
-    };
-  } catch (err) {
-    return {
-      data: null,
-      success: false,
-      message:
-        err instanceof Error
-          ? err.message
-          : "Something went wrong updating the newsletter member's role.",
-    };
-  }
-};
-
-export const transferNewsletterOwnership = async (
-  newsletterId: string,
-  currentOwnerId: string,
-  newOwnerUserId: string
-): Promise<ServiceResponse> => {
-  try {
-    if (currentOwnerId === newOwnerUserId) {
-      return {
-        data: null,
-        success: false,
-        message: "You already own this newsletter.",
-      };
-    }
-
-    const [currentOwnerMembership] = await db
-      .select()
-      .from(newsletterMembers)
-      .where(
-        and(
-          eq(newsletterMembers.newsletterId, newsletterId),
-          eq(newsletterMembers.userId, currentOwnerId)
-        )
-      );
-
-    if (!currentOwnerMembership || currentOwnerMembership.role !== "owner") {
-      return {
-        data: null,
-        success: false,
-        message: "Only the current owner can transfer ownership.",
-      };
-    }
-
-    const [targetMembership] = await db
-      .select()
-      .from(newsletterMembers)
-      .where(
-        and(
-          eq(newsletterMembers.newsletterId, newsletterId),
-          eq(newsletterMembers.userId, newOwnerUserId)
-        )
-      );
-
-    if (!targetMembership) {
-      return {
-        data: null,
-        success: false,
-        message:
-          "The new owner must already be a member of this newsletter. Invite them first.",
-      };
-    }
-
-    // Promote the new owner first so there's never a moment with zero owners
-    // if the second update below were to fail.
-    const [newOwner] = await db
-      .update(newsletterMembers)
-      .set({ role: "owner" })
-      .where(
-        and(
-          eq(newsletterMembers.newsletterId, newsletterId),
-          eq(newsletterMembers.userId, newOwnerUserId)
-        )
-      )
-      .returning();
-
-    await db
-      .update(newsletterMembers)
-      .set({ role: "admin" })
-      .where(
-        and(
-          eq(newsletterMembers.newsletterId, newsletterId),
-          eq(newsletterMembers.userId, currentOwnerId)
-        )
-      );
-
-    return {
-      data: newOwner,
-      success: true,
-      message:
-        "Newsletter ownership transferred successfully. You are now an admin on this newsletter.",
-    };
-  } catch (err) {
-    return {
-      data: null,
-      success: false,
-      message:
-        err instanceof Error
-          ? err.message
-          : "Something went wrong transferring newsletter ownership.",
-    };
-  }
-};
-
-export const getNewsletterMembers = async (
-  newsletterId: string
-): Promise<ServiceResponse> => {
-  try {
-    const members = await db
-      .select({
-        userId: newsletterMembers.userId,
-        role: newsletterMembers.role,
-        user: {
-          id: users.id,
-          name: users.name,
-          email: users.email,
-        },
-      })
-      .from(newsletterMembers)
-      .innerJoin(users, eq(newsletterMembers.userId, users.id))
-      .where(eq(newsletterMembers.newsletterId, newsletterId));
-
-    return {
-      success: true,
-      message: "Fetched newsletter members successfully",
-      data: members,
-    };
-  } catch (err) {
-    if (err instanceof Error) {
-      return { success: false, message: err.message, data: null };
-    }
-    return {
-      success: false,
-      message: "Something went wrong fetching newsletter members",
-      data: null,
-    };
-  }
-};
+// Member/invite/role-transfer management moved to apps/server/services/
+// teams.ts — inviteToTeam, getUserTeamInvites, acceptTeamInvite,
+// updateTeamMemberRole, transferTeamOwnership, getTeamMembers. A
+// newsletter no longer has its own member list (see the schema comment
+// above `teams` in packages/db/schema.ts) — team membership is what
+// grants access to it.

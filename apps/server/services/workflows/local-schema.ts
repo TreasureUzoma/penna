@@ -34,7 +34,7 @@ export const subscriberStatusEnum = pgEnum("subscriber_status", [
   "pending",
   "bounced",
 ]);
-export const newsletterRoleEnum = pgEnum("newsletter_role", [
+export const teamRoleEnum = pgEnum("team_role", [
   "owner",
   "admin",
   "editor",
@@ -49,6 +49,7 @@ export const userSubscriptionEnum = pgEnum("user_subscription", [
 export const newsletters = pgTable("newsletters", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
+  teamId: uuid("team_id").notNull(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
@@ -80,12 +81,12 @@ export const subscribers = pgTable("subscribers", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const newsletterMembers = pgTable("newsletter_members", {
+export const teamMembers = pgTable("team_members", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
-  newsletterId: uuid("newsletter_id").notNull(),
+  teamId: uuid("team_id").notNull(),
   userId: uuid("user_id").notNull(),
-  role: newsletterRoleEnum("role").default("viewer").notNull(),
+  role: teamRoleEnum("role").default("viewer").notNull(),
   joinedAt: timestamp("joined_at").defaultNow(),
 });
 

@@ -85,12 +85,16 @@ export async function prepareEmailSend(
 
   const [owner] = await dbLite
     .select({ subscriptionType: schema.users.subscriptionType })
-    .from(schema.newsletterMembers)
-    .innerJoin(schema.users, eq(schema.newsletterMembers.userId, schema.users.id))
+    .from(schema.newsletters)
+    .innerJoin(
+      schema.teamMembers,
+      eq(schema.teamMembers.teamId, schema.newsletters.teamId)
+    )
+    .innerJoin(schema.users, eq(schema.teamMembers.userId, schema.users.id))
     .where(
       and(
-        eq(schema.newsletterMembers.newsletterId, email.newsletterId),
-        eq(schema.newsletterMembers.role, "owner")
+        eq(schema.newsletters.id, email.newsletterId),
+        eq(schema.teamMembers.role, "owner")
       )
     );
   const removeBranding = !!owner && owner.subscriptionType !== "free";

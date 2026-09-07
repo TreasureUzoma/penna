@@ -42,10 +42,12 @@ import { Eye, EyeOff } from "lucide-react";
 export interface AuthProps {
   mode: "login" | "signup";
   className?: string;
+  /** Where to redirect after a successful login — e.g. back to the accept-invite page that sent someone here. Ignored for signup, which always goes to /verify-email first. */
+  next?: string;
 }
 
-export function AuthForm({ mode, className }: AuthProps) {
-  const { mutate: loginMutate, isPending: loginPending } = useLoginMutation();
+export function AuthForm({ mode, className, next }: AuthProps) {
+  const { mutate: loginMutate, isPending: loginPending } = useLoginMutation(next);
   const { mutate: signupMutate, isPending: signupPending } =
     useSignupMutation();
   const { mutate: ouathMutate, isPending: oauthPending } =

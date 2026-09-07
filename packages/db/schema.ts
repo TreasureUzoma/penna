@@ -25,6 +25,16 @@ export const newsletterRoleEnum = pgEnum("newsletter_role", [
   "editor",
   "viewer",
 ]);
+// Same 4 values as newsletterRoleEnum, kept as a separate enum (not reused)
+// since it's a distinct concept scoped to teams, not newsletters — a team's
+// role is what now actually gates access (see getTeamOrFail), newsletter-
+// level roles are gone.
+export const teamRoleEnum = pgEnum("team_role", [
+  "owner",
+  "admin",
+  "editor",
+  "viewer",
+]);
 export const userStatusEnum = pgEnum("user_status", [
   "active",
   "suspended",
@@ -108,6 +118,92 @@ export const users = pgTable("users", {
   plan: userPlanEnum("plan").default("hobby").notNull(),
 });
 
+// A team owns one or more newsletters. Team membership *is* newsletter
+// access — joining a team grants its role across every newsletter it owns
+// (see getTeamOrFail in apps/server/utils/team-access.ts), replacing what
+// used to be a separate per-newsletter member list. Sensitive actions
+// (API keys, billing, deleting the team, transferring a newsletter to
+// another team) still gate down to owner/admin — see each route's
+// `allowedRoles` — team membership isn't a blanket "access to everything."
+export const teams = pgTable("teams", {
+  serial: serial("serial").primaryKey(),
+  id: uuid("id").defaultRandom().notNull().unique(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const teamMembers = pgTable(
+  "team_members",
+  {
+    serial: serial("serial").primaryKey(),
+    id: uuid("id").defaultRandom().notNull().unique(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: teamRoleEnum("role").default("viewer").notNull(),
+    joinedAt: timestamp("joined_at").defaultNow(),
+  },
+  (table) => ({
+    teamIdx: index("team_members_team_idx").on(table.teamId),
+    userIdx: index("team_members_user_idx").on(table.userId),
+    teamUserUnique: uniqueIndex("team_members_team_user_idx").on(
+      table.teamId,
+      table.userId,
+    ),
+  }),
+);
+
+// Email-based (not user-id-based, unlike the old newsletterInvites this
+// replaces) so a team can invite someone who doesn't have an account yet —
+// there was previously no invite UI anywhere in the dashboard to build on,
+// so this is designed fresh rather than copying the old gap forward.
+// `invitedToUserId` fills in once the invite is accepted (or immediately at
+// invite time if the email already matches an existing user), `token` is
+// what the emailed accept link carries, since an unregistered invitee has
+// no session yet to identify them by.
+export const teamInvites = pgTable(
+  "team_invites",
+  {
+    serial: serial("serial").primaryKey(),
+    id: uuid("id").defaultRandom().notNull().unique(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    invitedByUserId: uuid("invited_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    invitedToUserId: uuid("invited_to_user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    email: text("email").notNull(),
+    role: teamRoleEnum("role").default("viewer").notNull(),
+    token: text("token").notNull().unique(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    acceptedAt: timestamp("accepted_at"),
+    revokedAt: timestamp("revoked_at"),
+  },
+  (table) => ({
+    teamIdx: index("team_invites_team_idx").on(table.teamId),
+    emailIdx: index("team_invites_email_idx").on(table.email),
+    tokenIdx: uniqueIndex("team_invites_token_idx").on(table.token),
+    // Same "plain unique, not partial" tradeoff the old newsletterInvites
+    // made (one row per (team, email) ever, not just one *active* one) —
+    // a revoked/expired invite blocks a fresh one to the same address
+    // until the app-level insert path deletes/reuses the old row, since
+    // drizzle-kit doesn't generate partial unique indexes cleanly.
+    teamEmailUnique: uniqueIndex("team_invites_team_email_idx").on(
+      table.teamId,
+      table.email,
+    ),
+  }),
+);
+
 // A "newsletter" here is the whole publication: its subscribers, posts,
 // domains, API keys, and the team that manages it — not a single issue.
 // Renamed from "projects" (see packages/validations, apps/server,
@@ -117,6 +213,9 @@ export const users = pgTable("users", {
 export const newsletters = pgTable("newsletters", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
+  teamId: uuid("team_id")
+    .notNull()
+    .references(() => teams.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
@@ -127,6 +226,10 @@ export const newsletters = pgTable("newsletters", {
   updatedAt: timestamp("updated_at").defaultNow().notNull().notNull(),
 });
 
+// Deprecated — replaced by teamMembers (see the comment above `teams`).
+// Kept only as a migration source until every existing row has been copied
+// into teamMembers and every call site repointed; not read by any live
+// code path.
 export const newsletterMembers = pgTable(
   "newsletter_members",
   {
@@ -260,6 +363,8 @@ export const subscribers = pgTable(
   }),
 );
 
+// Deprecated — replaced by teamInvites (see the comment above `teams`).
+// Kept only as a migration source; not read by any live code path.
 export const newsletterInvites = pgTable(
   "newsletter_invites",
   {
@@ -500,18 +605,57 @@ export const userRelations = relations(users, ({ many }) => ({
   refreshTokens: many(refreshTokens),
   passwordResets: many(passwordResets),
   payments: many(payments),
-  newsletterMemberships: many(newsletterMembers),
+  newsletterMemberships: many(newsletterMembers), // deprecated, see schema comment
+  teamMemberships: many(teamMembers),
+}));
+
+export const teamRelations = relations(teams, ({ many }) => ({
+  members: many(teamMembers),
+  invites: many(teamInvites),
+  newsletters: many(newsletters),
+}));
+
+export const teamMemberRelations = relations(teamMembers, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamMembers.teamId],
+    references: [teams.id],
+  }),
+  user: one(users, {
+    fields: [teamMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const teamInviteRelations = relations(teamInvites, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamInvites.teamId],
+    references: [teams.id],
+  }),
+  invitedBy: one(users, {
+    fields: [teamInvites.invitedByUserId],
+    references: [users.id],
+    relationName: "team_invited_by_user",
+  }),
+  invitedTo: one(users, {
+    fields: [teamInvites.invitedToUserId],
+    references: [users.id],
+    relationName: "team_invited_to_user",
+  }),
 }));
 
 export const newsletterRelations = relations(
   newsletters,
   ({ one, many }) => ({
+    team: one(teams, {
+      fields: [newsletters.teamId],
+      references: [teams.id],
+    }),
     emails: many(emails),
     subscribers: many(subscribers),
     payments: many(payments),
     apiKeys: many(newsletterApiKeys),
-    members: many(newsletterMembers),
-    invites: many(newsletterInvites),
+    members: many(newsletterMembers), // deprecated, see schema comment
+    invites: many(newsletterInvites), // deprecated, see schema comment
     segments: many(segments),
     newsletterSendLogs: many(newsletterSendLogs),
   }),

@@ -21,18 +21,46 @@ import { Globe, Lock, Loader2 } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { toast } from "sonner";
 import { Textarea } from "@workspace/ui/components/textarea";
+import { useEffect } from "react";
+import { useTeams } from "@/hooks/use-teams";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import {
+  FormDescription,
+} from "@workspace/ui/components/form";
 
 export function CreateNewsletterForm() {
   const router = useRouter();
+  const { data: teams, isLoading: isLoadingTeams } = useTeams();
+  // Only owner/admin can create a newsletter under a team (mirrors the
+  // server-side getTeamOrFail(["owner","admin"]) check on POST /new).
+  const availableTeams = (teams ?? []).filter(
+    (t) => t.role === "owner" || t.role === "admin"
+  );
+
   const form = useForm<NewNewsletter>({
     resolver: zodResolver(createNewsletterSchema),
     defaultValues: {
+      teamId: "",
       name: "",
       slug: "",
       isPublic: true,
       description: "",
     },
   });
+
+  // Most people only ever have the one (implicit) team — skip making them
+  // pick when there's nothing to pick between.
+  useEffect(() => {
+    if (availableTeams.length === 1 && !form.getValues("teamId")) {
+      form.setValue("teamId", availableTeams[0]!.id);
+    }
+  }, [availableTeams, form]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (values: NewNewsletter) => {
@@ -53,9 +81,50 @@ export function CreateNewsletterForm() {
     mutate(values);
   }
 
+  if (!isLoadingTeams && availableTeams.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        You don't have permission to create newsletters in any team. Ask a
+        team owner or admin to invite you with a role that can, or create
+        your own team first.
+      </p>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {availableTeams.length > 1 && (
+          <FormField
+            control={form.control}
+            name="teamId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Team</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose a team..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availableTeams.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Which team this newsletter belongs to — its members will
+                  have access to it.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <FormField
           control={form.control}
           name="name"

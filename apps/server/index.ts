@@ -6,6 +6,7 @@ import authRoute from "./routes/api/v1/auth";
 import type { Context } from "hono";
 import type { AuthType } from "./types";
 import newslettersRoute from "./routes/api/v1/newsletters";
+import teamsRoute from "./routes/api/v1/teams";
 import subscriptionRoutes from "./routes/api/v1/subscriptions";
 import subscriptionsPaddleRoute from "./routes/api/v1/subscriptions-paddle";
 import paddleWebhookRoute from "./routes/api/v1/webhooks/paddle";
@@ -111,6 +112,9 @@ v1.get("/session", rateLimiter(60 * 60 * 1000, 80), (c: Context) => {
 
 // newsletters, 70 req per hour
 v1.route("/newsletters", newslettersRoute.use(rateLimiter(60 * 60 * 1000, 70)));
+
+// teams (members, invites, ownership), 70 req per hour
+v1.route("/teams", teamsRoute.use(rateLimiter(60 * 60 * 1000, 70)));
 
 // subsribers, 70 req per hour
 v1.route(
