@@ -40,6 +40,53 @@ export const getNewsletterSubscribers = (
 
 export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
   try {
+    const [existingSubscriber] = await db
+      .select()
+      .from(subscribers)
+      .where(
+        and(
+          eq(subscribers.newsletterId, body.newsletterId),
+          eq(subscribers.email, body.email)
+        )
+      );
+
+    // Keep unsubscribe records for compliance/auditing, but let a subscriber
+    // explicitly opt back in from a public page. A unique row already exists,
+    // so inserting again would otherwise incorrectly report that they are
+    // still subscribed.
+    if (existingSubscriber) {
+      if (existingSubscriber.status === "subscribed") {
+        return {
+          success: false,
+          data: null,
+          message: "This email is already subscribed to this newsletter.",
+        };
+      }
+
+      if (existingSubscriber.status !== "unsubscribed") {
+        return {
+          success: false,
+          data: null,
+          message: "This email cannot be re-subscribed because delivery to it has been suppressed.",
+        };
+      }
+
+      const [resubscribed] = await db
+        .update(subscribers)
+        .set({
+          status: "subscribed",
+          ...(body.name !== undefined ? { name: body.name } : {}),
+        })
+        .where(eq(subscribers.id, existingSubscriber.id))
+        .returning();
+
+      return {
+        success: true,
+        data: resubscribed,
+        message: "Subscription restored successfully.",
+      };
+    }
+
     const usage = await assertSubscriberCapacity(body.newsletterId);
 
     const subscriber = await db

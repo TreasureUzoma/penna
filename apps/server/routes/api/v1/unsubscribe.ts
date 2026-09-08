@@ -76,7 +76,9 @@ unsubscribeRoutes.post(
       envConfig.UNSUBSCRIBE_SECRET!
     );
 
-    const confirmUrl = `${envConfig.APP_URL}/unsubscribe/confirm?token=${token}`;
+    // This opens a public dashboard page that requires an explicit button
+    // press. Do not point the email directly at a mutating API endpoint.
+    const confirmUrl = `${envConfig.DASHBOARD_SITE}/unsubscribe/confirm?token=${encodeURIComponent(token)}`;
 
     await sendUnsubscribeCofirmationEmail(
       body.email,
@@ -94,6 +96,19 @@ unsubscribeRoutes.post(
 
 // confirm unsubscribe
 unsubscribeRoutes.get(
+  "/unsubscribe/:token",
+  zValidator("param", isValidToken, (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  async (c) => {
+    const { token } = c.req.valid("param");
+    return verifyAndUnsubscribe(c, token);
+  }
+);
+
+// The dashboard confirmation page uses POST so a visit to the page itself
+// cannot unsubscribe anyone. Keep the GET route above for older links.
+unsubscribeRoutes.post(
   "/unsubscribe/:token",
   zValidator("param", isValidToken, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);

@@ -1,6 +1,25 @@
 import { sendNewsletterEmail, sendBulkNewsletterEmails } from "./ses";
 import { applyBranding } from "./branding";
 import { getVerifiedSendingDomain } from "../domains";
+import { canRemoveBranding } from "../newsletters";
+import { db } from "@workspace/db";
+import { newsletters } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
+
+const getNewsletterBrandingPreference = async (newsletterId: string) => {
+  const [newsletter] = await db
+    .select({ config: newsletters.config })
+    .from(newsletters)
+    .where(eq(newsletters.id, newsletterId));
+
+  const wantsBrandingRemoved =
+    (newsletter?.config as { removeBranding?: boolean } | null)
+      ?.removeBranding === true;
+
+  // The setting alone is never enough: a downgrade must immediately put the
+  // footer back on outgoing mail.
+  return wantsBrandingRemoved && (await canRemoveBranding(newsletterId));
+};
 
 export const sendEmailNewsletter = async (
   newsletter: { id: string; slug: string },
@@ -8,13 +27,17 @@ export const sendEmailNewsletter = async (
   subject: string,
   html: string,
   replyTo?: string,
-  removeBranding = false
+  removeBranding?: boolean
 ) => {
   if (recipientEmails.length === 0) {
     throw new Error("No recipient emails provided");
   }
 
-  const brandedHtml = applyBranding(html, removeBranding);
+  // Workflow sends have already resolved the preference in their step. API
+  // sends arrive here directly, so resolve it from the newsletter record.
+  const shouldRemoveBranding =
+    removeBranding ?? (await getNewsletterBrandingPreference(newsletter.id));
+  const brandedHtml = applyBranding(html, shouldRemoveBranding);
   // Falls back to the shared NEWSLETTER_DOMAIN (see ses.ts) whenever the
   // newsletter has no verified custom domain — see services/domains.ts.
   const fromDomain = await getVerifiedSendingDomain(newsletter.id);

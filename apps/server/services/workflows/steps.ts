@@ -4,6 +4,7 @@ import { decryptDataSubtle } from "@/lib/encrypt";
 import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { envConfig } from "@/config";
 import { moderateNewsletterContent } from "../moderation";
+import { canRemoveBranding } from "../newsletters";
 import { dbLite, schema } from "./db-lite";
 
 export type PrepareEmailSendResult =
@@ -123,21 +124,14 @@ export async function prepareEmailSend(
 
   const html = renderNewsletterMarkdown(rawBody);
 
-  const [owner] = await dbLite
-    .select({ subscriptionType: schema.users.subscriptionType })
-    .from(schema.newsletters)
-    .innerJoin(
-      schema.teamMembers,
-      eq(schema.teamMembers.teamId, schema.newsletters.teamId)
-    )
-    .innerJoin(schema.users, eq(schema.teamMembers.userId, schema.users.id))
-    .where(
-      and(
-        eq(schema.newsletters.id, email.newsletterId),
-        eq(schema.teamMembers.role, "owner")
-      )
-    );
-  const removeBranding = !!owner && owner.subscriptionType !== "free";
+  // A paid plan only makes removing branding available; it does not mean
+  // branding should be removed by default. Respect the newsletter's saved
+  // setting so choosing "Show Penna branding" is reflected in sent emails.
+  // Use the same team-plan gate as the settings API and external sends.
+  const removeBranding =
+    (await canRemoveBranding(newsletter.id)) &&
+    (newsletter.config as { removeBranding?: boolean } | null)?.removeBranding ===
+      true;
 
   return {
     status: "ready",

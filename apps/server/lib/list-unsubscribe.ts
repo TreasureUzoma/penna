@@ -31,10 +31,11 @@ export const buildListUnsubscribeHeaders = async (
   email: string
 ): Promise<ListUnsubscribeInfo> => {
   const token = await sign({ newsletterId, email }, envConfig.UNSUBSCRIBE_SECRET);
-  const unsubscribeUrl = `${envConfig.API_URL}/api/v1/unsubscribe/one-click/${token}`;
+  const oneClickUrl = `${envConfig.API_URL}/api/v1/unsubscribe/one-click/${token}`;
+  const unsubscribeUrl = `${envConfig.DASHBOARD_SITE}/unsubscribe/confirm?token=${encodeURIComponent(token)}`;
 
   return {
     unsubscribeUrl,
-    header: `<${unsubscribeUrl}>`,
+    header: `<${oneClickUrl}>`,
   };
 };
