@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import {
   useDomains,
@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { cn } from "@workspace/ui/lib/utils";
+import { DnsRecordsTable } from "@/components/dns-records-table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -146,7 +147,8 @@ export default function AccountDomainsPage() {
             </TableHeader>
             <TableBody>
               {domains.map((domain) => (
-                <TableRow key={domain.id}>
+                <Fragment key={domain.id}>
+                <TableRow>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -219,7 +221,7 @@ export default function AccountDomainsPage() {
                       ) : (
                         <Clock className="w-3 h-3" />
                       )}
-                      {domain.verified ? "Verified" : "Pending"}
+                      {domain.verified ? "Verified" : "DNS verification pending"}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
@@ -277,6 +279,22 @@ export default function AccountDomainsPage() {
                     </div>
                   </TableCell>
                 </TableRow>
+                {!domain.verified && domain.dnsRecords.length > 0 && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={4} className="bg-muted/30 p-5">
+                      <div className="max-w-4xl">
+                        <p className="font-medium">Finish verifying {domain.name}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Add all three records at your DNS provider. DNS can take a few minutes to propagate; then use Recheck.
+                        </p>
+                        <div className="mt-4">
+                          <DnsRecordsTable records={domain.dnsRecords} />
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                </Fragment>
               ))}
             </TableBody>
           </Table>

@@ -10,7 +10,7 @@ import {
 } from "@/hooks/use-domains";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
-import { CopyButton } from "@workspace/ui/components/copy-button";
+import { DnsRecordsTable } from "@/components/dns-records-table";
 import {
   Select,
   SelectContent,
@@ -65,7 +65,8 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
   // their account but hasn't assigned anywhere yet — offered below as
   // "attach an existing domain" instead of re-verifying the same one.
   const { data: allDomains } = useDomains();
-  const unassignedDomains = allDomains?.filter((d) => !d.newsletter) ?? [];
+  const unassignedDomains =
+    allDomains?.filter((d) => !d.newsletter && d.verified) ?? [];
 
   const { mutate: addDomain, isPending: isAdding } = useAddDomain();
   const { mutate: verifyDomain, isPending: isVerifying } = useVerifyDomain();
@@ -240,7 +241,7 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
                             ) : (
                               <Clock className="w-3 h-3" />
                             )}
-                            {domain.verified ? "Verified" : "Pending"}
+                            {domain.verified ? "Verified" : "DNS verification pending"}
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
@@ -304,30 +305,7 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
                               Add these CNAME records at your DNS provider,
                               then click Recheck:
                             </p>
-                            <div className="space-y-2 overflow-x-auto">
-                              {domain.dnsRecords.map((record) => (
-                                <div
-                                  key={record.name}
-                                  className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 text-xs font-mono items-center"
-                                >
-                                  <div className="flex items-center gap-1 min-w-0">
-                                    <span className="truncate">
-                                      {record.name}
-                                    </span>
-                                    <CopyButton content={record.name} size="sm" />
-                                  </div>
-                                  <div className="flex items-center gap-1 min-w-0">
-                                    <span className="truncate">
-                                      {record.value}
-                                    </span>
-                                    <CopyButton content={record.value} size="sm" />
-                                  </div>
-                                  <span className="text-muted-foreground">
-                                    CNAME
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
+                            <DnsRecordsTable records={domain.dnsRecords} />
                           </TableCell>
                         </TableRow>
                       )}

@@ -229,7 +229,9 @@ export const addDomain = async (
     return {
       success: true,
       message:
-        "Domain added. Add the DNS records below, then click Recheck once they've propagated.",
+        newsletterId
+          ? "Domain attached to this newsletter, but DNS verification is still required. Add the records below, then click Recheck."
+          : "Domain added. Add the DNS records below, then click Recheck once they've propagated.",
       data: toDomainView(row!),
     };
   } catch (err) {
@@ -390,6 +392,14 @@ export const assignDomainToNewsletter = async (
         success: false,
         message:
           "This domain is already assigned to a newsletter. Remove it there first to move it.",
+        data: null,
+      };
+    }
+
+    if (!row.verified) {
+      return {
+        success: false,
+        message: "Verify this domain's DNS records before assigning it to a newsletter.",
         data: null,
       };
     }
