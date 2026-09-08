@@ -170,23 +170,14 @@ export async function sendEmailChunk(
   "use step";
 
   try {
-    const result = await sendWorkflowEmailChunk(
+    return await sendWorkflowEmailChunk(
       newsletter,
       recipientEmails,
       subject,
       html,
-      undefined,
       removeBranding,
       emailId
     );
-
-    if ("sent" in result) {
-      return { sent: result.sent, failed: result.failed };
-    }
-    // Single-recipient path returns {success, messageId} instead of counts.
-    return result.success
-      ? { sent: 1, failed: 0 }
-      : { sent: 0, failed: 1 };
   } catch {
     // sendEmailNewsletter only throws when EVERY recipient in this chunk
     // failed (nothing succeeded), so nothing here needs a retry-safety

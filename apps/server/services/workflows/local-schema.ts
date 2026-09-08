@@ -25,7 +25,6 @@ import {
   serial,
   pgEnum,
   jsonb,
-  integer,
 } from "drizzle-orm/pg-core";
 
 export const emailStatusEnum = pgEnum("email_status", ["published", "draft"]);
