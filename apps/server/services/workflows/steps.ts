@@ -3,6 +3,7 @@ import { sendEmailNewsletter } from "../mail/external";
 import { decryptDataSubtle } from "@/lib/encrypt";
 import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { envConfig } from "@/config";
+import { moderateNewsletterContent } from "../moderation";
 import { dbLite, schema } from "./db-lite";
 
 export type PrepareEmailSendResult =
@@ -81,6 +82,37 @@ export async function prepareEmailSend(
     email.body,
     envConfig.ENCRYPTION_KEY || ""
   );
+
+  // Same spam/phishing/scam check the external API send path runs
+  // (routes/api/v1/external/newsletters.ts) — dashboard-authored posts go
+  // through this workflow instead of that route, so without this they'd
+  // skip moderation entirely. Run last among the cheap checks, right
+  // before rendering, since it's the most expensive one.
+  const moderation = await moderateNewsletterContent({
+    subject: email.subject,
+    content: rawBody,
+    newsletterName: newsletter.name,
+  });
+
+  if (moderation.verdict === "block") {
+    // There's no "blocked" status in the emails schema (just
+    // published/draft) — revert to draft so the post doesn't sit in the
+    // dashboard looking like it went out (status "published", sentAt in
+    // the past) when nothing was actually sent. The reason only surfaces
+    // in server logs for now; there's no per-post UI surface for it yet.
+    await dbLite
+      .update(schema.emails)
+      .set({ status: "draft" })
+      .where(eq(schema.emails.id, emailId));
+    console.warn(
+      `Email ${emailId} blocked by content moderation (${moderation.category}): ${moderation.reason}`
+    );
+    return {
+      status: "cancelled",
+      reason: `Blocked by content moderation: ${moderation.reason}`,
+    };
+  }
+
   const html = renderNewsletterMarkdown(rawBody);
 
   const [owner] = await dbLite

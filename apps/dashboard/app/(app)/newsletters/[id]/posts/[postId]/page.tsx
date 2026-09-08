@@ -30,6 +30,11 @@ export default function EditPostPage(): React.JSX.Element {
   const [content, setContent] = useState("");
   const [scheduledDate, setScheduledDate] = useState<string>("");
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  // Save/Schedule/Publish all share one mutation, so `isUpdating` alone
+  // can't tell them apart — without this, clicking one spins every button.
+  const [pendingAction, setPendingAction] = useState<
+    "save" | "schedule" | "publish" | null
+  >(null);
 
   useEffect(() => {
     if (email) {
@@ -70,6 +75,7 @@ export default function EditPostPage(): React.JSX.Element {
     if (!validateFields()) return;
     if (!scheduledDate) return;
 
+    setPendingAction("schedule");
     updateEmail(
       {
         emailId: postId,
@@ -86,6 +92,7 @@ export default function EditPostPage(): React.JSX.Element {
           );
           router.push(`/newsletters/${newsletterId}/posts`);
         },
+        onSettled: () => setPendingAction(null),
       },
     );
   };
@@ -93,6 +100,7 @@ export default function EditPostPage(): React.JSX.Element {
   const handlePublishNow = () => {
     if (!validateFields()) return;
 
+    setPendingAction("publish");
     updateEmail(
       {
         emailId: postId,
@@ -105,6 +113,7 @@ export default function EditPostPage(): React.JSX.Element {
           toast.success("Post published — sending now");
           router.push(`/newsletters/${newsletterId}/posts`);
         },
+        onSettled: () => setPendingAction(null),
       },
     );
   };
@@ -112,6 +121,7 @@ export default function EditPostPage(): React.JSX.Element {
   const handleSave = () => {
     if (!validateFields()) return;
 
+    setPendingAction("save");
     updateEmail(
       {
         emailId: postId,
@@ -123,6 +133,7 @@ export default function EditPostPage(): React.JSX.Element {
           toast.success("Changes saved");
           router.push(`/newsletters/${newsletterId}/posts`);
         },
+        onSettled: () => setPendingAction(null),
       },
     );
   };
@@ -168,7 +179,7 @@ export default function EditPostPage(): React.JSX.Element {
                 onClick={handleSave}
                 disabled={isUpdating}
               >
-                {isUpdating && (
+                {pendingAction === "save" && (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 )}
                 <Save className="w-4 h-4 mr-2" />
@@ -205,7 +216,7 @@ export default function EditPostPage(): React.JSX.Element {
                         onClick={handleSchedule}
                         disabled={isUpdating || !scheduledDate}
                       >
-                        {isUpdating && (
+                        {pendingAction === "schedule" && (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         )}
                         Confirm Schedule
@@ -215,7 +226,9 @@ export default function EditPostPage(): React.JSX.Element {
                 </PopoverContent>
               </Popover>
               <Button onClick={handlePublishNow} disabled={isUpdating}>
-                {isUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {pendingAction === "publish" && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                )}
                 <Send className="w-4 h-4 mr-2" />
                 Publish Now
               </Button>

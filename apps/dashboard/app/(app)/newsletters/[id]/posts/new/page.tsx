@@ -28,6 +28,11 @@ export default function NewPostPage(): React.JSX.Element {
   const [content, setContent] = useState("");
   const [scheduledDate, setScheduledDate] = useState<string>("");
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  // Save/Schedule/Publish all share one mutation, so `isCreating` alone
+  // can't tell them apart — without this, clicking one spins every button.
+  const [pendingAction, setPendingAction] = useState<
+    "draft" | "schedule" | "publish" | null
+  >(null);
 
   // "YYYY-MM-DDTHH:mm" in local time, for the datetime-local input's `min` —
   // stops the popover from accepting a "scheduled" time that's already in
@@ -55,6 +60,7 @@ export default function NewPostPage(): React.JSX.Element {
     if (!validateFields()) return;
     if (!scheduledDate) return;
 
+    setPendingAction("schedule");
     createEmail(
       {
         subject,
@@ -70,6 +76,7 @@ export default function NewPostPage(): React.JSX.Element {
           );
           router.push(`/newsletters/${newsletterId}/posts`);
         },
+        onSettled: () => setPendingAction(null),
       },
     );
   };
@@ -77,6 +84,7 @@ export default function NewPostPage(): React.JSX.Element {
   const handlePublishNow = () => {
     if (!validateFields()) return;
 
+    setPendingAction("publish");
     createEmail(
       {
         subject,
@@ -88,6 +96,7 @@ export default function NewPostPage(): React.JSX.Element {
           toast.success("Post published — sending now");
           router.push(`/newsletters/${newsletterId}/posts`);
         },
+        onSettled: () => setPendingAction(null),
       },
     );
   };
@@ -95,6 +104,7 @@ export default function NewPostPage(): React.JSX.Element {
   const handleSaveDraft = () => {
     if (!validateFields()) return;
 
+    setPendingAction("draft");
     createEmail(
       {
         subject,
@@ -105,6 +115,7 @@ export default function NewPostPage(): React.JSX.Element {
           toast.success("Draft saved");
           router.push(`/newsletters/${newsletterId}/posts`);
         },
+        onSettled: () => setPendingAction(null),
       },
     );
   };
@@ -127,7 +138,9 @@ export default function NewPostPage(): React.JSX.Element {
             onClick={handleSaveDraft}
             disabled={isCreating}
           >
-            {isCreating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {pendingAction === "draft" && (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            )}
             <Save className="w-4 h-4 mr-2" />
             Save as Draft
           </Button>
@@ -162,7 +175,7 @@ export default function NewPostPage(): React.JSX.Element {
                     onClick={handleSchedule}
                     disabled={isCreating || !scheduledDate}
                   >
-                    {isCreating && (
+                    {pendingAction === "schedule" && (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     )}
                     Confirm Schedule
@@ -172,7 +185,9 @@ export default function NewPostPage(): React.JSX.Element {
             </PopoverContent>
           </Popover>
           <Button onClick={handlePublishNow} disabled={isCreating}>
-            {isCreating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {pendingAction === "publish" && (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            )}
             <Send className="w-4 h-4 mr-2" />
             Publish Now
           </Button>
