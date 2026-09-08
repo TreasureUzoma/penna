@@ -1,11 +1,13 @@
 import { and, eq } from "drizzle-orm";
-import { sendEmailNewsletter } from "../mail/external";
 import { decryptDataSubtle } from "@/lib/encrypt";
 import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { envConfig } from "@/config";
 import { moderateNewsletterContent } from "../moderation";
-import { canRemoveBranding } from "../newsletters";
 import { dbLite, schema } from "./db-lite";
+import {
+  canWorkflowRemoveBranding,
+  sendWorkflowEmailChunk,
+} from "./workflow-delivery";
 
 export type PrepareEmailSendResult =
   | { status: "cancelled" | "skipped" | "failed"; reason: string }
@@ -130,7 +132,7 @@ export async function prepareEmailSend(
   // setting so choosing "Show Penna branding" is reflected in sent emails.
   // Use the same team-plan gate as the settings API and external sends.
   const removeBranding =
-    (await canRemoveBranding(newsletter.id)) &&
+    (await canWorkflowRemoveBranding(newsletter.teamId)) &&
     (newsletter.config as { removeBranding?: boolean } | null)?.removeBranding ===
       true;
 
@@ -168,7 +170,7 @@ export async function sendEmailChunk(
   "use step";
 
   try {
-    const result = await sendEmailNewsletter(
+    const result = await sendWorkflowEmailChunk(
       newsletter,
       recipientEmails,
       subject,

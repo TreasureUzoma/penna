@@ -25,6 +25,7 @@ import {
   serial,
   pgEnum,
   jsonb,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const emailStatusEnum = pgEnum("email_status", ["published", "draft"]);
@@ -99,4 +100,33 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   subscriptionType: userSubscriptionEnum("subscription_type").default("free"),
+  plan: text("plan").default("hobby").notNull(),
+});
+
+export const teamSubscriptions = pgTable("team_subscriptions", {
+  serial: serial("serial").primaryKey(),
+  id: uuid("id").defaultRandom().notNull().unique(),
+  teamId: uuid("team_id").notNull(),
+  planSlug: text("plan_slug").notNull(),
+  status: text("status").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const domains = pgTable("domains", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  newsletterId: uuid("newsletter_id"),
+  name: text("name").notNull().unique(),
+  verified: boolean("verified").default(false).notNull(),
+  type: text("type").default("email"),
+});
+
+export const emailRecipients = pgTable("email_recipients", {
+  id: uuid("id").defaultRandom().notNull().unique(),
+  emailId: uuid("email_id").notNull(),
+  newsletterId: uuid("newsletter_id").notNull(),
+  email: text("email").notNull(),
+  token: uuid("token").defaultRandom().notNull().unique(),
+  openedAt: timestamp("opened_at"),
+  clickedAt: timestamp("clicked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
