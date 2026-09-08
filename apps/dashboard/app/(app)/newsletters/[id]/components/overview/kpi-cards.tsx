@@ -45,10 +45,9 @@ export function KPICards({ stats }: KPICardsProps) {
       // 0 for this. Showing "Coming soon" instead of a value reads as
       // intentional; a bare "-" or a fake "0%" both read as broken data.
       title: "Open Rate",
-      value: "Coming soon",
-      description: "Open tracking isn't available yet",
+      value: `${stats?.openRate ?? 0}%`,
+      description: "Unique opens from the latest newsletter",
       icon: Mail,
-      muted: true,
     },
     {
       title: "Last Sent",
@@ -67,13 +66,7 @@ export function KPICards({ stats }: KPICardsProps) {
             <kpi.icon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div
-              className={
-                kpi.muted
-                  ? "text-lg font-medium text-muted-foreground"
-                  : "text-2xl font-bold"
-              }
-            >
+            <div className="text-2xl font-bold">
               {kpi.value}
             </div>
             <p className="text-xs text-muted-foreground mt-1">

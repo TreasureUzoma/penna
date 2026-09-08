@@ -32,11 +32,11 @@ interface SesNotification {
  * any newsletter's subscriber list.
  */
 const newsletterSlugFromSource = (source: string): string | null => {
-  const suffix = `@${envConfig.NEWSLETTER_DOMAIN}`;
-  if (!source.endsWith(suffix)) {
-    return null;
-  }
-  const slug = source.slice(0, source.length - suffix.length);
+  // The local part is always the newsletter slug, including for verified
+  // custom sending domains. SNS signatures authenticate the source event;
+  // we only need the local part to select the correct subscriber list.
+  const [slug, domain] = source.split("@");
+  if (!domain) return null;
   return slug || null;
 };
 

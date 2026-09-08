@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { emails, subscribers } from "@workspace/db/schema";
+import { emailRecipients, emails, subscribers } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
 import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 
@@ -64,6 +64,24 @@ export const getNewsletterAnalytics = async (
       )
       .orderBy(desc(emails.sentAt))
       .limit(1);
+
+    const [recipientStats] = lastEmail
+      ? await db
+          .select({
+            sent: count(),
+            opened: count(emailRecipients.openedAt),
+            clicked: count(emailRecipients.clickedAt),
+          })
+          .from(emailRecipients)
+          .where(eq(emailRecipients.emailId, lastEmail.id))
+      : [{ sent: 0, opened: 0, clicked: 0 }];
+    const sentCount = recipientStats?.sent ?? 0;
+    const openRate = sentCount
+      ? Number((((recipientStats?.opened ?? 0) / sentCount) * 100).toFixed(1))
+      : 0;
+    const clickRate = sentCount
+      ? Number((((recipientStats?.clicked ?? 0) / sentCount) * 100).toFixed(1))
+      : 0;
 
     // 4. Subscriber growth chart
     const dailyGrowth = await db.execute(sql`
@@ -167,7 +185,7 @@ export const getNewsletterAnalytics = async (
           growth7d,
           growth30d,
           lastPostSent: lastEmail?.sentAt ?? null,
-          openRate: 0, // Mocked for now
+          openRate,
         },
         chartData: filledData,
         activity,
@@ -177,8 +195,8 @@ export const getNewsletterAnalytics = async (
               id: lastEmail.id,
               subject: lastEmail.subject,
               sentAt: lastEmail.sentAt,
-              openRate: 0, // Mocked
-              clickRate: 0, // Mocked
+              openRate,
+              clickRate,
             }
           : null,
       },

@@ -27,7 +27,8 @@ export const sendEmailNewsletter = async (
   subject: string,
   html: string,
   replyTo?: string,
-  removeBranding?: boolean
+  removeBranding?: boolean,
+  emailId?: string
 ) => {
   if (recipientEmails.length === 0) {
     throw new Error("No recipient emails provided");
@@ -51,6 +52,7 @@ export const sendEmailNewsletter = async (
       html: brandedHtml,
       replyTo,
       fromDomain,
+      emailId,
     });
 
     if (!result.success) {
@@ -68,6 +70,7 @@ export const sendEmailNewsletter = async (
     html: brandedHtml,
     replyTo,
     fromDomain,
+    emailId,
   });
 
   if (!result.success && result.failed === recipientEmails.length) {

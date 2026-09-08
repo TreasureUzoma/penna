@@ -6,6 +6,7 @@ import {
 import { envConfig } from "@/config";
 import { buildListUnsubscribeHeaders } from "@/lib/list-unsubscribe";
 import { appendUnsubscribeFooter } from "./branding";
+import { addEmailTracking, removeEmailTracking } from "./tracking";
 
 const sesClient = new SESClient({
   region: envConfig.AWS_REGION,
@@ -40,6 +41,7 @@ export interface SendNewsletterOptions {
   replyTo?: string;
   /** A verified custom domain to send from instead of the shared `NEWSLETTER_DOMAIN` — see `services/domains.ts`. */
   fromDomain?: string | null;
+  emailId?: string;
 }
 
 export interface SendBulkNewsletterOptions {
@@ -49,6 +51,7 @@ export interface SendBulkNewsletterOptions {
   html: string;
   replyTo?: string;
   fromDomain?: string | null;
+  emailId?: string;
 }
 
 /**
@@ -66,6 +69,7 @@ export const sendNewsletterEmail = async (
       html,
       replyTo,
       fromDomain,
+      emailId,
     } = options;
 
     // Per-recipient: the token embedded in both the visible footer link and
@@ -76,6 +80,9 @@ export const sendNewsletterEmail = async (
       recipientEmail
     );
     const htmlWithFooter = appendUnsubscribeFooter(html, unsubscribeUrl);
+    const trackedHtml = emailId
+      ? await addEmailTracking(htmlWithFooter, emailId, newsletterId, recipientEmail)
+      : htmlWithFooter;
 
     const command = new SendEmailV2Command({
       // {slug}@newsletter.penna.dev — not newsletter@{slug}.newsletter.penna.dev.
@@ -97,7 +104,7 @@ export const sendNewsletterEmail = async (
           },
           Body: {
             Html: {
-              Data: htmlWithFooter,
+              Data: trackedHtml,
               Charset: "UTF-8",
             },
           },
@@ -120,6 +127,12 @@ export const sendNewsletterEmail = async (
       messageId: response.MessageId,
     };
   } catch (error) {
+    // A row is provisioned before SES receives the message so its unique
+    // token can be embedded in the HTML. Remove it on failure so unsent
+    // recipients never dilute open/click rates.
+    if (options.emailId) {
+      await removeEmailTracking(options.emailId, options.recipientEmail);
+    }
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error("Failed to send newsletter email:", errorMessage);
@@ -143,7 +156,7 @@ export const sendBulkNewsletterEmails = async (
   failed: number;
   errors?: Array<{ email: string; error: string }>;
 }> => {
-  const { newsletter, recipientEmails, subject, html, replyTo, fromDomain } =
+  const { newsletter, recipientEmails, subject, html, replyTo, fromDomain, emailId } =
     options;
   const results = {
     sent: 0,
@@ -164,6 +177,7 @@ export const sendBulkNewsletterEmails = async (
         html,
         replyTo,
         fromDomain,
+        emailId,
       });
 
       if (result.success) {

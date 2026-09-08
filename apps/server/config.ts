@@ -50,6 +50,16 @@ const envSchema = z.object({
   // open (moderation skipped, not the whole send) in envs where it isn't
   // configured yet, rather than breaking `envConfig.parse` for everyone.
   GROQ_API_KEY: z.string().optional(),
+}).superRefine((env, ctx) => {
+  // Production mail must always suppress permanent bounces and complaints.
+  // Local development can omit this because it does not send real campaigns.
+  if (env.NODE_ENV === "production" && !env.SES_NOTIFICATIONS_TOPIC_ARN) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["SES_NOTIFICATIONS_TOPIC_ARN"],
+      message: "SES_NOTIFICATIONS_TOPIC_ARN is required in production for bounce and complaint suppression.",
+    });
+  }
 });
 
 export const envConfig = envSchema.parse(process.env);

@@ -66,7 +66,8 @@ export async function emailCampaignWorkflow({
           prepared.subject,
           prepared.html,
           recipients,
-          prepared.removeBranding
+          prepared.removeBranding,
+          prepared.emailId
         )
       )
     );

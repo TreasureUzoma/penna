@@ -12,6 +12,7 @@ export type PrepareEmailSendResult =
   | {
       status: "ready";
       newsletter: { id: string; slug: string };
+      emailId: string;
       subject: string;
       html: string;
       recipientEmails: string[];
@@ -136,6 +137,7 @@ export async function prepareEmailSend(
   return {
     status: "ready",
     newsletter: { id: newsletter.id, slug: newsletter.slug },
+    emailId: email.id,
     subject: email.subject,
     html,
     recipientEmails,
@@ -160,7 +162,8 @@ export async function sendEmailChunk(
   subject: string,
   html: string,
   recipientEmails: string[],
-  removeBranding: boolean
+  removeBranding: boolean,
+  emailId: string
 ): Promise<SendEmailChunkResult> {
   "use step";
 
@@ -171,7 +174,8 @@ export async function sendEmailChunk(
       subject,
       html,
       undefined,
-      removeBranding
+      removeBranding,
+      emailId
     );
 
     if ("sent" in result) {

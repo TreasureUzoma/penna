@@ -321,6 +321,34 @@ export const emails = pgTable(
   }),
 );
 
+// One row per delivered campaign recipient. The opaque token lets open and
+// click endpoints attribute activity without exposing an email address.
+export const emailRecipients = pgTable(
+  "email_recipients",
+  {
+    id: uuid("id").defaultRandom().notNull().unique(),
+    emailId: uuid("email_id")
+      .notNull()
+      .references(() => emails.id, { onDelete: "cascade" }),
+    newsletterId: uuid("newsletter_id")
+      .notNull()
+      .references(() => newsletters.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    token: uuid("token").defaultRandom().notNull().unique(),
+    openedAt: timestamp("opened_at"),
+    clickedAt: timestamp("clicked_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdx: index("email_recipients_email_idx").on(table.emailId),
+    tokenIdx: uniqueIndex("email_recipients_token_idx").on(table.token),
+    recipientUnique: uniqueIndex("email_recipients_email_recipient_idx").on(
+      table.emailId,
+      table.email,
+    ),
+  }),
+);
+
 export const domains = pgTable(
   "domains",
   {

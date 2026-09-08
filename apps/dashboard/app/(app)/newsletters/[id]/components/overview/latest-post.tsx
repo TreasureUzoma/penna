@@ -15,6 +15,8 @@ interface LatestPostProps {
     id: string;
     subject: string;
     sentAt: string;
+    openRate: number;
+    clickRate: number;
   } | null;
 }
 
@@ -56,7 +58,7 @@ export function LatestPost({ post }: LatestPostProps) {
             click-redirect endpoint) — showing real send data (subject,
             date) rather than fabricated rate numbers. */}
         <p className="text-sm text-muted-foreground pt-2">
-          Open and click tracking isn't available yet.
+          {post.openRate}% open rate · {post.clickRate}% click rate
         </p>
       </CardContent>
       <CardFooter className="pt-2">

@@ -20,6 +20,7 @@ import emailsRoute from "./routes/api/v1/emails";
 import segmentRoutes from "./routes/api/v1/segments";
 import domainsRoute from "./routes/api/v1/domains";
 import publicNewslettersRoute from "./routes/api/v1/public/newsletters";
+import trackingRoute from "./routes/api/v1/tracking";
 import { start } from "workflow/api";
 import { myTestWorkflow } from "./tests/workflow";
 
@@ -80,6 +81,10 @@ v1.route(
   "/public/newsletters",
   publicNewslettersRoute.use(rateLimiter(60 * 1000, 60)),
 );
+
+// Email clients load these without a user session. The opaque recipient
+// token is the only identifier accepted by these endpoints.
+v1.route("/tracking", trackingRoute.use(rateLimiter(60 * 1000, 600)));
 
 // Paddle webhook — public, verified via Paddle's own signature instead of
 // a session (Paddle's servers can't carry a Penna session cookie)
