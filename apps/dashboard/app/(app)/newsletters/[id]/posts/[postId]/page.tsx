@@ -6,9 +6,14 @@ import { useEmail, useUpdateEmail } from "@/hooks/use-emails";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { MarkdownSplitEditor } from "@/components/markdown-split-editor";
-import { Loader2, Save, Send } from "lucide-react";
+import { Loader2, Save, Send, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@workspace/ui/components/card";
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+} from "@workspace/ui/components/alert";
 import {
   Popover,
   PopoverContent,
@@ -236,6 +241,20 @@ export default function EditPostPage(): React.JSX.Element {
           )}
         </div>
       </div>
+
+      {email?.moderationBlockedReason && (
+        <Alert variant="destructive" className="shrink-0">
+          <ShieldAlert />
+          <AlertTitle>Blocked by content moderation</AlertTitle>
+          <AlertDescription>
+            <p>{email.moderationBlockedReason}</p>
+            <p>
+              This was reverted to a draft instead of sending — edit the
+              content and try publishing again.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-0 shadow-none bg-transparent">
         <CardContent className="p-0 h-full flex flex-col gap-3">

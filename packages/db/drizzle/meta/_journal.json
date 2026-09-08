@@ -64,6 +64,13 @@
       "when": 1788801714536,
       "tag": "0008_chunky_liz_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788883811152,
+      "tag": "0009_add_email_moderation_block_fields",
+      "breakpoints": true
     }
   ]
 }

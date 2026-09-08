@@ -68,6 +68,9 @@ export const emails = pgTable("emails", {
   body: text("body").notNull(),
   sentAt: timestamp("sent_at").defaultNow().notNull(),
   status: emailStatusEnum("status").notNull(),
+  moderationBlockedAt: timestamp("moderation_blocked_at"),
+  moderationBlockedReason: text("moderation_blocked_reason"),
+  moderationBlockedCategory: text("moderation_blocked_category"),
 });
 
 export const subscribers = pgTable("subscribers", {

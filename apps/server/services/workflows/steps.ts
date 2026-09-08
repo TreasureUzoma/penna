@@ -98,11 +98,19 @@ export async function prepareEmailSend(
     // There's no "blocked" status in the emails schema (just
     // published/draft) — revert to draft so the post doesn't sit in the
     // dashboard looking like it went out (status "published", sentAt in
-    // the past) when nothing was actually sent. The reason only surfaces
-    // in server logs for now; there's no per-post UI surface for it yet.
+    // the past) when nothing was actually sent. The reason/category are
+    // persisted so the dashboard can explain the block to the author (see
+    // posts/[postId]/page.tsx and posts/page.tsx) — cleared on the next
+    // publish/schedule attempt (services/emails.ts) so a stale reason
+    // never lingers after a resend.
     await dbLite
       .update(schema.emails)
-      .set({ status: "draft" })
+      .set({
+        status: "draft",
+        moderationBlockedAt: new Date(),
+        moderationBlockedReason: moderation.reason,
+        moderationBlockedCategory: moderation.category,
+      })
       .where(eq(schema.emails.id, emailId));
     console.warn(
       `Email ${emailId} blocked by content moderation (${moderation.category}): ${moderation.reason}`

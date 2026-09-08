@@ -306,6 +306,14 @@ export const emails = pgTable(
     body: text("body").notNull(), // encrypted
     sentAt: timestamp("sent_at").defaultNow().notNull().notNull(),
     status: emailStatusEnum("status").notNull(),
+    // Set when the send workflow's content-moderation check blocks this
+    // post (see services/workflows/steps.ts) — `status` gets reverted to
+    // "draft" at the same time, since there's no dedicated "blocked" status.
+    // Cleared on the next publish/schedule attempt so a stale reason never
+    // lingers after a resend. Null in the ordinary unblocked case.
+    moderationBlockedAt: timestamp("moderation_blocked_at"),
+    moderationBlockedReason: text("moderation_blocked_reason"),
+    moderationBlockedCategory: text("moderation_blocked_category"),
   },
   (table) => ({
     newsletterIdx: index("emails_newsletter_idx").on(table.newsletterId),

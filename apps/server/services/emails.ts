@@ -211,7 +211,17 @@ export const updateEmail = async (
     if (body !== undefined) {
       updateValues.body = await encryptDataSubtle(body, encryptionKey);
     }
-    if (status !== undefined) updateValues.status = status;
+    if (status !== undefined) {
+      updateValues.status = status;
+      // A publish/schedule attempt (the only caller that sets `status`) —
+      // clear any previous moderation block so a stale reason doesn't
+      // linger in the dashboard once the author has tried again. The
+      // workflow re-sets these itself (services/workflows/steps.ts) if
+      // this new attempt gets blocked too.
+      updateValues.moderationBlockedAt = null;
+      updateValues.moderationBlockedReason = null;
+      updateValues.moderationBlockedCategory = null;
+    }
     if (sentAt !== undefined) updateValues.sentAt = sentAt;
 
     if (Object.keys(updateValues).length === 0) {

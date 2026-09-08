@@ -9,6 +9,12 @@ export interface Email {
   body: string;
   status: "published" | "draft";
   sentAt: string;
+  // Set when the send workflow's AI moderation check blocked this post
+  // (status gets reverted to "draft" at the same time) — null otherwise,
+  // and cleared again on the next publish/schedule attempt.
+  moderationBlockedAt: string | null;
+  moderationBlockedReason: string | null;
+  moderationBlockedCategory: string | null;
 }
 
 export function useEmails(newsletterId: string) {

@@ -41,8 +41,19 @@ import Link from "next/link";
  * the raw status would label a not-yet-sent post as "published". Derive
  * the third state (Scheduled) from `sentAt` instead of adding a DB column.
  */
-function getDisplayStatus(email: { status: string; sentAt: string }) {
+function getDisplayStatus(email: {
+  status: string;
+  sentAt: string;
+  moderationBlockedReason?: string | null;
+}) {
   if (email.status !== "published") {
+    if (email.moderationBlockedReason) {
+      return {
+        label: "Blocked",
+        className:
+          "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+      };
+    }
     return {
       label: "Draft",
       className: "bg-secondary text-secondary-foreground",
@@ -129,6 +140,7 @@ export default function NewsletterPostsPage() {
                     </TableCell>
                     <TableCell>
                       <span
+                        title={email.moderationBlockedReason ?? undefined}
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getDisplayStatus(email).className}`}
                       >
                         {getDisplayStatus(email).label}
