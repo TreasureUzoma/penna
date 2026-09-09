@@ -30,7 +30,7 @@ const encryptionKey = envConfig.ENCRYPTION_KEY!;
 // anymore. The route calling this validates the caller is actually an
 // owner/admin of `data.teamId` before getting here.
 export const createNewsletter = async (
-  data: NewNewsletter
+  data: NewNewsletter,
 ): Promise<ServiceResponse> => {
   try {
     const [newsletter] = await db
@@ -81,7 +81,7 @@ export const createNewsletter = async (
  * stored config, in case the owner downgrades later.
  */
 export const isNewsletterOwnerOnPaidPlan = async (
-  newsletterId: string
+  newsletterId: string,
 ): Promise<boolean> => {
   const [newsletter] = await db
     .select({ teamId: newsletters.teamId })
@@ -117,7 +117,7 @@ export const isUserOnPaidPlan = async (userId: string): Promise<boolean> => {
 
 export const updateNewsletter = async (
   newsletterId: string,
-  data: Partial<UpdateNewsletter>
+  data: Partial<UpdateNewsletter>,
 ): Promise<ServiceResponse> => {
   try {
     const updateValues: Record<string, any> = {};
@@ -205,7 +205,7 @@ export const updateNewsletter = async (
  */
 export const transferNewsletterToTeam = async (
   newsletterId: string,
-  teamId: string
+  teamId: string,
 ): Promise<ServiceResponse> => {
   try {
     const [updated] = await db
@@ -236,7 +236,7 @@ export const transferNewsletterToTeam = async (
 };
 
 export const deleteNewsletter = async (
-  newsletterId: string
+  newsletterId: string,
 ): Promise<ServiceResponse> => {
   try {
     await db.delete(newsletters).where(eq(newsletters.id, newsletterId));
@@ -262,12 +262,12 @@ export const deleteNewsletter = async (
 };
 
 export const createNewsletterApiKeys = async (
-  data: InsertApiKey
+  data: InsertApiKey,
 ): Promise<ServiceResponse> => {
   try {
     const encryptedSecret = await encryptDataSubtle(
       data.encryptedSecretKey,
-      encryptionKey
+      encryptionKey,
     );
 
     const [apiKeys] = await db
@@ -302,7 +302,7 @@ export const createNewsletterApiKeys = async (
 
 export const generateAndCreateNewsletterApiKey = async (
   newsletterId: string,
-  scopes: ApiKeyScope[]
+  scopes: ApiKeyScope[],
 ): Promise<ServiceResponse> => {
   try {
     const { publicKey, secretKey } = generateApiKeys();
@@ -338,7 +338,7 @@ export const generateAndCreateNewsletterApiKey = async (
 
 export const deleteNewsletterApiKey = async (
   newsletterId: string,
-  keyId: string
+  keyId: string,
 ): Promise<ServiceResponse> => {
   try {
     const [deletedKey] = await db
@@ -346,8 +346,8 @@ export const deleteNewsletterApiKey = async (
       .where(
         and(
           eq(newsletterApiKeys.newsletterId, newsletterId),
-          eq(newsletterApiKeys.id, keyId)
-        )
+          eq(newsletterApiKeys.id, keyId),
+        ),
       )
       .returning();
 
@@ -386,7 +386,7 @@ export const deleteNewsletterApiKey = async (
  */
 export const getUserNewsletterRole = async (
   newsletterId: string,
-  userId: string
+  userId: string,
 ) => {
   try {
     const [membership] = await db
@@ -398,7 +398,7 @@ export const getUserNewsletterRole = async (
       .from(newsletters)
       .innerJoin(teamMembers, eq(teamMembers.teamId, newsletters.teamId))
       .where(
-        and(eq(newsletters.id, newsletterId), eq(teamMembers.userId, userId))
+        and(eq(newsletters.id, newsletterId), eq(teamMembers.userId, userId)),
       );
 
     if (!membership) {
@@ -496,7 +496,7 @@ export const getPublicNewsletterBySlug = async (slug: string) => {
     .from(newsletters)
     .innerJoin(teamMembers, eq(teamMembers.teamId, newsletters.teamId))
     .where(
-      and(eq(newsletters.id, newsletter.id), eq(teamMembers.role, "owner"))
+      and(eq(newsletters.id, newsletter.id), eq(teamMembers.role, "owner")),
     );
 
   if (!owner) {
@@ -518,11 +518,13 @@ export const getPublicNewsletterBySlug = async (slug: string) => {
   };
 };
 
-export const getNewslettersByUser = (
-  userId: string,
-  page = 1,
-  limit = 10
-) => {
+export const getNewslettersByUser = (userId: string, page = 1, limit = 10) => {
+  console.log("[newsletters] getNewslettersByUser start", {
+    userId,
+    page,
+    limit,
+  });
+
   const offset = (page - 1) * limit;
 
   const dbQuery = db
@@ -549,7 +551,7 @@ export const getNewslettersByUser = (
       newsletters.config,
       newsletters.createdAt,
       newsletters.updatedAt,
-      teamMembers.role
+      teamMembers.role,
     )
     .orderBy(desc(newsletters.createdAt))
     .limit(limit)
@@ -561,11 +563,19 @@ export const getNewslettersByUser = (
     .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
     .where(eq(teamMembers.userId, userId));
 
-  return paginate(dbQuery, countQuery, page, limit);
+  const result = paginate(dbQuery, countQuery, page, limit);
+
+  console.log("[newsletters] getNewslettersByUser queued", {
+    userId,
+    page,
+    limit,
+  });
+
+  return result;
 };
 
 export const getNewsletterApiKeys = async (
-  newsletterId: string
+  newsletterId: string,
 ): Promise<ServiceResponse> => {
   try {
     // Deliberately excludes encryptedSecretKey — the private key is only
@@ -586,8 +596,8 @@ export const getNewsletterApiKeys = async (
       .where(
         and(
           eq(newsletterApiKeys.newsletterId, newsletterId),
-          isNull(newsletterApiKeys.revokedAt)
-        )
+          isNull(newsletterApiKeys.revokedAt),
+        ),
       )
       .orderBy(desc(newsletterApiKeys.createdAt));
 

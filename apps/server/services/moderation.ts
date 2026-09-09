@@ -15,16 +15,14 @@ const moderationSchema = z.object({
   verdict: z
     .enum(["clean", "review", "block"])
     .describe(
-      "clean: ordinary newsletter content. review: borderline/ambiguous — allow the send but flag it for human review. block: high-confidence spam, phishing, scam, hate, or adult content — do not send."
+      "clean: ordinary newsletter content. review: borderline/ambiguous — allow the send but flag it for human review. block: high-confidence spam, phishing, scam, hate, or adult content — do not send.",
     ),
   category: z
     .string()
     .describe(
-      "Short label for the primary concern, e.g. 'clean', 'promotional-spam', 'phishing', 'scam', 'hate', 'adult', or similar."
+      "Short label for the primary concern, e.g. 'clean', 'promotional-spam', 'phishing', 'scam', 'hate', 'adult', or similar.",
     ),
-  reason: z
-    .string()
-    .describe("One or two sentences explaining the verdict."),
+  reason: z.string().describe("One or two sentences explaining the verdict."),
 });
 
 const SYSTEM_PROMPT = `You are a content moderator for a newsletter sending platform. You are given the subject and body of an email a customer is about to send to their own subscribers via our API.
@@ -61,7 +59,15 @@ export const moderateNewsletterContent = async ({
   content: string;
   newsletterName: string;
 }): Promise<ModerationResult> => {
+  console.log("[moderation] start", {
+    newsletterName,
+    subjectLength: subject.length,
+    contentLength: content.length,
+    hasApiKey: Boolean(envConfig.GROQ_API_KEY),
+  });
+
   if (!envConfig.GROQ_API_KEY) {
+    console.warn("[moderation] missing GROQ_API_KEY; failing open");
     return {
       verdict: "clean",
       category: "unchecked",
@@ -69,20 +75,39 @@ export const moderateNewsletterContent = async ({
     };
   }
 
+  const start = Date.now();
+
   try {
     const groq = createGroq({ apiKey: envConfig.GROQ_API_KEY });
+    const moderationTimeoutMs = envConfig.GROQ_MODERATION_TIMEOUT_MS;
+
+    console.log("[moderation] calling Groq", {
+      model: "openai/gpt-oss-120b",
+      timeoutMs: moderationTimeoutMs,
+    });
 
     const { object } = await generateObject({
       model: groq("openai/gpt-oss-120b"),
       schema: moderationSchema,
       system: SYSTEM_PROMPT,
       prompt: `Newsletter: ${newsletterName}\n\nSubject: ${subject}\n\nBody:\n${content}`,
-      abortSignal: AbortSignal.timeout(10_000),
+      abortSignal: AbortSignal.timeout(moderationTimeoutMs),
+      maxRetries: 2,
+    });
+
+    console.log("[moderation] success", {
+      verdict: object.verdict,
+      category: object.category,
+      durationMs: Date.now() - start,
     });
 
     return object;
   } catch (error) {
-    console.error("Newsletter content moderation check failed:", error);
+    console.error("[moderation] failed", {
+      error,
+      durationMs: Date.now() - start,
+      newsletterName,
+    });
     return {
       verdict: "clean",
       category: "moderation_unavailable",

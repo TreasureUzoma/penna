@@ -37,9 +37,11 @@ export type PrepareEmailSendResult =
  * `@workspace/db` — see `./local-schema.ts` for why.
  */
 export async function prepareEmailSend(
-  emailId: string
+  emailId: string,
 ): Promise<PrepareEmailSendResult> {
   "use step";
+
+  console.log("[workflow] prepareEmailSend start", { emailId });
 
   const [email] = await dbLite
     .select()
@@ -47,6 +49,10 @@ export async function prepareEmailSend(
     .where(eq(schema.emails.id, emailId));
 
   if (!email || email.status !== "published") {
+    console.warn("[workflow] prepareEmailSend cancelled", {
+      emailId,
+      status: email?.status ?? "not found",
+    });
     return {
       status: "cancelled",
       reason: `Email is no longer eligible for sending (status: ${email?.status ?? "not found"})`,
@@ -59,6 +65,10 @@ export async function prepareEmailSend(
     .where(eq(schema.newsletters.id, email.newsletterId));
 
   if (!newsletter) {
+    console.error("[workflow] prepareEmailSend failed: newsletter not found", {
+      emailId,
+      newsletterId: email.newsletterId,
+    });
     return { status: "failed", reason: "Newsletter not found" };
   }
 
@@ -68,45 +78,43 @@ export async function prepareEmailSend(
     .where(
       and(
         eq(schema.subscribers.newsletterId, email.newsletterId),
-        eq(schema.subscribers.status, "subscribed")
-      )
+        eq(schema.subscribers.status, "subscribed"),
+      ),
     );
   const recipientEmails = subscriberRows.map((r) => r.email);
 
+  console.log("[workflow] prepareEmailSend subscribers loaded", {
+    emailId,
+    newsletterId: newsletter.id,
+    recipientCount: recipientEmails.length,
+  });
+
   if (recipientEmails.length === 0) {
+    console.warn("[workflow] prepareEmailSend skipped: no recipients", {
+      emailId,
+      newsletterId: newsletter.id,
+    });
     return { status: "skipped", reason: "No subscribed subscribers" };
   }
 
-  // The dashboard's post editor stores the raw Markdown a user typed, not
-  // HTML — render it the same way the external API send path does
-  // (`routes/api/v1/external/newsletters.ts`), otherwise subscribers get
-  // literal "**bold**"/"# heading" markdown syntax in their inbox instead
-  // of formatted email.
   const rawBody = await decryptDataSubtle(
     email.body,
-    envConfig.ENCRYPTION_KEY || ""
+    envConfig.ENCRYPTION_KEY || "",
   );
 
-  // Same spam/phishing/scam check the external API send path runs
-  // (routes/api/v1/external/newsletters.ts) — dashboard-authored posts go
-  // through this workflow instead of that route, so without this they'd
-  // skip moderation entirely. Run last among the cheap checks, right
-  // before rendering, since it's the most expensive one.
   const moderation = await moderateNewsletterContent({
     subject: email.subject,
     content: rawBody,
     newsletterName: newsletter.name,
   });
 
+  console.log("[workflow] prepareEmailSend moderation result", {
+    emailId,
+    verdict: moderation.verdict,
+    category: moderation.category,
+  });
+
   if (moderation.verdict === "block") {
-    // There's no "blocked" status in the emails schema (just
-    // published/draft) — revert to draft so the post doesn't sit in the
-    // dashboard looking like it went out (status "published", sentAt in
-    // the past) when nothing was actually sent. The reason/category are
-    // persisted so the dashboard can explain the block to the author (see
-    // posts/[postId]/page.tsx and posts/page.tsx) — cleared on the next
-    // publish/schedule attempt (services/emails.ts) so a stale reason
-    // never lingers after a resend.
     await dbLite
       .update(schema.emails)
       .set({
@@ -117,7 +125,7 @@ export async function prepareEmailSend(
       })
       .where(eq(schema.emails.id, emailId));
     console.warn(
-      `Email ${emailId} blocked by content moderation (${moderation.category}): ${moderation.reason}`
+      `Email ${emailId} blocked by content moderation (${moderation.category}): ${moderation.reason}`,
     );
     return {
       status: "cancelled",
@@ -127,14 +135,17 @@ export async function prepareEmailSend(
 
   const html = renderNewsletterMarkdown(rawBody);
 
-  // A paid plan only makes removing branding available; it does not mean
-  // branding should be removed by default. Respect the newsletter's saved
-  // setting so choosing "Show Penna branding" is reflected in sent emails.
-  // Use the same team-plan gate as the settings API and external sends.
   const removeBranding =
     (await canWorkflowRemoveBranding(newsletter.teamId)) &&
-    (newsletter.config as { removeBranding?: boolean } | null)?.removeBranding ===
-      true;
+    (newsletter.config as { removeBranding?: boolean } | null)
+      ?.removeBranding === true;
+
+  console.log("[workflow] prepareEmailSend ready", {
+    emailId,
+    newsletterId: newsletter.id,
+    recipientCount: recipientEmails.length,
+    removeBranding,
+  });
 
   return {
     status: "ready",
@@ -165,23 +176,38 @@ export async function sendEmailChunk(
   html: string,
   recipientEmails: string[],
   removeBranding: boolean,
-  emailId: string
+  emailId: string,
 ): Promise<SendEmailChunkResult> {
   "use step";
 
+  console.log("[workflow] sendEmailChunk start", {
+    emailId,
+    newsletterId: newsletter.id,
+    recipientCount: recipientEmails.length,
+  });
+
   try {
-    return await sendWorkflowEmailChunk(
+    const result = await sendWorkflowEmailChunk(
       newsletter,
       recipientEmails,
       subject,
       html,
       removeBranding,
-      emailId
+      emailId,
     );
-  } catch {
-    // sendEmailNewsletter only throws when EVERY recipient in this chunk
-    // failed (nothing succeeded), so nothing here needs a retry-safety
-    // rollback — just report the whole chunk as failed.
+
+    console.log("[workflow] sendEmailChunk result", {
+      emailId,
+      sent: result.sent,
+      failed: result.failed,
+    });
+
+    return result;
+  } catch (error) {
+    console.error("[workflow] sendEmailChunk caught error", {
+      emailId,
+      error,
+    });
     return { sent: 0, failed: recipientEmails.length };
   }
 }

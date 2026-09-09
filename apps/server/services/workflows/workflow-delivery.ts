@@ -18,7 +18,9 @@ const sesClient = new SESv2Client({
  * within apps/server: importing the normal mail or newsletter services pulls
  * in @workspace/db, which Nitro leaves external to the standalone bundle.
  */
-export async function canWorkflowRemoveBranding(teamId: string): Promise<boolean> {
+export async function canWorkflowRemoveBranding(
+  teamId: string,
+): Promise<boolean> {
   const [subscription] = await dbLite
     .select({ planSlug: schema.teamSubscriptions.planSlug })
     .from(schema.teamSubscriptions)
@@ -47,7 +49,9 @@ export async function canWorkflowRemoveBranding(teamId: string): Promise<boolean
   return owner?.plan !== undefined && owner.plan !== "hobby";
 }
 
-async function getWorkflowSendingDomain(newsletterId: string): Promise<string | null> {
+async function getWorkflowSendingDomain(
+  newsletterId: string,
+): Promise<string | null> {
   const [domain] = await dbLite
     .select({ name: schema.domains.name })
     .from(schema.domains)
@@ -68,28 +72,52 @@ async function addWorkflowTracking(
   newsletterId: string,
   recipientEmail: string,
 ): Promise<string> {
-  const [existing] = await dbLite
-    .select({ token: schema.emailRecipients.token })
-    .from(schema.emailRecipients)
-    .where(
-      and(
-        eq(schema.emailRecipients.emailId, emailId),
-        eq(schema.emailRecipients.email, recipientEmail),
-      ),
+  try {
+    const [existing] = await dbLite
+      .select({ token: schema.emailRecipients.token })
+      .from(schema.emailRecipients)
+      .where(
+        and(
+          eq(schema.emailRecipients.emailId, emailId),
+          eq(schema.emailRecipients.email, recipientEmail),
+        ),
+      );
+    const token =
+      existing?.token ??
+      (
+        await dbLite
+          .insert(schema.emailRecipients)
+          .values({ emailId, newsletterId, email: recipientEmail })
+          .returning({ token: schema.emailRecipients.token })
+      )[0]!.token;
+    const clickBase = `${envConfig.API_URL}/api/v1/tracking/click/${token}?url=`;
+    const trackedLinks = html.replace(
+      /href=(['"])(https?:\/\/[^'"\s>]+)\1/gi,
+      (_match, quote: string, url: string) =>
+        `href=${quote}${clickBase}${encodeURIComponent(url)}${quote}`,
     );
-  const token = existing?.token ?? (
-    await dbLite
-      .insert(schema.emailRecipients)
-      .values({ emailId, newsletterId, email: recipientEmail })
-      .returning({ token: schema.emailRecipients.token })
-  )[0]!.token;
-  const clickBase = `${envConfig.API_URL}/api/v1/tracking/click/${token}?url=`;
-  const trackedLinks = html.replace(
-    /href=(['"])(https?:\/\/[^'"\s>]+)\1/gi,
-    (_match, quote: string, url: string) =>
-      `href=${quote}${clickBase}${encodeURIComponent(url)}${quote}`,
-  );
-  return `${trackedLinks}<img src="${envConfig.API_URL}/api/v1/tracking/open/${token}.gif" width="1" height="1" alt="" style="display:block;border:0;" />`;
+    return `${trackedLinks}<img src="${envConfig.API_URL}/api/v1/tracking/open/${token}.gif" width="1" height="1" alt="" style="display:block;border:0;" />`;
+  } catch (error) {
+    const isMissingTrackingTable =
+      (error as { code?: string } | undefined)?.code === "42P01" ||
+      (error instanceof Error &&
+        /relation .*email_recipients.* does not exist/i.test(error.message));
+
+    if (isMissingTrackingTable) {
+      console.warn(
+        "[workflow] email_recipients table is missing; skipping tracking for this send",
+        {
+          emailId,
+          newsletterId,
+          recipientEmail,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+      return html;
+    }
+
+    throw error;
+  }
 }
 
 async function sendWorkflowNewsletterEmail(
@@ -121,7 +149,10 @@ async function sendWorkflowNewsletterEmail(
             Body: { Html: { Data: trackedHtml, Charset: "UTF-8" } },
             Headers: [
               { Name: "List-Unsubscribe", Value: header },
-              { Name: "List-Unsubscribe-Post", Value: "List-Unsubscribe=One-Click" },
+              {
+                Name: "List-Unsubscribe-Post",
+                Value: "List-Unsubscribe=One-Click",
+              },
             ],
           },
         },
@@ -129,14 +160,47 @@ async function sendWorkflowNewsletterEmail(
     );
     return true;
   } catch (error) {
-    await dbLite
-      .delete(schema.emailRecipients)
-      .where(
-        and(
-          eq(schema.emailRecipients.emailId, emailId),
-          eq(schema.emailRecipients.email, recipientEmail),
-        ),
+    const isMissingTrackingTable =
+      (error as { code?: string } | undefined)?.code === "42P01" ||
+      (error instanceof Error &&
+        /relation .*email_recipients.* does not exist/i.test(error.message));
+
+    if (isMissingTrackingTable) {
+      console.warn(
+        "[workflow] email_recipients table is missing; continuing without tracking cleanup",
+        {
+          emailId,
+          newsletterId: newsletter.id,
+          recipientEmail,
+          error: error instanceof Error ? error.message : String(error),
+        },
       );
+      return false;
+    }
+
+    try {
+      await dbLite
+        .delete(schema.emailRecipients)
+        .where(
+          and(
+            eq(schema.emailRecipients.emailId, emailId),
+            eq(schema.emailRecipients.email, recipientEmail),
+          ),
+        );
+    } catch (cleanupError) {
+      const cleanupMissingTable =
+        (cleanupError as { code?: string } | undefined)?.code === "42P01" ||
+        (cleanupError instanceof Error &&
+          /relation .*email_recipients.* does not exist/i.test(
+            cleanupError.message,
+          ));
+      if (!cleanupMissingTable) {
+        console.error(
+          "[workflow] failed to clean up tracking row after send failure",
+          cleanupError,
+        );
+      }
+    }
     console.error("Failed to send workflow newsletter email:", error);
     return false;
   }

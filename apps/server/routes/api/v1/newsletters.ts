@@ -62,7 +62,7 @@ newslettersRoute.delete(
 
     const deleteService = await deleteNewsletter(newsletter.id);
     return c.json(deleteService, routeStatus(deleteService));
-  }
+  },
 );
 
 // get a newsletter api key
@@ -83,7 +83,7 @@ newslettersRoute.get(
     const serviceData = await getNewsletterApiKeys(newsletter.id);
 
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // create a newsletter api key
@@ -107,10 +107,10 @@ newslettersRoute.post(
 
     const serviceData = await generateAndCreateNewsletterApiKey(
       newsletter.id,
-      scopes
+      scopes,
     );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // delete a newsletter api key
@@ -121,7 +121,7 @@ newslettersRoute.delete(
     z.object({ id: z.string().min(1), keyId: z.string().uuid() }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
-    }
+    },
   ),
   async (c) => {
     const { id: newsletterId, keyId } = c.req.valid("param");
@@ -134,7 +134,7 @@ newslettersRoute.delete(
 
     const serviceData = await deleteNewsletterApiKey(newsletter.id, keyId);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // create a newsletter — the caller must be an owner/admin of the team
@@ -151,7 +151,7 @@ newslettersRoute.post(
 
     const serviceData = await createNewsletter(body);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // update a newsletter
@@ -176,7 +176,7 @@ newslettersRoute.patch(
     const newsletter = newsletterOrRes;
     const serviceData = await updateNewsletter(newsletter.id, body);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // get a newsletter by slug
@@ -189,7 +189,7 @@ newslettersRoute.get(
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
-    }
+    },
   ),
   async (c) => {
     const { slug } = c.req.valid("param");
@@ -217,9 +217,9 @@ newslettersRoute.get(
           canUseCustomDomain: customDomainAllowed,
         },
       },
-      200
+      200,
     );
-  }
+  },
 );
 
 // get a newsletter
@@ -241,7 +241,7 @@ newslettersRoute.get(
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
     return c.json({ newsletter }, 200);
-  }
+  },
 );
 
 // get newsletter analytics
@@ -268,7 +268,7 @@ newslettersRoute.get(
 
     const serviceData = await getNewsletterAnalytics(newsletter.id, daysNum);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // Members now live at the team level — see routes/api/v1/teams.ts
@@ -313,10 +313,10 @@ newslettersRoute.post(
 
     const serviceData = await transferNewsletterToTeam(
       newsletter.id,
-      destinationTeamId
+      destinationTeamId,
     );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // get all newsletters
@@ -327,11 +327,22 @@ newslettersRoute.get("/", async (c) => {
   const pageNumber = page ? parseInt(page) : undefined;
   const limitNumber = limit ? parseInt(limit) : undefined;
 
+  console.log("[route] GET /api/v1/newsletters", {
+    userId: cookieUser?.id,
+    page: pageNumber,
+    limit: limitNumber,
+  });
+
   const newsletter = await getNewslettersByUser(
     cookieUser.id,
     pageNumber,
-    limitNumber
+    limitNumber,
   );
+
+  console.log("[route] GET /api/v1/newsletters result", {
+    userId: cookieUser?.id,
+    count: Array.isArray(newsletter) ? newsletter.length : "unknown",
+  });
 
   return c.json(
     {
@@ -339,7 +350,7 @@ newslettersRoute.get("/", async (c) => {
       success: true,
       message: "Fetched all newsletters successfully",
     },
-    200
+    200,
   );
 });
 
@@ -372,10 +383,10 @@ newslettersRoute.get(
     const serviceData = await getSubscribers(
       newsletter.id,
       pageNumber,
-      limitNumber
+      limitNumber,
     );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // create subscriber
@@ -393,7 +404,7 @@ newslettersRoute.post(
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
-    }
+    },
   ),
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
@@ -408,7 +419,7 @@ newslettersRoute.post(
 
     const serviceData = await createSubscriber(newsletter.id, email, name);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // import subscribers via CSV
@@ -426,7 +437,7 @@ newslettersRoute.post(
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
-    }
+    },
   ),
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
@@ -439,9 +450,12 @@ newslettersRoute.post(
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
-    const serviceData = await importSubscribersFromCsv(newsletter.id, csvContent);
+    const serviceData = await importSubscribersFromCsv(
+      newsletter.id,
+      csvContent,
+    );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // delete subscriber
@@ -454,7 +468,7 @@ newslettersRoute.delete(
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
-    }
+    },
   ),
   async (c) => {
     const { id: newsletterId, subscriberId } = c.req.valid("param");
@@ -468,7 +482,7 @@ newslettersRoute.delete(
 
     const serviceData = await deleteSubscriber(newsletter.id, subscriberId);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // get newsletter emails
@@ -492,7 +506,7 @@ newslettersRoute.get(
 
     const serviceData = await getEmails(newsletter.id);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // get a single email
@@ -506,7 +520,7 @@ newslettersRoute.get(
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
-    }
+    },
   ),
   async (c) => {
     const { id: newsletterId, emailId } = c.req.valid("param");
@@ -521,7 +535,7 @@ newslettersRoute.get(
 
     const serviceData = await getEmail(newsletter.id, emailId);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // create email
@@ -544,7 +558,7 @@ newslettersRoute.post(
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
-    }
+    },
   ),
   async (c) => {
     const { id: newsletterId } = c.req.valid("param");
@@ -562,10 +576,10 @@ newslettersRoute.post(
       subject,
       body,
       status,
-      sentAt
+      sentAt,
     );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // update email
@@ -578,7 +592,7 @@ newslettersRoute.patch(
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
-    }
+    },
   ),
   zValidator(
     "json",
@@ -592,7 +606,7 @@ newslettersRoute.patch(
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
-    }
+    },
   ),
   async (c) => {
     const { id: newsletterId, emailId } = c.req.valid("param");
@@ -611,10 +625,10 @@ newslettersRoute.patch(
       subject,
       body,
       status,
-      sentAt
+      sentAt,
     );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // delete email
@@ -627,7 +641,7 @@ newslettersRoute.delete(
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
-    }
+    },
   ),
   async (c) => {
     const { id: newsletterId, emailId } = c.req.valid("param");
@@ -641,7 +655,7 @@ newslettersRoute.delete(
 
     const serviceData = await deleteEmail(newsletter.id, emailId);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 export default newslettersRoute;
