@@ -104,15 +104,6 @@ async function addWorkflowTracking(
         /relation .*email_recipients.* does not exist/i.test(error.message));
 
     if (isMissingTrackingTable) {
-      console.warn(
-        "[workflow] email_recipients table is missing; skipping tracking for this send",
-        {
-          emailId,
-          newsletterId,
-          recipientEmail,
-          error: error instanceof Error ? error.message : String(error),
-        },
-      );
       return html;
     }
 
@@ -166,15 +157,6 @@ async function sendWorkflowNewsletterEmail(
         /relation .*email_recipients.* does not exist/i.test(error.message));
 
     if (isMissingTrackingTable) {
-      console.warn(
-        "[workflow] email_recipients table is missing; continuing without tracking cleanup",
-        {
-          emailId,
-          newsletterId: newsletter.id,
-          recipientEmail,
-          error: error instanceof Error ? error.message : String(error),
-        },
-      );
       return false;
     }
 
@@ -194,14 +176,9 @@ async function sendWorkflowNewsletterEmail(
           /relation .*email_recipients.* does not exist/i.test(
             cleanupError.message,
           ));
-      if (!cleanupMissingTable) {
-        console.error(
-          "[workflow] failed to clean up tracking row after send failure",
-          cleanupError,
-        );
-      }
+      // intentionally silent on cleanup errors
     }
-    console.error("Failed to send workflow newsletter email:", error);
+    // intentionally silent on send errors
     return false;
   }
 }

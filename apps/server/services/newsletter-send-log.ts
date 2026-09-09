@@ -1,8 +1,7 @@
 import { db } from "@workspace/db";
 import { newsletterSendLogs } from "@workspace/db/schema";
 
-type NewsletterSendStatus =
-  (typeof newsletterSendLogs.$inferInsert)["status"];
+type NewsletterSendStatus = (typeof newsletterSendLogs.$inferInsert)["status"];
 type ModerationVerdict =
   (typeof newsletterSendLogs.$inferInsert)["moderationVerdict"];
 
@@ -30,7 +29,7 @@ interface LogNewsletterSendInput {
  * errors are caught and logged rather than thrown.
  */
 export const logNewsletterSend = async (
-  input: LogNewsletterSendInput
+  input: LogNewsletterSendInput,
 ): Promise<void> => {
   try {
     await db.insert(newsletterSendLogs).values({
@@ -46,9 +45,6 @@ export const logNewsletterSend = async (
       errorMessage: input.errorMessage,
     });
   } catch (error) {
-    console.error(
-      `Failed to log newsletter send for newsletter ${input.newsletterId}:`,
-      error
-    );
+    // intentionally silent on logging failures
   }
 };

@@ -1,5 +1,10 @@
 import { db } from "@workspace/db";
-import { newsletters, subscribers, teamMembers, users } from "@workspace/db/schema";
+import {
+  newsletters,
+  subscribers,
+  teamMembers,
+  users,
+} from "@workspace/db/schema";
 import { and, count, eq } from "drizzle-orm";
 import type { Plan } from "@workspace/constants/plans";
 import { envConfig } from "@/config";
@@ -29,7 +34,7 @@ export class SubscriberLimitError extends Error {
 
   constructor(usage: SubscriberUsage) {
     super(
-      `${usage.newsletterName} is at its ${usage.plan.name} plan limit of ${usage.cap?.toLocaleString()} subscribers. Upgrade to add more.`
+      `${usage.newsletterName} is at its ${usage.plan.name} plan limit of ${usage.cap?.toLocaleString()} subscribers. Upgrade to add more.`,
     );
     this.name = "SubscriberLimitError";
     this.usage = usage;
@@ -58,7 +63,7 @@ type NewsletterOwnerPlan = {
 // since they're needed for the subscriber-limit-warning email regardless
 // of which plan source won.
 const getNewsletterOwnerPlan = async (
-  newsletterId: string
+  newsletterId: string,
 ): Promise<NewsletterOwnerPlan | null> => {
   const [row] = await db
     .select({
@@ -71,10 +76,7 @@ const getNewsletterOwnerPlan = async (
     .innerJoin(teamMembers, eq(teamMembers.teamId, newsletters.teamId))
     .innerJoin(users, eq(teamMembers.userId, users.id))
     .where(
-      and(
-        eq(newsletters.id, newsletterId),
-        eq(teamMembers.role, "owner")
-      )
+      and(eq(newsletters.id, newsletterId), eq(teamMembers.role, "owner")),
     );
 
   if (!row) return null;
@@ -92,7 +94,7 @@ const getNewsletterOwnerPlan = async (
  * count. Returns `null` if the newsletter has no owner on record.
  */
 export const getNewsletterSubscriberUsage = async (
-  newsletterId: string
+  newsletterId: string,
 ): Promise<SubscriberUsage | null> => {
   const ownerPlan = await getNewsletterOwnerPlan(newsletterId);
   if (!ownerPlan) return null;
@@ -123,7 +125,7 @@ type LimitWarningState = {
 };
 
 const getWarningState = (
-  config: Record<string, unknown> | null
+  config: Record<string, unknown> | null,
 ): LimitWarningState | null => {
   const state = (config as any)?.subscriberLimitWarnings;
   return state && typeof state.cap === "number" ? state : null;
@@ -140,7 +142,7 @@ const getWarningState = (
  * thrown, so a flaky email send never blocks a subscriber signup.
  */
 export const syncSubscriberLimitWarnings = async (
-  usage: SubscriberUsage
+  usage: SubscriberUsage,
 ): Promise<void> => {
   if (usage.cap === null) return; // unlimited plan, nothing to warn about
 
@@ -188,10 +190,7 @@ export const syncSubscriberLimitWarnings = async (
       });
     }
   } catch (error) {
-    console.error(
-      `Failed to sync subscriber limit warnings for newsletter ${usage.newsletterId}:`,
-      error
-    );
+    // intentionally silent on limit-warning sync failures
   }
 };
 
@@ -203,16 +202,13 @@ export const syncSubscriberLimitWarnings = async (
  */
 export const assertSubscriberCapacity = async (
   newsletterId: string,
-  additionalCount = 1
+  additionalCount = 1,
 ): Promise<SubscriberUsage> => {
   const usage = await getNewsletterSubscriberUsage(newsletterId);
 
   if (!usage) {
     // Fails closed: a newsletter with no resolvable owner/plan shouldn't be
     // able to silently accept unlimited subscribers.
-    console.error(
-      `assertSubscriberCapacity: no owner found for newsletter ${newsletterId}.`
-    );
     throw new Error("Could not determine this newsletter's subscriber limit.");
   }
 
@@ -245,7 +241,7 @@ export class NewsletterSendLimitError extends Error {
 
   constructor(usage: NewsletterSendUsage) {
     super(
-      `${usage.newsletterName} has reached its ${usage.plan.name} plan limit of ${usage.cap} newsletter ${usage.cap === 1 ? "send" : "sends"} per day. Try again tomorrow or upgrade to send more.`
+      `${usage.newsletterName} has reached its ${usage.plan.name} plan limit of ${usage.cap} newsletter ${usage.cap === 1 ? "send" : "sends"} per day. Try again tomorrow or upgrade to send more.`,
     );
     this.name = "NewsletterSendLimitError";
     this.usage = usage;
@@ -268,15 +264,12 @@ const newsletterSendCounterKey = (newsletterId: string) =>
  * data that needs to survive a Redis flush.
  */
 export const assertNewsletterSendCapacity = async (
-  newsletterId: string
+  newsletterId: string,
 ): Promise<NewsletterSendUsage> => {
   const ownerPlan = await getNewsletterOwnerPlan(newsletterId);
 
   if (!ownerPlan) {
     // Fails closed, same reasoning as assertSubscriberCapacity.
-    console.error(
-      `assertNewsletterSendCapacity: no owner found for newsletter ${newsletterId}.`
-    );
     throw new Error("Could not determine this newsletter's send limit.");
   }
 

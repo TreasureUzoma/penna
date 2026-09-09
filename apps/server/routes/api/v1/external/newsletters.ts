@@ -1,7 +1,10 @@
 import { routeStatus } from "@/lib/utils";
 import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { newsletterApiKey } from "@/middlewares/newsletter-api-keys";
-import { getSubscribers, getSubscribedEmailsFromList } from "@/services/subscribers";
+import {
+  getSubscribers,
+  getSubscribedEmailsFromList,
+} from "@/services/subscribers";
 import { createNewsletterSubscriber } from "@/services/subscriptions";
 import { sendEmailNewsletter } from "@/services/mail/external";
 import {
@@ -157,10 +160,13 @@ externalNewslettersRoute.post(
         const { getSegmentSubscribers } = await import("@/services/segments");
 
         for (const segmentId of segmentIds) {
-          const result = await getSegmentSubscribers(segmentId, newsletterData.id);
+          const result = await getSegmentSubscribers(
+            segmentId,
+            newsletterData.id,
+          );
           if (result.success && Array.isArray(result.data)) {
             result.data.forEach((subscriber: { email: string }) =>
-              candidateEmails.add(subscriber.email)
+              candidateEmails.add(subscriber.email),
             );
           }
         }
@@ -245,7 +251,7 @@ externalNewslettersRoute.post(
       try {
         await recordSentNewsletterPost(newsletterData.id, subject, content);
       } catch (err) {
-        console.error("Failed to record sent newsletter as a post:", err);
+        // intentionally silent on failure to record post
       }
 
       await logNewsletterSend({

@@ -58,7 +58,7 @@ export interface SendBulkNewsletterOptions {
  * Send a single newsletter email via AWS SES
  */
 export const sendNewsletterEmail = async (
-  options: SendNewsletterOptions
+  options: SendNewsletterOptions,
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
   try {
     const {
@@ -77,11 +77,16 @@ export const sendNewsletterEmail = async (
     // pair, so it can't be reused to unsubscribe someone else.
     const { unsubscribeUrl, header } = await buildListUnsubscribeHeaders(
       newsletterId,
-      recipientEmail
+      recipientEmail,
     );
     const htmlWithFooter = appendUnsubscribeFooter(html, unsubscribeUrl);
     const trackedHtml = emailId
-      ? await addEmailTracking(htmlWithFooter, emailId, newsletterId, recipientEmail)
+      ? await addEmailTracking(
+          htmlWithFooter,
+          emailId,
+          newsletterId,
+          recipientEmail,
+        )
       : htmlWithFooter;
 
     const command = new SendEmailV2Command({
@@ -135,7 +140,6 @@ export const sendNewsletterEmail = async (
     }
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Failed to send newsletter email:", errorMessage);
 
     return {
       success: false,
@@ -149,15 +153,22 @@ export const sendNewsletterEmail = async (
  * Note: AWS SES has rate limits. Consider using SendBulkTemplatedEmail for large lists
  */
 export const sendBulkNewsletterEmails = async (
-  options: SendBulkNewsletterOptions
+  options: SendBulkNewsletterOptions,
 ): Promise<{
   success: boolean;
   sent: number;
   failed: number;
   errors?: Array<{ email: string; error: string }>;
 }> => {
-  const { newsletter, recipientEmails, subject, html, replyTo, fromDomain, emailId } =
-    options;
+  const {
+    newsletter,
+    recipientEmails,
+    subject,
+    html,
+    replyTo,
+    fromDomain,
+    emailId,
+  } = options;
   const results = {
     sent: 0,
     failed: 0,
@@ -219,7 +230,7 @@ export interface SendSystemEmailOptions {
  * which sends from a newsletter's own `{slug}@{NEWSLETTER_DOMAIN}` identity.
  */
 export const sendSystemEmail = async (
-  options: SendSystemEmailOptions
+  options: SendSystemEmailOptions,
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
   try {
     const { to, subject, html } = options;
@@ -252,7 +263,6 @@ export const sendSystemEmail = async (
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Failed to send system email:", errorMessage);
 
     return {
       success: false,
@@ -265,12 +275,10 @@ export const sendSystemEmail = async (
  * Verify email address with AWS SES (for testing)
  */
 export const verifyEmailAddress = async (
-  email: string
+  email: string,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { VerifyEmailIdentityCommand } = await import(
-      "@aws-sdk/client-ses"
-    );
+    const { VerifyEmailIdentityCommand } = await import("@aws-sdk/client-ses");
     const command = new VerifyEmailIdentityCommand({ EmailAddress: email });
     await sesClient.send(command);
 

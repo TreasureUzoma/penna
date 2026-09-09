@@ -59,15 +59,9 @@ export const moderateNewsletterContent = async ({
   content: string;
   newsletterName: string;
 }): Promise<ModerationResult> => {
-  console.log("[moderation] start", {
-    newsletterName,
-    subjectLength: subject.length,
-    contentLength: content.length,
-    hasApiKey: Boolean(envConfig.GROQ_API_KEY),
-  });
+  // moderation start (silent)
 
   if (!envConfig.GROQ_API_KEY) {
-    console.warn("[moderation] missing GROQ_API_KEY; failing open");
     return {
       verdict: "clean",
       category: "unchecked",
@@ -81,10 +75,7 @@ export const moderateNewsletterContent = async ({
     const groq = createGroq({ apiKey: envConfig.GROQ_API_KEY });
     const moderationTimeoutMs = envConfig.GROQ_MODERATION_TIMEOUT_MS;
 
-    console.log("[moderation] calling Groq", {
-      model: "openai/gpt-oss-120b",
-      timeoutMs: moderationTimeoutMs,
-    });
+    // calling Groq (silent)
 
     const { object } = await generateObject({
       model: groq("openai/gpt-oss-120b"),
@@ -95,19 +86,11 @@ export const moderateNewsletterContent = async ({
       maxRetries: 2,
     });
 
-    console.log("[moderation] success", {
-      verdict: object.verdict,
-      category: object.category,
-      durationMs: Date.now() - start,
-    });
+    // moderation success (silent)
 
     return object;
   } catch (error) {
-    console.error("[moderation] failed", {
-      error,
-      durationMs: Date.now() - start,
-      newsletterName,
-    });
+    // moderation failed (silent)
     return {
       verdict: "clean",
       category: "moderation_unavailable",

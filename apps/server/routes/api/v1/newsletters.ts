@@ -327,11 +327,7 @@ newslettersRoute.get("/", async (c) => {
   const pageNumber = page ? parseInt(page) : undefined;
   const limitNumber = limit ? parseInt(limit) : undefined;
 
-  console.log("[route] GET /api/v1/newsletters", {
-    userId: cookieUser?.id,
-    page: pageNumber,
-    limit: limitNumber,
-  });
+  // GET /api/v1/newsletters (silent)
 
   const newsletter = await getNewslettersByUser(
     cookieUser.id,
@@ -339,10 +335,7 @@ newslettersRoute.get("/", async (c) => {
     limitNumber,
   );
 
-  console.log("[route] GET /api/v1/newsletters result", {
-    userId: cookieUser?.id,
-    count: Array.isArray(newsletter) ? newsletter.length : "unknown",
-  });
+  // GET /api/v1/newsletters result (silent)
 
   return c.json(
     {
@@ -516,7 +509,7 @@ newslettersRoute.get(
     "param",
     z.object({ id: z.string().min(1), emailId: z.string().uuid() }),
     (result, c) => {
-      console.log("started");
+      // started (silent)
       if (!result.success) {
         return validationErrorResponse(c, result.error);
       }
