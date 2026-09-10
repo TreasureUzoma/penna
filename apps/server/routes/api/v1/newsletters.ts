@@ -10,6 +10,7 @@ import {
   transferNewsletterToTeam,
   canRemoveBranding,
   canUseCustomDomain,
+  canUseEmailTracking,
 } from "@/services/newsletters";
 import { getTeamOrFail } from "@/utils/team-access";
 import {
@@ -204,10 +205,12 @@ newslettersRoute.get(
     // branding" for free-plan owners instead of letting them click it and
     // hit a 400 — see settings-tab.tsx. Same gate backs the custom-domains
     // tab (see domains-tab.tsx).
-    const [removableBranding, customDomainAllowed] = await Promise.all([
-      canRemoveBranding(serviceData.data.id),
-      canUseCustomDomain(serviceData.data.id),
-    ]);
+    const [removableBranding, customDomainAllowed, emailTrackingAllowed] =
+      await Promise.all([
+        canRemoveBranding(serviceData.data.id),
+        canUseCustomDomain(serviceData.data.id),
+        canUseEmailTracking(serviceData.data.id),
+      ]);
 
     return c.json(
       {
@@ -215,6 +218,7 @@ newslettersRoute.get(
           ...serviceData.data,
           canRemoveBranding: removableBranding,
           canUseCustomDomain: customDomainAllowed,
+          canUseEmailTracking: emailTrackingAllowed,
         },
       },
       200,

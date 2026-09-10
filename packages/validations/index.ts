@@ -58,7 +58,7 @@ export const RESERVED_SLUGS = [
 ];
 
 const RESERVED_SET = new Set(
-  RESERVED_SLUGS.map((name) => name.toLowerCase().trim())
+  RESERVED_SLUGS.map((name) => name.toLowerCase().trim()),
 );
 
 export const loginSchema = z.object({
@@ -149,7 +149,7 @@ export const createNewsletterSchema = z.object({
       (value) => !RESERVED_SET.has(value),
       (value) => ({
         message: `The slug '${value}' is reserved and cannot be used.`,
-      })
+      }),
     ),
   description: z.string().max(255).optional(),
   isPublic: z.boolean(),
@@ -173,9 +173,7 @@ export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 export const apiKeyScopeSchema = z.enum(API_KEY_SCOPES);
 
 export const createApiKeySchema = z.object({
-  scopes: z
-    .array(apiKeyScopeSchema)
-    .min(1, "Select at least one scope"),
+  scopes: z.array(apiKeyScopeSchema).min(1, "Select at least one scope"),
 });
 
 export type CreateApiKey = z.infer<typeof createApiKeySchema>;
@@ -196,12 +194,13 @@ export const updateNewsletterSchema = z.object({
       (value) => !RESERVED_SET.has(value),
       (value) => ({
         message: `The slug '${value}' is reserved and cannot be used.`,
-      })
+      }),
     )
     .optional(),
   description: z.string().max(255).optional(),
   isPublic: z.boolean().optional(),
   removeBranding: z.boolean().optional(),
+  emailTracking: z.boolean().optional(),
   // Empty string clears it back to the initials fallback — see
   // updateNewsletter in apps/server/services/newsletters.ts.
   avatarUrl: z.string().url().optional().or(z.literal("")),
@@ -258,7 +257,7 @@ export const createTeamSchema = z.object({
       (value) => !RESERVED_SET.has(value),
       (value) => ({
         message: `The slug '${value}' is reserved and cannot be used.`,
-      })
+      }),
     ),
 });
 
@@ -323,7 +322,9 @@ export const unsubscribeFromNewsletterSchema = z.object({
   email: z.string().email(),
 });
 
-export type UnsubscribeRequest = z.infer<typeof unsubscribeFromNewsletterSchema>;
+export type UnsubscribeRequest = z.infer<
+  typeof unsubscribeFromNewsletterSchema
+>;
 
 export const createNewsletterSubscriberSchema = z.object({
   name: z.string().min(2).max(40).optional().or(z.literal("")),

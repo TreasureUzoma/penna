@@ -3,6 +3,7 @@ import { generateApiKeys } from "@/lib/utils";
 import type { InsertApiKey } from "@/types";
 import { db } from "@workspace/db";
 import {
+  domains,
   newsletterApiKeys,
   newsletters,
   subscribers,
@@ -100,6 +101,34 @@ export const canRemoveBranding = isNewsletterOwnerOnPaidPlan;
 /** See `isNewsletterOwnerOnPaidPlan` — same gate, kept as a named alias at each call site for readability. */
 export const canUseCustomDomain = isNewsletterOwnerOnPaidPlan;
 
+/** Whether the newsletter owner may use email tracking (opens & clicks). */
+export const hasVerifiedSendingDomain = async (
+  newsletterId: string,
+): Promise<boolean> => {
+  const [row] = await db
+    .select({ id: domains.id })
+    .from(domains)
+    .where(
+      and(
+        eq(domains.newsletterId, newsletterId),
+        eq(domains.verified, true),
+        eq(domains.type, "email"),
+      ),
+    );
+
+  return !!row;
+};
+
+/** Whether the newsletter owner may use email tracking (opens & clicks). */
+export const canUseEmailTracking = async (
+  newsletterId: string,
+): Promise<boolean> => {
+  const paidPlan = await isNewsletterOwnerOnPaidPlan(newsletterId);
+  if (!paidPlan) return false;
+
+  return await hasVerifiedSendingDomain(newsletterId);
+};
+
 /**
  * Same "any paid plan" gate as `isNewsletterOwnerOnPaidPlan`, but for a
  * domain that isn't attached to any newsletter yet (see the account-wide
@@ -134,7 +163,11 @@ export const updateNewsletter = async (
       updateValues.isPrivateAt = data.isPublic ? null : new Date();
     }
 
-    if (data.removeBranding !== undefined || data.avatarUrl !== undefined) {
+    if (
+      data.removeBranding !== undefined ||
+      data.avatarUrl !== undefined ||
+      data.emailTracking !== undefined
+    ) {
       if (data.removeBranding) {
         const allowed = await canRemoveBranding(newsletterId);
         if (!allowed) {
@@ -143,6 +176,18 @@ export const updateNewsletter = async (
             success: false,
             message:
               "Removing Penna branding is a Pro feature. Upgrade the newsletter owner's plan to enable it.",
+          };
+        }
+      }
+
+      if (data.emailTracking !== undefined && data.emailTracking === true) {
+        const allowed = await canUseEmailTracking(newsletterId);
+        if (!allowed) {
+          return {
+            data: null,
+            success: false,
+            message:
+              "Email tracking requires a Pro plan and a verified custom sending domain. Add and verify a custom domain first.",
           };
         }
       }
@@ -163,6 +208,9 @@ export const updateNewsletter = async (
         // "unset by writing empty" convention used for other optional
         // profile-ish fields (e.g. profile.ts's avatarUrl).
         mergedConfig.avatarUrl = data.avatarUrl || null;
+      }
+      if (data.emailTracking !== undefined) {
+        mergedConfig.emailTracking = !!data.emailTracking;
       }
       updateValues.config = mergedConfig;
     }

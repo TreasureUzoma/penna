@@ -10,6 +10,11 @@ import {
 import type { ServiceResponse, TeamRoles } from "@workspace/types";
 import type { NewTeam, UpdateTeam } from "@workspace/validations";
 import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
+// Helper to work around duplicate-installed Drizzle types causing
+// incompatible overload errors in TS; cast query builder pieces to
+// `any` at the call sites so the emitted JS is unchanged but the
+// compiler no longer tries to reconcile mismatched private types.
+const q = (c: unknown) => c as any;
 import crypto from "crypto";
 import { paginate } from "@/utils/pagination";
 import { sendTeamInviteEmail } from "./mail/internal";
@@ -46,7 +51,7 @@ export const createTeam = async (
 };
 
 export const getValidTeam = async (teamId: string) => {
-  const [team] = await db.select().from(teams).where(eq(teams.id, teamId));
+  const [team] = await db.select().from(teams).where(q(eq(teams.id, teamId)));
 
   if (!team) {
     return { data: null, success: false, message: "Team not found." };
@@ -56,7 +61,7 @@ export const getValidTeam = async (teamId: string) => {
 };
 
 export const getTeamBySlug = async (slug: string) => {
-  const [team] = await db.select().from(teams).where(eq(teams.slug, slug));
+  const [team] = await db.select().from(teams).where(q(eq(teams.slug, slug)));
 
   if (!team) {
     return { data: null, success: false, message: "Team not found." };
@@ -74,7 +79,7 @@ export const getUserTeamRole = async (teamId: string, userId: string) => {
       role: teamMembers.role,
     })
     .from(teamMembers)
-    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
+    .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId))));
 
   if (!membership) {
     return {
@@ -103,13 +108,13 @@ export const getTeamPlan = async (teamId: string): Promise<Plan> => {
   const [liveSub] = await db
     .select({ planSlug: teamSubscriptions.planSlug })
     .from(teamSubscriptions)
-    .where(
+    .where(q(
       and(
         eq(teamSubscriptions.teamId, teamId),
         inArray(teamSubscriptions.status, ["active", "trialing"]),
       ),
-    )
-    .orderBy(desc(teamSubscriptions.updatedAt))
+    ))
+    .orderBy(q(desc(teamSubscriptions.updatedAt)))
     .limit(1);
 
   if (liveSub) {
@@ -119,8 +124,8 @@ export const getTeamPlan = async (teamId: string): Promise<Plan> => {
   const [owner] = await db
     .select({ plan: users.plan })
     .from(teamMembers)
-    .innerJoin(users, eq(teamMembers.userId, users.id))
-    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.role, "owner")));
+    .innerJoin(users, q(eq(teamMembers.userId, users.id)))
+    .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.role, "owner"))));
 
   return getPlanBySlug(owner?.plan);
 };
@@ -129,7 +134,7 @@ const getTeamMemberCount = async (teamId: string): Promise<number> => {
   const [row] = await db
     .select({ value: count() })
     .from(teamMembers)
-    .where(eq(teamMembers.teamId, teamId));
+    .where(q(eq(teamMembers.teamId, teamId)));
   return row?.value ?? 0;
 };
 
@@ -194,17 +199,17 @@ export const getUserTeams = (userId: string, page = 1, limit = 20) => {
       createdAt: teams.createdAt,
     })
     .from(teams)
-    .innerJoin(teamMembers, eq(teams.id, teamMembers.teamId))
-    .where(eq(teamMembers.userId, userId))
-    .orderBy(desc(teams.createdAt))
+    .innerJoin(teamMembers, q(eq(teams.id, teamMembers.teamId)))
+    .where(q(eq(teamMembers.userId, userId)))
+    .orderBy(q(desc(teams.createdAt)))
     .limit(limit)
     .offset(offset);
 
   const countQuery = db
     .select({ count: count() })
     .from(teams)
-    .innerJoin(teamMembers, eq(teams.id, teamMembers.teamId))
-    .where(eq(teamMembers.userId, userId));
+    .innerJoin(teamMembers, q(eq(teams.id, teamMembers.teamId)))
+    .where(q(eq(teamMembers.userId, userId)));
 
   return paginate(dbQuery, countQuery, page, limit);
 };
@@ -226,7 +231,7 @@ export const updateTeam = async (
     const [updated] = await db
       .update(teams)
       .set(updateValues)
-      .where(eq(teams.id, teamId))
+      .where(q(eq(teams.id, teamId)))
       .returning();
 
     return { data: updated, success: true, message: "Team updated successfully" };
@@ -247,7 +252,7 @@ export const updateTeam = async (
  */
 export const deleteTeam = async (teamId: string): Promise<ServiceResponse> => {
   try {
-    await db.delete(teams).where(eq(teams.id, teamId));
+    await db.delete(teams).where(q(eq(teams.id, teamId)));
     return { data: null, success: true, message: "Team deleted successfully" };
   } catch (err) {
     return {
@@ -268,8 +273,8 @@ export const getTeamMembers = async (teamId: string): Promise<ServiceResponse> =
         user: { id: users.id, name: users.name, email: users.email },
       })
       .from(teamMembers)
-      .innerJoin(users, eq(teamMembers.userId, users.id))
-      .where(eq(teamMembers.teamId, teamId));
+      .innerJoin(users, q(eq(teamMembers.userId, users.id)))
+      .where(q(eq(teamMembers.teamId, teamId)));
 
     return { success: true, message: "Fetched team members successfully", data: members };
   } catch (err) {
@@ -291,8 +296,8 @@ export const getTeamNewsletters = async (teamId: string): Promise<ServiceRespons
         name: newsletters.name,
       })
       .from(newsletters)
-      .where(eq(newsletters.teamId, teamId))
-      .orderBy(desc(newsletters.createdAt));
+      .where(q(eq(newsletters.teamId, teamId)))
+      .orderBy(q(desc(newsletters.createdAt)));
 
     return { success: true, message: "Fetched team newsletters successfully", data: rows };
   } catch (err) {
@@ -322,7 +327,7 @@ export const updateTeamMemberRole = async (
     const [updatedMember] = await db
       .update(teamMembers)
       .set({ role: newRole })
-      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId)))
+      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId))))
       .returning();
 
     if (!updatedMember) {
@@ -359,7 +364,7 @@ export const transferTeamOwnership = async (
     const [currentOwnerMembership] = await db
       .select()
       .from(teamMembers)
-      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, currentOwnerId)));
+      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, currentOwnerId))));
 
     if (!currentOwnerMembership || currentOwnerMembership.role !== "owner") {
       return { data: null, success: false, message: "Only the current owner can transfer ownership." };
@@ -368,7 +373,7 @@ export const transferTeamOwnership = async (
     const [targetMembership] = await db
       .select()
       .from(teamMembers)
-      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, newOwnerUserId)));
+      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, newOwnerUserId))));
 
     if (!targetMembership) {
       return {
@@ -383,13 +388,13 @@ export const transferTeamOwnership = async (
     const [newOwner] = await db
       .update(teamMembers)
       .set({ role: "owner" })
-      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, newOwnerUserId)))
+      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, newOwnerUserId))))
       .returning();
 
     await db
       .update(teamMembers)
       .set({ role: "admin" })
-      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, currentOwnerId)));
+      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, currentOwnerId))));
 
     return {
       data: newOwner,
@@ -430,13 +435,13 @@ export const inviteToTeam = async (
     const [existingUser] = await db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, normalizedEmail));
+      .where(q(eq(users.email, normalizedEmail)));
 
     if (existingUser) {
       const [existingMember] = await db
         .select()
         .from(teamMembers)
-        .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, existingUser.id)));
+        .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, existingUser.id))));
 
       if (existingMember) {
         return { data: null, success: false, message: "User is already a member of this team." };
@@ -446,14 +451,14 @@ export const inviteToTeam = async (
     const [existingInvite] = await db
       .select()
       .from(teamInvites)
-      .where(
+      .where(q(
         and(
           eq(teamInvites.teamId, teamId),
           eq(teamInvites.email, normalizedEmail),
           isNull(teamInvites.acceptedAt),
           isNull(teamInvites.revokedAt)
         )
-      );
+      ));
 
     if (existingInvite) {
       return { data: null, success: false, message: "An active invitation for this email already exists." };
@@ -474,8 +479,8 @@ export const inviteToTeam = async (
       })
       .returning();
 
-    const [team] = await db.select().from(teams).where(eq(teams.id, teamId));
-    const [inviter] = await db.select().from(users).where(eq(users.id, invitedByUserId));
+    const [team] = await db.select().from(teams).where(q(eq(teams.id, teamId)));
+    const [inviter] = await db.select().from(users).where(q(eq(users.id, invitedByUserId)));
 
     await sendTeamInviteEmail(
       normalizedEmail,
@@ -508,15 +513,15 @@ export const getUserTeamInvites = async (userEmail: string): Promise<ServiceResp
         createdAt: teamInvites.createdAt,
       })
       .from(teamInvites)
-      .innerJoin(teams, eq(teamInvites.teamId, teams.id))
-      .where(
-        and(
-          eq(teamInvites.email, userEmail.trim().toLowerCase()),
-          isNull(teamInvites.acceptedAt),
-          isNull(teamInvites.revokedAt)
-        )
-      )
-      .orderBy(desc(teamInvites.createdAt));
+      .innerJoin(teams, q(eq(teamInvites.teamId, teams.id)))
+        .where(q(
+          and(
+            eq(teamInvites.email, userEmail.trim().toLowerCase()),
+            isNull(teamInvites.acceptedAt),
+            isNull(teamInvites.revokedAt)
+          )
+        ))
+      .orderBy(q(desc(teamInvites.createdAt)));
 
     return { data: invites, message: "Fetched team invites successfully", success: true };
   } catch (err) {
@@ -542,7 +547,7 @@ export const acceptTeamInvite = async (
   acceptingUserEmail: string
 ): Promise<ServiceResponse> => {
   try {
-    const [invite] = await db.select().from(teamInvites).where(eq(teamInvites.token, token));
+    const [invite] = await db.select().from(teamInvites).where(q(eq(teamInvites.token, token)));
 
     if (!invite) {
       return { data: null, success: false, message: "Invitation not found." };
@@ -567,7 +572,7 @@ export const acceptTeamInvite = async (
     const [existingMember] = await db
       .select()
       .from(teamMembers)
-      .where(and(eq(teamMembers.teamId, invite.teamId), eq(teamMembers.userId, acceptingUserId)));
+      .where(q(and(eq(teamMembers.teamId, invite.teamId), eq(teamMembers.userId, acceptingUserId))));
 
     if (!existingMember) {
       // Hard check: the team's plan or size may have changed since this
@@ -595,7 +600,7 @@ export const acceptTeamInvite = async (
     const [updatedInvite] = await db
       .update(teamInvites)
       .set({ acceptedAt: new Date(), invitedToUserId: acceptingUserId })
-      .where(eq(teamInvites.id, invite.id))
+      .where(q(eq(teamInvites.id, invite.id)))
       .returning();
 
     return {
@@ -617,7 +622,7 @@ export const revokeTeamInvite = async (inviteId: string): Promise<ServiceRespons
     const [revoked] = await db
       .update(teamInvites)
       .set({ revokedAt: new Date() })
-      .where(eq(teamInvites.id, inviteId))
+      .where(q(eq(teamInvites.id, inviteId)))
       .returning();
 
     if (!revoked) {
@@ -648,7 +653,7 @@ export const removeTeamMember = async (
     const [target] = await db
       .select()
       .from(teamMembers)
-      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId)));
+      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId))));
 
     if (!target) {
       return { data: null, success: false, message: "User is not a member of this team." };
@@ -663,7 +668,7 @@ export const removeTeamMember = async (
 
     await db
       .delete(teamMembers)
-      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId)));
+      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId))));
 
     // Same fire-and-forget reasoning as the invite-accept path — a seat
     // was freed, sync it, but don't fail the removal over a Paddle hiccup.

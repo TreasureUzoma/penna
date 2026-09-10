@@ -66,11 +66,17 @@ interface SettingsTabProps {
     description: string;
     isPublic: boolean;
     isPrivateAt: string | null;
-    config?: { removeBranding?: boolean; avatarUrl?: string | null } | null;
+    config?: {
+      removeBranding?: boolean;
+      avatarUrl?: string | null;
+      emailTracking?: boolean;
+    } | null;
     /** Computed server-side from the newsletter owner's plan — see routes/api/v1/newsletters.ts's `/slug/:slug`. */
     canRemoveBranding: boolean;
     /** Same gate as `canRemoveBranding` — governs the custom-domains tab, not this newsletter's own URL (see the Public URL field below, unconditional for every plan). */
     canUseCustomDomain: boolean;
+    /** Whether the newsletter owner may enable email tracking */
+    canUseEmailTracking: boolean;
     /** The team that owns this newsletter — team membership is what grants access to it now, see routes/api/v1/newsletters.ts's `/slug/:slug`. */
     teamId?: string;
     teamName?: string;
@@ -94,7 +100,8 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
   // Only teams the user owns/admins are valid destinations — the server
   // re-checks this too, but no point offering options that would 403.
   const transferableTeams = (myTeams ?? []).filter(
-    (t) => t.id !== newsletter.teamId && (t.role === "owner" || t.role === "admin")
+    (t) =>
+      t.id !== newsletter.teamId && (t.role === "owner" || t.role === "admin"),
   );
 
   const form = useForm<UpdateNewsletter>({
@@ -146,6 +153,11 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
     // request that we already know the server will 400 on.
     if (removeBranding && !newsletter.canRemoveBranding) return;
     updateNewsletter({ removeBranding });
+  }
+
+  function toggleEmailTracking(enable: boolean) {
+    if (enable && !newsletter.canUseEmailTracking) return;
+    updateNewsletter({ emailTracking: enable });
   }
 
   return (
@@ -250,7 +262,7 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                           "cursor-pointer border rounded-lg p-4 flex flex-col gap-2 transition-all hover:border-primary/50",
                           field.value === true
                             ? "border-primary bg-primary/5 ring-1 ring-primary"
-                            : "bg-card"
+                            : "bg-card",
                         )}
                         onClick={() => field.onChange(true)}
                       >
@@ -269,7 +281,7 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                           "cursor-pointer border rounded-lg p-4 flex flex-col gap-2 transition-all hover:border-primary/50",
                           field.value === false
                             ? "border-primary bg-primary/5 ring-1 ring-primary"
-                            : "bg-card"
+                            : "bg-card",
                         )}
                         onClick={() => field.onChange(false)}
                       >
@@ -278,8 +290,8 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                           Private
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Only you and your team can view this — its public
-                          page is taken down too.
+                          Only you and your team can view this — its public page
+                          is taken down too.
                         </p>
                       </div>
                     </div>
@@ -291,7 +303,11 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
               <div className="space-y-2">
                 <p className="text-sm font-medium">Public URL</p>
                 <div className="flex items-center gap-2">
-                  <Input readOnly value={previewUrl} className="font-mono text-xs sm:text-sm" />
+                  <Input
+                    readOnly
+                    value={previewUrl}
+                    className="font-mono text-xs sm:text-sm"
+                  />
                   <CopyButton content={previewUrl} />
                 </div>
                 {!watchedIsPublic && (
@@ -318,6 +334,93 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
+            Email Tracking
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              <Sparkles className="w-3 h-3" />
+              Pro
+            </span>
+          </CardTitle>
+          <CardDescription>
+            Track opens and link clicks per recipient. Requires a Pro plan and a
+            verified custom sending domain. Default is off.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              className={cn(
+                "cursor-pointer border rounded-lg p-4 flex flex-col gap-2 transition-all hover:border-primary/50",
+                !newsletter.config?.emailTracking
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "bg-card",
+              )}
+              onClick={() => toggleEmailTracking(false)}
+            >
+              <div className="font-medium">Tracking off</div>
+              <p className="text-sm text-muted-foreground">
+                Default — recipients won't get tracking pixels or click
+                redirects.
+              </p>
+            </div>
+
+            <div
+              className={cn(
+                "border rounded-lg p-4 flex flex-col gap-2 transition-all",
+                !newsletter.canUseEmailTracking
+                  ? "opacity-60 cursor-not-allowed bg-muted/30"
+                  : "cursor-pointer hover:border-primary/50",
+                newsletter.config?.emailTracking
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "bg-card",
+              )}
+              onClick={() => toggleEmailTracking(true)}
+              aria-disabled={!newsletter.canUseEmailTracking}
+            >
+              <div className="font-medium flex items-center gap-1.5">
+                {!newsletter.canUseEmailTracking && (
+                  <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+                Enable tracking
+              </div>
+              {newsletter.canUseEmailTracking ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Embed a per-recipient open pixel and route links through a
+                    click tracker to measure engagement.
+                  </p>
+                  <p className="text-xs text-destructive">
+                    Warning: tracking pixels and link redirects can increase the
+                    chance your messages are marked as spam. Use with caution.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Requires a Pro plan and a verified custom email domain. Add
+                  and verify a domain in the{" "}
+                  <Link
+                    href={`/newsletters/${newsletter.slug}/domains`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-primary underline underline-offset-4 hover:opacity-80"
+                  >
+                    Domains tab
+                  </Link>
+                  .
+                </p>
+              )}
+            </div>
+          </div>
+          {isUpdating && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Saving...
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             Branding
             <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
               <Sparkles className="w-3 h-3" />
@@ -325,8 +428,8 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
             </span>
           </CardTitle>
           <CardDescription>
-            Remove the "Powered by Penna" footer from your outgoing
-            emails. Requires the newsletter owner to be on a paid plan.
+            Remove the "Powered by Penna" footer from your outgoing emails.
+            Requires the newsletter owner to be on a paid plan.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -336,7 +439,7 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                 "cursor-pointer border rounded-lg p-4 flex flex-col gap-2 transition-all hover:border-primary/50",
                 !newsletter.config?.removeBranding
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "bg-card"
+                  : "bg-card",
               )}
               onClick={() => toggleBranding(false)}
             >
@@ -352,9 +455,10 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                 !newsletter.canRemoveBranding
                   ? "opacity-60 cursor-not-allowed bg-muted/30"
                   : "cursor-pointer hover:border-primary/50",
-                newsletter.config?.removeBranding && newsletter.canRemoveBranding
+                newsletter.config?.removeBranding &&
+                  newsletter.canRemoveBranding
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "bg-card"
+                  : "bg-card",
               )}
               onClick={() => toggleBranding(true)}
               aria-disabled={!newsletter.canRemoveBranding}
@@ -434,11 +538,14 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
               </p>
               <p className="text-xs text-muted-foreground">
                 Only teams you own or admin are shown. This changes who has
-                access — members of the current team lose access, members of
-                the destination team gain it.
+                access — members of the current team lose access, members of the
+                destination team gain it.
               </p>
               <div className="flex items-center gap-2 pt-1">
-                <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+                <Select
+                  value={selectedTeamId}
+                  onValueChange={setSelectedTeamId}
+                >
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Choose a team..." />
                   </SelectTrigger>

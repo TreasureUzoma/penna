@@ -41,7 +41,8 @@ export default function NewsletterAnalyticsPage() {
   const slug = params.id as string;
   const [timeframe, setTimeframe] = useState(30);
 
-  const { data: newsletter, isLoading: isNewsletterLoading } = useNewsletter(slug);
+  const { data: newsletter, isLoading: isNewsletterLoading } =
+    useNewsletter(slug);
   const { data: analytics, isLoading: isAnalyticsLoading } =
     useNewsletterAnalytics(newsletter?.id ?? "", timeframe);
   const { data: emails, isLoading: isEmailsLoading } = useEmails(slug);
@@ -90,10 +91,10 @@ export default function NewsletterAnalyticsPage() {
     .filter(
       (email) =>
         email.status === "published" &&
-        new Date(email.sentAt).getTime() <= Date.now()
+        new Date(email.sentAt).getTime() <= Date.now(),
     )
     .sort(
-      (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
+      (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
     );
 
   return (
@@ -101,6 +102,14 @@ export default function NewsletterAnalyticsPage() {
       <p className="text-muted-foreground">
         Subscriber health and send history for this newsletter.
       </p>
+
+      {!newsletter?.canUseEmailTracking && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
+          Open and click tracking is available only for newsletters on a Pro
+          plan with a verified custom sending domain. Add or verify a domain in
+          the Domains tab before turning it on in Settings.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {isAnalyticsLoading

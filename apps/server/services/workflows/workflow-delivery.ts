@@ -117,19 +117,22 @@ async function sendWorkflowNewsletterEmail(
   subject: string,
   html: string,
   fromDomain: string | null,
-  emailId: string,
+  emailId?: string,
 ): Promise<boolean> {
   try {
     const { unsubscribeUrl, header } = await buildListUnsubscribeHeaders(
       newsletter.id,
       recipientEmail,
     );
-    const trackedHtml = await addWorkflowTracking(
-      appendUnsubscribeFooter(html, unsubscribeUrl),
-      emailId,
-      newsletter.id,
-      recipientEmail,
-    );
+    const htmlWithFooter = appendUnsubscribeFooter(html, unsubscribeUrl);
+    const trackedHtml = emailId
+      ? await addWorkflowTracking(
+          htmlWithFooter,
+          emailId,
+          newsletter.id,
+          recipientEmail,
+        )
+      : htmlWithFooter;
     await sesClient.send(
       new SendEmailCommand({
         FromEmailAddress: `${newsletter.slug}@${fromDomain || envConfig.NEWSLETTER_DOMAIN}`,
@@ -161,6 +164,10 @@ async function sendWorkflowNewsletterEmail(
     }
 
     try {
+      if (!emailId) {
+        return false;
+      }
+
       await dbLite
         .delete(schema.emailRecipients)
         .where(
@@ -189,7 +196,7 @@ export async function sendWorkflowEmailChunk(
   subject: string,
   html: string,
   removeBranding: boolean,
-  emailId: string,
+  emailId?: string,
 ): Promise<{ sent: number; failed: number }> {
   const fromDomain = await getWorkflowSendingDomain(newsletter.id);
   const brandedHtml = applyBranding(html, removeBranding);

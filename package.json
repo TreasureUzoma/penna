@@ -22,6 +22,12 @@
   "engines": {
     "node": ">=20"
   },
+  "pnpm": {
+    "overrides": {
+      "drizzle-orm": "0.44.7",
+      "drizzle-kit": "0.31.6"
+    }
+  },
   "dependencies": {
     "next-themes": "^0.4.6",
     "sonner": "^2.0.7"

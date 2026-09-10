@@ -33,7 +33,7 @@
     "ai": "^7.0.66",
     "bcryptjs": "^3.0.3",
     "csv-parse": "^7.0.2",
-    "drizzle-kit": "^0.31.5",
+    "drizzle-kit": "^0.31.6",
     "drizzle-orm": "^0.44.7",
     "googleapis": "^164.1.0",
     "hono": "^4.10.3",

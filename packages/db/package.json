@@ -4,7 +4,9 @@
   "type": "module",
   "main": "index.ts",
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.2",
+    "@neondatabase/serverless": "^1.0.2"
+  },
+  "peerDependencies": {
     "drizzle-kit": "^0.31.6",
     "drizzle-orm": "^0.44.7"
   }

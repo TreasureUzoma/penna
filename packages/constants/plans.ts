@@ -58,6 +58,7 @@ export const plans: Plan[] = [
     features: [
       "up to 2,500 subscribers",
       "advanced analytics",
+      "email tracking (opens & clicks)",
       "priority support",
       "custom domain",
       "remove branding",
@@ -77,6 +78,7 @@ export const plans: Plan[] = [
     features: [
       "up to 10,000 subscribers",
       "advanced analytics",
+      "email tracking (opens & clicks)",
       "priority support",
       "custom domain",
       "remove branding",
@@ -126,7 +128,7 @@ export const plans: Plan[] = [
  */
 export const getPlanForSubscriberCount = (count: number): Plan => {
   const fitting = plans.find(
-    (plan) => plan.subscribers !== null && count <= plan.subscribers
+    (plan) => plan.subscribers !== null && count <= plan.subscribers,
   );
   return fitting ?? plans[plans.length - 1]!;
 };
