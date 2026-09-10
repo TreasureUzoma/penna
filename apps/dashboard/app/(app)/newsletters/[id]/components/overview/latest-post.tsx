@@ -54,12 +54,6 @@ export function LatestPost({ post }: LatestPostProps) {
             Sent on {new Date(post.sentAt).toLocaleDateString()}
           </p>
         </div>
-        {/* Open/click tracking isn't implemented (no tracking pixel, no
-            click-redirect endpoint) — showing real send data (subject,
-            date) rather than fabricated rate numbers. */}
-        <p className="text-sm text-muted-foreground pt-2">
-          {post.openRate}% open rate · {post.clickRate}% click rate
-        </p>
       </CardContent>
       <CardFooter className="pt-2">
         <Button variant="ghost" className="w-full justify-between" asChild>

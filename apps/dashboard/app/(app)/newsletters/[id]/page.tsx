@@ -51,14 +51,6 @@ export default function NewsletterOverviewPage() {
         A snapshot of your newsletter's health and activity.
       </p>
 
-      {!newsletter?.canUseEmailTracking && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
-          Open and click tracking is available only for newsletters on a Pro
-          plan with a verified custom sending domain. Add or verify a domain in
-          the Domains tab before turning it on in Settings.
-        </div>
-      )}
-
       {isAnalyticsLoading ? (
         <KPICardsSkeleton />
       ) : (

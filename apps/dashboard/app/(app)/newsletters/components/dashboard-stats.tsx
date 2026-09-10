@@ -1,7 +1,6 @@
 "use client";
 
 import numeral from "numeral";
-import { FolderKanban, Users, FileText, DollarSign } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -28,23 +27,23 @@ interface DashboardStatsProps {
   compact?: boolean;
 }
 
-export function DashboardStats({ stats, compact = false }: DashboardStatsProps) {
+export function DashboardStats({
+  stats,
+  compact = false,
+}: DashboardStatsProps) {
   const dashboardStats = [
     {
       title: "Total Newsletters",
       value: stats?.totalNewsletters ?? 0,
-      icon: FolderKanban,
     },
     {
       title: "Total Subscribers",
       value: stats?.totalSubscribers ?? 0,
-      icon: Users,
     },
-    { title: "Total Posts", value: stats?.totalPosts ?? 0, icon: FileText },
+    { title: "Total Posts", value: stats?.totalPosts ?? 0 },
     {
       title: "Total Revenue",
       value: stats?.totalRevenue ?? 0,
-      icon: DollarSign,
       isCurrency: true,
     },
   ];
@@ -52,7 +51,9 @@ export function DashboardStats({ stats, compact = false }: DashboardStatsProps) 
   return (
     <div
       className={
-        compact ? "grid gap-4 grid-cols-2" : "grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+        compact
+          ? "grid gap-4 grid-cols-2"
+          : "grid gap-4 md:grid-cols-2 lg:grid-cols-4"
       }
     >
       {dashboardStats.map((stat) => (
@@ -61,7 +62,6 @@ export function DashboardStats({ stats, compact = false }: DashboardStatsProps) 
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {stat.title}
             </CardTitle>
-            <stat.icon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <p className="text-xl font-medium">

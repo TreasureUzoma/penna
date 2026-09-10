@@ -1,10 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
-import { Users, TrendingUp, Mail, Send } from "lucide-react";
+import { Card, CardContent, CardTitle } from "@workspace/ui/components/card";
 import numeral from "numeral";
 
 interface KPICardsProps {
@@ -27,13 +21,11 @@ export function KPICards({ stats }: KPICardsProps) {
       title: "Subscribers",
       value: numeral(stats?.totalSubscribers).format("0,0"),
       description: "Total active subscribers",
-      icon: Users,
     },
     {
       title: "Growth",
       value: `+${stats?.growth7d ?? 0}`,
       description: "New subscribers this week",
-      icon: TrendingUp,
       trend:
         stats?.growth7d && stats?.totalSubscribers
           ? ((stats.growth7d / stats.totalSubscribers) * 100).toFixed(1) + "%"
@@ -45,15 +37,13 @@ export function KPICards({ stats }: KPICardsProps) {
       // 0 for this. Showing "Coming soon" instead of a value reads as
       // intentional; a bare "-" or a fake "0%" both read as broken data.
       title: "Open Rate",
-      value: `${stats?.openRate ?? 0}%`,
+      value: `${stats?.openRate ?? "-"}%`,
       description: "Unique opens from the latest newsletter",
-      icon: Mail,
     },
     {
       title: "Last Sent",
       value: lastSent,
       description: "Most recent newsletter",
-      icon: Send,
     },
   ];
 
@@ -61,14 +51,11 @@ export function KPICards({ stats }: KPICardsProps) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {kpis.map((kpi) => (
         <Card key={kpi.title}>
-          <CardHeader>
-            <CardTitle>{kpi.title}</CardTitle>
-            <kpi.icon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {kpi.value}
-            </div>
+            <CardTitle className="my-3 text-xs text-muted-foreground">
+              {kpi.title}
+            </CardTitle>
+            <div className="text-4xl font-bold">{kpi.value}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {kpi.trend && (
                 <span className="text-emerald-500 font-medium mr-1">
