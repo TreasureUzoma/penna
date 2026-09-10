@@ -54,8 +54,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { AlertTriangle, Crown, Loader2, Plus, UserMinus, UserPlus } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
+import {
+  AlertTriangle,
+  Crown,
+  Loader2,
+  Plus,
+  UserMinus,
+  UserPlus,
+} from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert";
 import type { TeamRoles } from "@workspace/types";
 
 function CreateTeamDialog() {
@@ -93,7 +104,7 @@ function CreateTeamDialog() {
                     e.target.value
                       .toLowerCase()
                       .replace(/[^a-z0-9-]+/g, "-")
-                      .replace(/^-+|-+$/g, "")
+                      .replace(/^-+|-+$/g, ""),
                   );
                 }
               }}
@@ -123,7 +134,7 @@ function CreateTeamDialog() {
                     setName("");
                     setSlug("");
                   },
-                }
+                },
               )
             }
           >
@@ -156,17 +167,17 @@ function TeamSettingsContent() {
       : undefined) ?? teams?.[0];
 
   const { data: members, isLoading: isLoadingMembers } = useTeamMembers(
-    activeTeam?.id ?? ""
+    activeTeam?.id ?? "",
   );
   const { mutate: updateRole, isPending: isUpdatingRole } =
     useUpdateTeamMemberRole(activeTeam?.id ?? "");
   const { mutate: transferOwnership, isPending: isTransferring } =
     useTransferTeamOwnership(activeTeam?.id ?? "");
   const { mutate: inviteToTeam, isPending: isInviting } = useInviteToTeam(
-    activeTeam?.id ?? ""
+    activeTeam?.id ?? "",
   );
   const { mutate: removeMember, isPending: isRemoving } = useRemoveTeamMember(
-    activeTeam?.id ?? ""
+    activeTeam?.id ?? "",
   );
   const { data: billing } = useTeamSubscription(activeTeam?.id ?? "");
 
@@ -209,19 +220,23 @@ function TeamSettingsContent() {
           setInviteEmail("");
           setInviteRole("viewer");
         },
-      }
+      },
     );
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen px-4 py-6 md:px-8 md:py-8 space-y-6">
       <div className="flex items-center justify-between gap-2">
         {teams && teams.length > 1 ? (
           <div className="flex items-center gap-2">
-            <Label className="text-sm text-muted-foreground shrink-0">Team</Label>
+            <Label className="text-sm text-muted-foreground shrink-0">
+              Team
+            </Label>
             <Select
               value={activeTeam.slug}
-              onValueChange={(slug) => router.push(`/settings/team?team=${slug}`)}
+              onValueChange={(slug) =>
+                router.push(`/settings/team?team=${slug}`)
+              }
             >
               <SelectTrigger className="w-64">
                 <SelectValue />
@@ -244,11 +259,13 @@ function TeamSettingsContent() {
       {isOverCap && (
         <Alert variant="destructive">
           <AlertTriangle className="w-4 h-4" />
-          <AlertTitle>Over the {billing?.plan.name} plan's member limit</AlertTitle>
+          <AlertTitle>
+            Over the {billing?.plan.name} plan's member limit
+          </AlertTitle>
           <AlertDescription>
-            {activeTeam.name} has {members?.length} members, but its plan
-            only includes {memberCap}. Existing members keep their access,
-            but you can't invite anyone new until you remove a member{" "}
+            {activeTeam.name} has {members?.length} members, but its plan only
+            includes {memberCap}. Existing members keep their access, but you
+            can't invite anyone new until you remove a member{" "}
             {isOwnerOrAdmin && (
               <>
                 or{" "}
@@ -272,7 +289,10 @@ function TeamSettingsContent() {
             </CardDescription>
           </div>
           {isOwnerOrAdmin && (
-            <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+            <Dialog
+              open={isInviteDialogOpen}
+              onOpenChange={setIsInviteDialogOpen}
+            >
               <DialogTrigger asChild>
                 <Button
                   className="w-full sm:w-auto"
@@ -378,13 +398,14 @@ function TeamSettingsContent() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Transfer Ownership</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Transfer Ownership
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
                             Make <strong>{member.user.name}</strong> the new
                             owner of {activeTeam.name}? You'll be moved to the
                             Admin role and lose owner-only permissions (like
-                            deleting the team or transferring ownership
-                            again).
+                            deleting the team or transferring ownership again).
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -439,8 +460,8 @@ function TeamSettingsContent() {
                           <AlertDialogDescription>
                             Remove <strong>{member.user.name}</strong> from{" "}
                             {activeTeam.name}? They'll lose access to every
-                            newsletter this team owns. This also frees up a
-                            seat on the team's subscription, if it has one.
+                            newsletter this team owns. This also frees up a seat
+                            on the team's subscription, if it has one.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
