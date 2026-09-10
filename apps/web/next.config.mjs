@@ -14,6 +14,7 @@ const nextConfig = {
       "forgot-password",
       "reset-password",
       "verify-email",
+      "accept-invite",
       "dashboard",
       "new",
       "new/:path+",
