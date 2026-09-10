@@ -161,49 +161,6 @@ export default function NewsletterAnalyticsPage() {
           )}
         </div>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Send History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isEmailsLoading ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : sendHistory.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No posts sent yet.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Sent</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sendHistory.map((email) => (
-                  <TableRow key={email.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href={`/newsletters/${slug}/posts/${email.id}`}
-                        className="hover:underline"
-                      >
-                        {email.subject}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(email.sentAt).toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

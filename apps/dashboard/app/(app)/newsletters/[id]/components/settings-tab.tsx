@@ -29,7 +29,7 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { CopyButton } from "@workspace/ui/components/copy-button";
 import { cn } from "@workspace/ui/lib/utils";
-import { Globe, Loader2, Lock, Sparkles, Trash2 } from "lucide-react";
+import { Globe, Info, Loader2, Lock, Sparkles, Trash2 } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -57,6 +57,11 @@ import {
 } from "@workspace/ui/components/select";
 import { Users } from "lucide-react";
 import { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 
 interface SettingsTabProps {
   newsletter: {
@@ -334,6 +339,18 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="w-3.5 h-3.5" />
+                <TooltipContent>
+                  <p className="text-sm">
+                    Tracking pixels can increase the chance
+                    <br />
+                    your messages are marked as spam.
+                  </p>
+                </TooltipContent>
+              </TooltipTrigger>
+            </Tooltip>{" "}
             Email Tracking
             <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
               <Sparkles className="w-3 h-3" />
@@ -387,10 +404,6 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                   <p className="text-sm text-muted-foreground">
                     Embed a per-recipient open pixel and route links through a
                     click tracker to measure engagement.
-                  </p>
-                  <p className="text-xs text-destructive">
-                    Warning: tracking pixels and link redirects can increase the
-                    chance your messages are marked as spam. Use with caution.
                   </p>
                 </>
               ) : (
