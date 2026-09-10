@@ -25,7 +25,8 @@
   "pnpm": {
     "overrides": {
       "drizzle-orm": "0.44.7",
-      "drizzle-kit": "0.31.6"
+      "drizzle-kit": "0.31.6",
+      "@neondatabase/serverless": "1.0.2"
     }
   },
   "dependencies": {
