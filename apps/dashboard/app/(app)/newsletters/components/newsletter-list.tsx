@@ -29,11 +29,11 @@ export function NewsletterList({ newsletters }: NewsletterListProps) {
     <div>
       <h2 className="font-semibold mb-4">Newsletters</h2>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-2 flex flex-col">
         {newsletters.map((newsletter) => (
           <Link href={`/newsletters/${newsletter.slug}`} key={newsletter.id}>
-            <Card className="h-full py-4 hover:bg-accent/50 rounded-sm px-4 cursor-pointer transition-colors">
-              <CardContent className="space-y-2">
+            <Card className="w-full py-3 hover:bg-accent/50 rounded-sm px-4 cursor-pointer transition-colors">
+              <CardContent className="space-y-1">
                 <CardTitle className="text-base">{newsletter.name}</CardTitle>
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {newsletter.description || "No description"}

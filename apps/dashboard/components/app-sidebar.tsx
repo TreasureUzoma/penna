@@ -216,8 +216,6 @@ export default function AppSidebar({
         </div>
       )}
 
-      <Separator />
-
       {/* Navigation Items */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {navItems.map((item) => {

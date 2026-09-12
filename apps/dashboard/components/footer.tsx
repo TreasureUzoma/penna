@@ -16,28 +16,12 @@ export const Footer = () => {
 
         <div className="flex flex-wrap items-center gap-5 md:gap-7 justify-center">
           <a
-            href={meta.developer.url}
-            className="hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Developer
-          </a>
-          <a
             href={meta.socials.github}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:underline"
           >
             <span className="hidden md-block">View </span>Source
-          </a>
-          <a
-            href="https://x.com/idolodev"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline"
-          >
-            X
           </a>
         </div>
         <div>

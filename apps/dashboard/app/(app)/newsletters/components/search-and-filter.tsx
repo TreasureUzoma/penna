@@ -8,8 +8,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import { Filter, Search } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@workspace/ui/components/dropdown-menu";
+import { ChevronDown, Filter, Search } from "lucide-react";
 import type { DashboardOverview } from "@workspace/validations";
+import { Button } from "@workspace/ui/components/button";
+import Link from "next/link";
 
 interface SearchAndFilterProps {
   onFilterChange: (value: DashboardOverview["sort"]) => void;
@@ -27,7 +35,7 @@ export function SearchAndFilter({
   };
 
   return (
-    <div className="flex items-center justify-center gap-3 w-full">
+    <div className="flex items-center justify-center gap-2 w-full">
       <div className="relative flex-1">
         <Input
           placeholder="Search newsletters..."
@@ -51,6 +59,24 @@ export function SearchAndFilter({
           <SelectItem value="subscribers">Subscribers</SelectItem>
         </SelectContent>
       </Select>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button className="gap-2">
+            Add New <ChevronDown className="w-4 h-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href="/new">New Newsletter</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/domains">New Domain</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings/team">Add Team Member</Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
