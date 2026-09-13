@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 
+import { withBotId } from "botid/next/config";
+
 const DOCS_SITE = process.env.DOCS_SITE || "http://localhost:3006";
 const DASHBOARD_SITE = process.env.DASHBOARD_SITE || "http://localhost:3001";
 const API_URL = process.env.API_URL || "http://localhost:3005";
@@ -72,4 +74,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBotId(nextConfig);

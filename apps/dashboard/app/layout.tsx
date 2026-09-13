@@ -5,6 +5,7 @@ import "./globals.css";
 import QueryProvider from "@/providers/tanstack-query";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
+import { BotIdClient } from "botid/client";
 
 export const switzer = {
   variable: "--font-switzer",
@@ -29,6 +30,16 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <BotIdClient
+          protect={[
+            {
+              path: "/api/v1/auth/*",
+              method: "POST",
+            },
+          ]}
+        />
+      </head>
       <body
         className={`${switzer.variable} ${geistMono.variable} bg-background font-[Switzer] antialiased`}
       >

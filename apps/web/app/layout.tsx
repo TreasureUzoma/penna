@@ -1,5 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
-
+import { BotIdClient } from "botid/client";
 import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
@@ -31,6 +31,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <BotIdClient
+          protect={[
+            {
+              path: "/api/v1/public/newsletters/*/subscribe",
+              method: "POST",
+            },
+          ]}
+        />
+      </head>
       <body
         className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased has-grain`}
       >
