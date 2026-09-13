@@ -28,10 +28,16 @@ import api from "@workspace/axios";
 export function AcceptInviteForm({ token }: { token?: string }) {
   const router = useRouter();
   const { data: profile, isLoading: isLoadingProfile } = useGetProfile();
-  const { mutate: acceptInvite, isPending, isSuccess, isError, error } =
-    useAcceptTeamInvite();
+  const {
+    mutate: acceptInvite,
+    isPending,
+    isSuccess,
+    isError,
+    error,
+  } = useAcceptTeamInvite();
   const [hasAttempted, setHasAttempted] = useState(false);
-  const [isSigningOutAndSwitching, setIsSigningOutAndSwitching] = useState(false);
+  const [isSigningOutAndSwitching, setIsSigningOutAndSwitching] =
+    useState(false);
 
   const isLoggedIn = !isLoadingProfile && !!profile;
   const isEmailMismatch = (error as any)?.message?.includes("different email");
@@ -54,8 +60,7 @@ export function AcceptInviteForm({ token }: { token?: string }) {
     }
   };
 
-  const currentUrl =
-    typeof window !== "undefined" ? window.location.href : "";
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-md md:max-w-xl">
@@ -85,8 +90,8 @@ export function AcceptInviteForm({ token }: { token?: string }) {
           {token && !isLoadingProfile && !isLoggedIn && (
             <div className="space-y-3">
               <p className="text-sm text-center text-muted-foreground">
-                Once you're signed in, come back to this same link to accept
-                the invite.
+                Once you're signed in, come back to this same link to accept the
+                invite.
               </p>
               <div className="flex gap-2">
                 <Button asChild className="flex-1">
@@ -115,7 +120,10 @@ export function AcceptInviteForm({ token }: { token?: string }) {
                 You've joined the team — its newsletters now show up in your
                 dashboard.
               </p>
-              <Button className="w-full" onClick={() => router.push("/newsletters")}>
+              <Button
+                className="w-full"
+                onClick={() => router.push("/newsletters")}
+              >
                 Go to dashboard
               </Button>
             </div>
@@ -126,12 +134,14 @@ export function AcceptInviteForm({ token }: { token?: string }) {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  You're signed in as <span className="font-semibold">{profile?.email}</span>,
-                  but this invitation was sent to a different email address.
+                  You're signed in as{" "}
+                  <span className="font-semibold">{profile?.email}</span>, but
+                  this invitation was sent to a different email address.
                 </AlertDescription>
               </Alert>
               <p className="text-sm text-center text-muted-foreground">
-                Sign in with the account that received the invitation to accept it.
+                Sign in with the account that received the invitation to accept
+                it.
               </p>
               <Button
                 onClick={handleSignOutAndSwitch}
