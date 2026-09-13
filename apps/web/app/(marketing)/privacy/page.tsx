@@ -18,10 +18,12 @@ const sections = [
   {
     title: "how we use it",
     body: `we use your data to run the product: authenticate you, send your
-      newsletters, show you analytics, process payments, and provide
-      support. we don't sell your data, and we don't use your subscriber
-      lists or content for anything other than delivering the service you
-      signed up for.`,
+      newsletters, show you analytics, process payments, provide support,
+      and protect platform integrity. when you send newsletters via the api,
+      we analyze the content with ai to detect spam, phishing, and abuse
+      that could harm deliverability. we don't sell your data, and we don't
+      use your subscriber lists or content for any purpose other than
+      delivering the service you signed up for.`,
   },
   {
     title: "cookies",
@@ -32,9 +34,20 @@ const sections = [
   {
     title: "third-party services",
     body: `we rely on a few trusted providers to run ${meta.name}: hosting
-      and infrastructure providers, an email delivery provider to send
-      newsletters on your behalf, and paddle for billing. each only
-      receives the data it needs to do its job.`,
+      and infrastructure providers (neon for database, upstash for redis),
+      aws ses for email delivery, paddle for billing, and groq for ai-based
+      content moderation. each only receives the data it needs to do its job.`,
+  },
+  {
+    title: "ai content moderation",
+    body: `when you send a newsletter, we analyze the subject line
+      and content using groq (an ai service) to detect spam, phishing,
+      scams, and other abuse that could harm deliverability for all users.
+      this check happens before sending and takes a few seconds. the content
+      is only sent to groq for moderation — it's not stored, trained on, or
+      used for any other purpose. if you self-host ${meta.name}, you can
+      disable this by not setting the groq api key, and moderation will be
+      skipped entirely.`,
   },
   {
     title: "data retention",
@@ -69,14 +82,14 @@ export default function PrivacyPage() {
         <div className="space-y-2">
           <h1 className="text-3xl md:text-4xl font-bold">privacy policy</h1>
           <p className="text-sm text-muted-foreground">
-            last updated: august 13, 2026
+            last updated: september 13, 2026
           </p>
         </div>
 
         <p className="text-muted-foreground leading-relaxed">
-          this policy explains what data {meta.name} collects, why, and how
-          it's used. it applies to the hosted version of {meta.name} — if
-          you're self-hosting, see the note below.
+          this policy explains what data {meta.name} collects, why, and how it's
+          used. it applies to the hosted version of {meta.name} — if you're
+          self-hosting, see the note below.
         </p>
 
         {sections.map((section) => (
