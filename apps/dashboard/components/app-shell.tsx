@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" data-scroll-container>
           {children}
           <Footer />
         </div>

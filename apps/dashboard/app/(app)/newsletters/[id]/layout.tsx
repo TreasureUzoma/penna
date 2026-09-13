@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname, useParams } from "next/navigation";
 import { useNewsletter } from "@/hooks/use-newsletters";
 import { NewsletterSwitcher } from "@/components/newsletter-switcher";
@@ -38,6 +39,18 @@ export default function NewsletterLayout({
   // above them would just be redundant chrome eating into their height.
   const isFullBleedEditor = rest[0] === "posts" && rest.length > 1;
   const title = SECTION_TITLES[rest[0] ?? ""] ?? "";
+
+  // Scroll to top when navigating between pages in this newsletter group
+  useEffect(() => {
+    // Find the scrolling container (the main pane in app-shell.tsx)
+    const scrollContainer = document.querySelector("[data-scroll-container]");
+    if (scrollContainer) {
+      scrollContainer.scrollTop = 0;
+    } else {
+      // Fallback: scroll window to top
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
 
   return (
     <div className="flex flex-col min-h-screen">
