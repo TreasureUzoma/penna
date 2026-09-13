@@ -38,9 +38,14 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen  px-4 py-7">
-      <div className="space-y-0.5">
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+    <div className="min-h-screen px-4 py-6 md:px-8 md:py-8 space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Manage your account details, security settings, billing, and team
+          access. Verify a domain here, then assign it to a newsletter when
+          you're ready—or add one directly from a newsletter's Domains tab.
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 relative">

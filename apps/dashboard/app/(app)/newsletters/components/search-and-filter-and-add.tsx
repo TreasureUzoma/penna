@@ -25,7 +25,7 @@ interface SearchAndFilterProps {
   searchValue?: string;
 }
 
-export function SearchAndFilter({
+export function SearchAndFilterAndAdd({
   onFilterChange,
   onSearchChange,
   searchValue = "",

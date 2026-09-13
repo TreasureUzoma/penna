@@ -45,7 +45,7 @@ export default function NewsletterLayout({
         // Sticky to the scrolling container in app-shell.tsx (the
         // `overflow-y-auto` main pane), not the window — stays put while
         // a long page (e.g. a big subscriber table) scrolls beneath it.
-        <div className="sticky top-0 z-10 shrink-0 bg-background border-b border-border px-6 py-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="sticky top-0 z-10 shrink-0 bg-background border-b border-border px-6 py-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
           <div className="min-w-0">
             <NewsletterSwitcher />
           </div>

@@ -3,22 +3,22 @@ import { Skeleton } from "@workspace/ui/components/skeleton";
 
 export function NewsletterListSkeleton() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {[...Array(6)].map((_, i) => (
-        <Card key={i}>
-          <CardContent className="p-6">
-            <div className="space-y-3">
-              <Skeleton className="h-6 w-3/4" />
+    <div>
+      <div className="mb-4">
+        <Skeleton className="h-6 w-28" />
+      </div>
+
+      <div className="space-y-2 flex flex-col">
+        {[...Array(4)].map((_, index) => (
+          <Card key={index} className="w-full py-3 rounded-sm px-4">
+            <CardContent className="space-y-1 p-0">
+              <Skeleton className="h-5 w-32" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-5/6" />
-              <div className="flex items-center gap-4 pt-2">
-                <Skeleton className="h-3 w-16" />
-                <Skeleton className="h-3 w-16" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

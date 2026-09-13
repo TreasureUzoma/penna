@@ -7,15 +7,15 @@ import {
 } from "@/hooks/use-dashboard";
 import { NewsletterList } from "./components/newsletter-list";
 import { NewsletterListSkeleton } from "./components/newsletter-list-skeleton";
-import { SearchAndFilter } from "./components/search-and-filter";
+import { RecentActivitySkeleton } from "./components/recent-activity-skeleton";
+import { SearchAndFilterAndAdd } from "./components/search-and-filter-and-add";
 import { RecentActivity } from "./components/recent-activity";
 import { Button } from "@workspace/ui/components/button";
 
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DashboardOverview } from "@workspace/validations";
 import { useGetProfile } from "@/hooks/use-auth";
 import { OnboardingModal } from "./components/onboarding-modal";
-import Link from "next/link";
 
 export default function NewslettersPage() {
   const [page, setPage] = useState(1);
@@ -56,12 +56,11 @@ export default function NewslettersPage() {
     return (
       <div className="min-h-screen px-8 py-12 flex-col gap-6 flex">
         <div className="space-y-3">
-          <div className="h-8 w-48 bg-muted animate-pulse rounded" />
-          <div className="h-4 w-64 bg-muted animate-pulse rounded" />
+          <div className="h-10 w-full bg-muted animate-pulse rounded-md" />
         </div>
-        <div className="h-10 w-full bg-muted animate-pulse rounded" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <NewsletterListSkeleton />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+          <RecentActivitySkeleton />
           <NewsletterListSkeleton />
         </div>
       </div>
@@ -74,7 +73,7 @@ export default function NewslettersPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-4">
           <div className="flex-1">
-            <SearchAndFilter
+            <SearchAndFilterAndAdd
               onFilterChange={setSort}
               onSearchChange={setSearch}
               searchValue={search}
@@ -87,7 +86,11 @@ export default function NewslettersPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
         {/* Activity Column */}
         <div>
-          <RecentActivity activity={activityData?.activity} />
+          {activityData ? (
+            <RecentActivity activity={activityData?.activity} />
+          ) : (
+            <RecentActivitySkeleton />
+          )}
         </div>
 
         {/* Projects/Newsletters Column */}
