@@ -11,9 +11,11 @@ import {
   CardContent,
 } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useGetProfile } from "@/hooks/use-auth";
 import { useAcceptTeamInvite } from "@/hooks/use-teams";
+import { Alert, AlertDescription } from "@workspace/ui/components/alert";
+import api from "@workspace/axios";
 
 /**
  * Standalone, same reasoning as ForgotPasswordForm/ResetPasswordForm/
@@ -29,8 +31,10 @@ export function AcceptInviteForm({ token }: { token?: string }) {
   const { mutate: acceptInvite, isPending, isSuccess, isError, error } =
     useAcceptTeamInvite();
   const [hasAttempted, setHasAttempted] = useState(false);
+  const [isSigningOutAndSwitching, setIsSigningOutAndSwitching] = useState(false);
 
   const isLoggedIn = !isLoadingProfile && !!profile;
+  const isEmailMismatch = (error as any)?.message?.includes("different email");
 
   useEffect(() => {
     if (isLoggedIn && token && !hasAttempted) {
@@ -38,6 +42,17 @@ export function AcceptInviteForm({ token }: { token?: string }) {
       acceptInvite(token);
     }
   }, [isLoggedIn, token, hasAttempted, acceptInvite]);
+
+  const handleSignOutAndSwitch = async () => {
+    setIsSigningOutAndSwitching(true);
+    try {
+      await api.post("/auth/logout");
+      router.push(`/login?next=${encodeURIComponent(window.location.href)}`);
+    } catch (err) {
+      // Even if logout fails, redirect to login
+      router.push(`/login?next=${encodeURIComponent(window.location.href)}`);
+    }
+  };
 
   const currentUrl =
     typeof window !== "undefined" ? window.location.href : "";
@@ -106,7 +121,32 @@ export function AcceptInviteForm({ token }: { token?: string }) {
             </div>
           )}
 
-          {token && isLoggedIn && isError && (
+          {token && isLoggedIn && isError && isEmailMismatch && (
+            <div className="space-y-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  You're signed in as <span className="font-semibold">{profile?.email}</span>,
+                  but this invitation was sent to a different email address.
+                </AlertDescription>
+              </Alert>
+              <p className="text-sm text-center text-muted-foreground">
+                Sign in with the account that received the invitation to accept it.
+              </p>
+              <Button
+                onClick={handleSignOutAndSwitch}
+                disabled={isSigningOutAndSwitching}
+                className="w-full"
+              >
+                {isSigningOutAndSwitching && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                )}
+                Sign out and try another account
+              </Button>
+            </div>
+          )}
+
+          {token && isLoggedIn && isError && !isEmailMismatch && (
             <p className="text-sm text-center text-destructive">
               {(error as any)?.message || "Failed to accept this invitation."}
             </p>
