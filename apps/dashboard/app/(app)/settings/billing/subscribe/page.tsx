@@ -40,14 +40,17 @@ function SubscribePageContent(): React.ReactNode {
 
   const { data: teams, isLoading: isLoadingTeams } = useTeams();
   const activeTeam =
-    (teamSlug ? teams?.find((t) => t.slug === teamSlug) : undefined) ?? teams?.[0];
+    (teamSlug ? teams?.find((t) => t.slug === teamSlug) : undefined) ??
+    teams?.[0];
 
   const { data: billing, isLoading: isLoadingBilling } = useTeamSubscription(
-    activeTeam?.id ?? ""
+    activeTeam?.id ?? "",
   );
-  const { mutate: createCheckout } = useCreateTeamCheckout(activeTeam?.id ?? "");
+  const { mutate: createCheckout } = useCreateTeamCheckout(
+    activeTeam?.id ?? "",
+  );
   const { mutate: cancelSubscription } = useCancelTeamSubscription(
-    activeTeam?.id ?? ""
+    activeTeam?.id ?? "",
   );
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -56,8 +59,10 @@ function SubscribePageContent(): React.ReactNode {
 
   const profileLoading = isLoadingTeams || isLoadingBilling;
   const selectedPlan = plans.find((p) => p.slug === planSlug);
-  const currentPlan = plans.find((p) => p.slug === billing?.plan.slug) || plans[0]!;
-  const isOwnerOrAdmin = activeTeam?.role === "owner" || activeTeam?.role === "admin";
+  const currentPlan =
+    plans.find((p) => p.slug === billing?.plan.slug) || plans[0]!;
+  const isOwnerOrAdmin =
+    activeTeam?.role === "owner" || activeTeam?.role === "admin";
 
   // Redirect if no plan selected or invalid plan
   useEffect(() => {
@@ -123,10 +128,12 @@ function SubscribePageContent(): React.ReactNode {
             }
           },
           onError: (err: any) => {
-            setError(err.response?.data?.message || "Failed to create checkout");
+            setError(
+              err.response?.data?.message || "Failed to create checkout",
+            );
           },
           onSettled: () => setIsProcessing(false),
-        }
+        },
       );
     } catch (err) {
       const errorMessage =
@@ -201,7 +208,9 @@ function SubscribePageContent(): React.ReactNode {
                 Current Plan
               </p>
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <span className="capitalize font-medium">{currentPlan.name}</span>
+                <span className="capitalize font-medium">
+                  {currentPlan.name}
+                </span>
                 <span className="text-sm text-muted-foreground">
                   {currentPlan.price === 0
                     ? "Free"
@@ -221,7 +230,9 @@ function SubscribePageContent(): React.ReactNode {
                 New Plan
               </p>
               <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/20">
-                <span className="capitalize font-medium">{selectedPlan.name}</span>
+                <span className="capitalize font-medium">
+                  {selectedPlan.name}
+                </span>
                 <span className="text-sm font-semibold">
                   {selectedPlan.price === 0
                     ? "Free"
@@ -325,14 +336,30 @@ function SubscribePageContent(): React.ReactNode {
             </div>
 
             {/* Info Text */}
-            <p className="text-xs text-muted-foreground text-center">
-              {isUpgrade && "Your team's new plan will be active immediately."}
-              {isDowngrade &&
-                "Your team will be downgraded at the end of your current billing cycle."}
-              {!isUpgrade &&
-                !isDowngrade &&
-                "Your team's subscription will be updated immediately."}
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground text-center">
+                {isUpgrade &&
+                  "Your team's new plan will be active immediately."}
+                {isDowngrade &&
+                  "Your team will be downgraded at the end of your current billing cycle."}
+                {!isUpgrade &&
+                  !isDowngrade &&
+                  "Your team's subscription will be updated immediately."}
+              </p>
+              {selectedPlan.price !== 0 && (
+                <p className="text-xs text-muted-foreground text-center">
+                  30-day money-back guarantee.{" "}
+                  <a
+                    href="https://penna.dev/refund"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                  >
+                    View refund policy
+                  </a>
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -341,7 +368,8 @@ function SubscribePageContent(): React.ReactNode {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              You will be redirected to Paddle to complete your payment securely.
+              You will be redirected to Paddle to complete your payment
+              securely.
             </AlertDescription>
           </Alert>
         )}

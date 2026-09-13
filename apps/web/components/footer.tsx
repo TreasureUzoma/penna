@@ -18,6 +18,7 @@ const footerSections = [
       { name: "contact", url: "/contact" },
       { name: "privacy", url: "/privacy" },
       { name: "terms", url: "/terms" },
+      { name: "refund", url: "/refund" },
     ],
   },
   {
