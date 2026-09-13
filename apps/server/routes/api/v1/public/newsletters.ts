@@ -16,7 +16,8 @@ const publicNewslettersRoute = new Hono();
 
 const slugParam = z.object({ slug: z.string().min(1) });
 
-const loadPublicNewsletter = async (slug: string) => getPublicNewsletterBySlug(slug);
+const loadPublicNewsletter = async (slug: string) =>
+  getPublicNewsletterBySlug(slug);
 
 publicNewslettersRoute.get(
   "/:slug",
@@ -27,7 +28,7 @@ publicNewslettersRoute.get(
     const { slug } = c.req.valid("param");
     const serviceData = await loadPublicNewsletter(slug);
     return c.json(serviceData, serviceData.success ? 200 : 404);
-  }
+  },
 );
 
 publicNewslettersRoute.get(
@@ -46,10 +47,10 @@ publicNewslettersRoute.get(
     const serviceData = await getPublicEmails(
       newsletterRes.data.id,
       page ? parseInt(page) : 1,
-      limit ? parseInt(limit) : 10
+      limit ? parseInt(limit) : 10,
     );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 publicNewslettersRoute.get(
@@ -59,7 +60,7 @@ publicNewslettersRoute.get(
     slugParam.extend({ postId: z.string().uuid() }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
-    }
+    },
   ),
   async (c) => {
     const { slug, postId } = c.req.valid("param");
@@ -70,14 +71,14 @@ publicNewslettersRoute.get(
 
     const serviceData = await getPublicEmail(newsletterRes.data.id, postId);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 publicNewslettersRoute.post(
   "/:slug/subscribe",
   // Tighter than the route-level limit above (60/min) — this one writes,
   // and is the one worth throttling harder against spam-subscribing.
-  rateLimiter(60 * 60 * 1000, 10),
+  rateLimiter(60 * 60 * 1000, 3),
   zValidator("param", slugParam, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
@@ -86,7 +87,7 @@ publicNewslettersRoute.post(
     createNewsletterSubscriberSchema.omit({ newsletterId: true }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
-    }
+    },
   ),
   async (c) => {
     const { slug } = c.req.valid("param");
@@ -102,7 +103,7 @@ publicNewslettersRoute.post(
       name,
     });
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 export default publicNewslettersRoute;
