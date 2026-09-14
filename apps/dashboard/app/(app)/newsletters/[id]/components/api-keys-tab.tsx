@@ -41,26 +41,24 @@ import { Label } from "@workspace/ui/components/label";
 import { cn } from "@workspace/ui/lib/utils";
 import { API_KEY_SCOPES, type ApiKeyScope } from "@workspace/validations";
 
-const SCOPE_INFO: Record<
-  ApiKeyScope,
-  { label: string; description: string }
-> = {
-  "subscribers:write": {
-    label: "Add subscribers",
-    description:
-      "Add new subscribers to this newsletter — the scope a public signup form needs.",
-  },
-  "subscribers:read": {
-    label: "Read subscribers",
-    description:
-      "List this newsletter's subscribers. Requires the private key half of the pair.",
-  },
-  "newsletter:send": {
-    label: "Send newsletters",
-    description:
-      "Send a newsletter to your subscribers. The most powerful scope — requires the private key half, since it can email your whole list.",
-  },
-};
+const SCOPE_INFO: Record<ApiKeyScope, { label: string; description: string }> =
+  {
+    "subscribers:write": {
+      label: "Add subscribers",
+      description:
+        "Add new subscribers to this newsletter — the scope a public signup form needs.",
+    },
+    "subscribers:read": {
+      label: "Read subscribers",
+      description:
+        "List this newsletter's subscribers. Requires the private key half of the pair.",
+    },
+    "newsletter:send": {
+      label: "Send newsletters",
+      description:
+        "Send a newsletter to your subscribers. The most powerful scope — requires the private key half, since it can email your whole list.",
+    },
+  };
 
 export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
   const { data: apiKeys, isLoading } = useNewsletterApiKeys(newsletterId);
@@ -77,9 +75,7 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
 
   const toggleScope = (scope: ApiKeyScope) => {
     setSelectedScopes((prev) =>
-      prev.includes(scope)
-        ? prev.filter((s) => s !== scope)
-        : [...prev, scope]
+      prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope],
     );
   };
 
@@ -108,10 +104,10 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
           <div className="space-y-1">
             <CardTitle>API Keys</CardTitle>
             <CardDescription>
-              Manage your API keys for accessing the Penna API. Each key
-              created below is a pair: a Public Key you can use in
-              client-side code, and a Private Key for privileged,
-              server-only requests — scoped to only what you grant it.
+              Manage your API keys for accessing the Penna API. Each key created
+              below is a pair: a Public Key you can use in client-side code, and
+              a Private Key for privileged, server-only requests — scoped to
+              only what you grant it.
             </CardDescription>
           </div>
           <Dialog
@@ -128,8 +124,8 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
               <DialogHeader>
                 <DialogTitle>Create API Key</DialogTitle>
                 <DialogDescription>
-                  Choose what this key is allowed to do. You can't change
-                  this later — delete the key and create a new one instead.
+                  Choose what this key is allowed to do. You can't change this
+                  later - delete the key and create a new one instead.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-2 py-2">
@@ -153,7 +149,7 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
                         "cursor-pointer border rounded-lg p-3 flex items-start gap-3 transition-all hover:border-primary/50",
                         isSelected
                           ? "border-primary bg-primary/5 ring-1 ring-primary"
-                          : "bg-card"
+                          : "bg-card",
                       )}
                     >
                       <div
@@ -161,7 +157,7 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
                           "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
                           isSelected
                             ? "bg-primary border-primary text-primary-foreground"
-                            : "border-input"
+                            : "border-input",
                         )}
                       >
                         {isSelected && <Check className="h-3 w-3" />}
@@ -192,7 +188,10 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {apiKeys?.map((key) => (
-            <div key={key.id} className="flex flex-col gap-2 border-b pb-4 last:border-0 last:pb-0">
+            <div
+              key={key.id}
+              className="flex flex-col gap-2 border-b pb-4 last:border-0 last:pb-0"
+            >
               <div className="flex items-center gap-2">
                 <div className="grid flex-1 gap-2">
                   <Label className="text-xs text-muted-foreground">
@@ -214,9 +213,9 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete API Key</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete this API key? This action
-                        cannot be undone and will immediately revoke access for
-                        any application using this key.
+                        Are you sure you want to delete this API key? This
+                        action cannot be undone and will immediately revoke
+                        access for any application using this key.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -251,9 +250,9 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
           <DialogHeader>
             <DialogTitle>API Key Created</DialogTitle>
             <DialogDescription>
-              Your new key pair has been created. The Public Key is saved in
-              the list below, but this Private Key is shown only once — copy
-              it now, as you won&apos;t be able to see it again.
+              Your new key pair has been created. The Public Key is saved in the
+              list below, but this Private Key is shown only once — copy it now,
+              as you won&apos;t be able to see it again.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

@@ -40,7 +40,7 @@ await fetch(
       <div className="max-w-3xl w-full space-y-8">
         <div className="space-y-4">
           <h2 className="text-3xl md:text-4xl font-bold">
-            or automate it — everything's an API too
+            or automate it - everything's an API too
           </h2>
           <p className="text-lg text-muted-foreground">
             whatever you can do in the dashboard, you can do from your code:
