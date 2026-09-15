@@ -18,6 +18,8 @@ import { passwordResets, refreshTokens, users } from "@workspace/db/schema";
 import { and, desc, eq, gt, lt, ne } from "drizzle-orm";
 import { sendForgottenPasswordEmail, sendWelcomeEmail } from "./mail/internal";
 import { type ChangePasswordData } from "@workspace/validations";
+import { createTeam } from "./teams";
+import crypto from "crypto";
 
 const GOOGLE_REDIRECT_URI = `${envConfig.APP_URL}/api/v1/auth/google/callback`;
 const GITHUB_REDIRECT_URI = `${envConfig.APP_URL}/api/v1/auth/github/callback`;
@@ -26,8 +28,38 @@ const GITHUB_REDIRECT_URI = `${envConfig.APP_URL}/api/v1/auth/github/callback`;
 // Signups are now OPEN! 🚀 Launched on September 13, 2026.
 // Legacy message kept for type compatibility but signups are no longer blocked.
 export const SIGNUPS_CLOSED_MESSAGE =
-  "Signups are currently closed — check back after launch.";
-const signupsBlocked = () => false; // ← SIGNUPS OPEN!
+  "Signups are currently closed — check back later.";
+const signupsBlocked = () => false;
+
+/**
+ * Auto-creates a default team for new users on signup. Every user needs
+ * a team to create newsletters — this avoids the confusing "you need a
+ * team" error on first use. Team name format: "{User Name}'s Workspace"
+ * with a unique slug generated from the user's name + random suffix.
+ */
+const createDefaultTeamForUser = async (userId: string, userName: string) => {
+  try {
+    const teamName = `${userName}'s Workspace`;
+    // Generate slug: lowercase, replace spaces with hyphens, add random suffix for uniqueness
+    const baseSlug = userName
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+    const randomSuffix = crypto.randomBytes(3).toString("hex"); // 6 char hex
+    const slug = `${baseSlug}-${randomSuffix}`;
+
+    await createTeam(
+      {
+        name: teamName,
+        slug,
+      },
+      userId,
+    );
+  } catch (error) {
+    console.error(`Failed to create default team for user ${userId}:`, error);
+    // Non-fatal — user can manually create a team later if this fails
+  }
+};
 
 const oauth2Client = new google.auth.OAuth2(
   envConfig.GOOGLE_CLIENT_ID,
@@ -201,6 +233,9 @@ const upsertUser = async (user: {
       .returning({ id: users.id });
 
     currentUserId = newUser!.id;
+
+    // Auto-create default team for new OAuth user
+    await createDefaultTeamForUser(currentUserId, user.name);
   } else {
     currentUserId = existing[0]!.id;
   }
@@ -288,6 +323,10 @@ export const signup = async (payload: Signup) => {
       password: hashedPassword,
     })
     .returning();
+
+  // Auto-create default team for new user
+  await createDefaultTeamForUser(newUser!.id, newUser!.name);
+
   await sendWelcomeEmail(newUser?.name ?? "", newUser!.email);
 
   return {
