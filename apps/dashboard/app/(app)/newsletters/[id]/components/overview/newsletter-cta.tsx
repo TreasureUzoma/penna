@@ -1,8 +1,9 @@
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
-import { CheckCircle2, PenLine, Send, Share2 } from "lucide-react";
+import { Check, CheckCircle2, PenLine, Send, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 
 interface NewsletterCTAProps {
   newsletter: any;
@@ -12,15 +13,32 @@ interface NewsletterCTAProps {
   };
 }
 
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
+
 export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
   const params = useParams();
   const slug = params.id as string;
+  const [copied, setCopied] = useState(false);
 
   const lastSent = stats?.lastPostSent ? new Date(stats.lastPostSent) : null;
   const hasNeverSent = !lastSent;
   const isStale =
     !!lastSent &&
     new Date().getTime() - lastSent.getTime() > 14 * 24 * 60 * 60 * 1000;
+
+  const handleCopySignupLink = async () => {
+    const publicUrl = `${WEB_URL}/${newsletter.slug || slug}`;
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(publicUrl);
+      }
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch (error) {
+      console.error("Error copying newsletter signup link", error);
+    }
+  };
 
   // Context-aware CTA — ordered by priority. Falls through to `null`
   // ("everything's fine, nothing to nudge") when the newsletter has
@@ -32,7 +50,8 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
     description: string;
     buttonText: string;
     icon: typeof PenLine;
-    href: string;
+    href?: string;
+    onClick?: () => void;
   } | null = null;
 
   if (stats?.totalSubscribers === 0) {
@@ -40,9 +59,9 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
       title: "Share your signup link",
       description:
         "You don't have any subscribers yet. Share your signup page to start growing.",
-      buttonText: "Copy Link",
+      buttonText: copied ? "Copied!" : "Copy Link",
       icon: Share2,
-      href: `/newsletters/${slug}/settings`,
+      onClick: handleCopySignupLink,
     };
   } else if (hasNeverSent) {
     cta = {
@@ -75,8 +94,8 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
             <div className="space-y-2">
               <h3 className="text-xl font-bold">You're all caught up</h3>
               <p className="text-neutral-400 text-sm leading-relaxed">
-                Recently active with subscribers on board — nothing needs
-                your attention right now.
+                Recently active with subscribers on board — nothing needs your
+                attention right now.
               </p>
             </div>
           </div>
@@ -89,6 +108,17 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
       </Card>
     );
   }
+
+  const buttonContent = (
+    <>
+      {cta.buttonText}
+      {copied ? (
+        <Check className="ml-2 h-4 w-4" />
+      ) : (
+        <cta.icon className="ml-2 h-4 w-4" />
+      )}
+    </>
+  );
 
   return (
     <Card>
@@ -105,12 +135,15 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
           </div>
         </div>
         <div className="mt-8">
-          <Button className="w-full" asChild>
-            <Link href={cta.href}>
-              {cta.buttonText}
-              <cta.icon className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          {cta.href ? (
+            <Button className="w-full" asChild>
+              <Link href={cta.href}>{buttonContent}</Link>
+            </Button>
+          ) : (
+            <Button className="w-full" type="button" onClick={cta.onClick}>
+              {buttonContent}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

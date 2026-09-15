@@ -117,7 +117,7 @@ export default function NewsletterSubscribersPage() {
           setIsDialogOpen(false);
           form.reset();
         },
-      }
+      },
     );
   };
 
@@ -150,164 +150,9 @@ export default function NewsletterSubscribersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground">
-          Manage your newsletter subscribers.
-        </p>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Add Subscriber
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Add Subscriber</DialogTitle>
-              <DialogDescription>
-                Choose how you want to add new subscribers to your newsletter.
-              </DialogDescription>
-            </DialogHeader>
-
-            <Tabs defaultValue="manual" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="manual" className="gap-2">
-                  <UserPlus className="w-4 h-4" />
-                  Manual
-                </TabsTrigger>
-                <TabsTrigger value="csv" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  Import CSV
-                </TabsTrigger>
-                <TabsTrigger value="api" className="gap-2">
-                  <Code className="w-4 h-4" />
-                  API / Devs
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="manual" className="space-y-4 pt-4">
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-4"
-                  >
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="john@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <DialogFooter>
-                      <Button
-                        type="submit"
-                        disabled={isCreating}
-                        className="w-full"
-                      >
-                        {isCreating && (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        )}
-                        Add Subscriber
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </TabsContent>
-
-              <TabsContent value="csv" className="space-y-4 pt-4">
-                <div className="bg-muted/50 rounded-xl p-6 space-y-4 border border-dashed">
-                  <div className="p-3 bg-background rounded-lg w-fit border shadow-sm">
-                    <FileText className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-base">
-                      Import from CSV
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Upload a CSV file with an <code>email</code> column
-                      (and an optional <code>name</code> column). Duplicate
-                      and invalid rows are skipped automatically.
-                    </p>
-                  </div>
-                  <div className="pt-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".csv,text/csv"
-                      onChange={handleCsvFileChange}
-                      className="hidden"
-                      id="csv-upload"
-                    />
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2"
-                      disabled={isImporting}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      {isImporting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      {isImporting
-                        ? "Importing..."
-                        : csvFileName || "Choose CSV file"}
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="api" className="space-y-4 pt-4">
-                <div className="bg-muted/50 rounded-xl p-6 space-y-4 border border-dashed">
-                  <div className="p-3 bg-background rounded-lg w-fit border shadow-sm">
-                    <Zap className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-base">
-                      Programmatic Access
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Integrate Penna directly into your website or
-                      application using our simple REST API.
-                    </p>
-                  </div>
-                  <div className="pt-2">
-                    <Button variant="outline" className="w-full gap-2" asChild>
-                      <Link href="/docs">
-                        <BookOpen className="w-4 h-4" />
-                        View API Docs
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-                <div className="text-[0.7rem] text-muted-foreground text-center px-4">
-                  You can find your API key and Newsletter ID in the newsletter
-                  settings tab.
-                </div>
-              </TabsContent>
-            </Tabs>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <p className="text-muted-foreground">
+        Manage your newsletter subscribers.
+      </p>
 
       <Card>
         <CardHeader>

@@ -313,7 +313,7 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                     value={previewUrl}
                     className="font-mono text-xs sm:text-sm"
                   />
-                  <CopyButton content={previewUrl} />
+                  <CopyButton content={previewUrl} type="button" />
                 </div>
                 {!watchedIsPublic && (
                   <p className="text-xs text-muted-foreground">
