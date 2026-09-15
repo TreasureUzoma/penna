@@ -23,18 +23,16 @@ const GOOGLE_REDIRECT_URI = `${envConfig.APP_URL}/api/v1/auth/google/callback`;
 const GITHUB_REDIRECT_URI = `${envConfig.APP_URL}/api/v1/auth/github/callback`;
 
 // Pre-launch lockdown: block new account creation in production while
-// still allowing existing users to log in (password or OAuth). Remove
-// this once the product actually launches. Matched by exact message in
-// the OAuth callback routes (auth.ts) to redirect with a specific error
-// code instead of the generic "auth_failed".
+// Signups are now OPEN! 🚀 Launched on September 13, 2026.
+// Legacy message kept for type compatibility but signups are no longer blocked.
 export const SIGNUPS_CLOSED_MESSAGE =
   "Signups are currently closed — check back after launch.";
-const signupsBlocked = () => envConfig.NODE_ENV === "production";
+const signupsBlocked = () => false; // ← SIGNUPS OPEN!
 
 const oauth2Client = new google.auth.OAuth2(
   envConfig.GOOGLE_CLIENT_ID,
   envConfig.GOOGLE_CLIENT_SECRET,
-  GOOGLE_REDIRECT_URI
+  GOOGLE_REDIRECT_URI,
 );
 
 export const getGoogleAuthUrl = () => {
@@ -335,8 +333,8 @@ export const verifyResetPassword = async (payload: VerifyResetPassword) => {
     .where(
       and(
         eq(passwordResets.token, payload.token),
-        eq(passwordResets.used, false)
-      )
+        eq(passwordResets.used, false),
+      ),
     )
     .limit(1);
 
@@ -370,8 +368,8 @@ export const verifyEmail = async (payload: VerifyEmail) => {
     .where(
       and(
         eq(passwordResets.token, payload.token),
-        eq(passwordResets.used, false)
-      )
+        eq(passwordResets.used, false),
+      ),
     )
     .limit(1);
 
@@ -393,7 +391,7 @@ export const verifyEmail = async (payload: VerifyEmail) => {
 
 export const changePassword = async (
   userId: string,
-  data: ChangePasswordData
+  data: ChangePasswordData,
 ) => {
   const [user] = await db
     .select()
@@ -432,7 +430,9 @@ export const getActiveSessions = async (userId: string) => {
   // the cleanup — then only return what's actually still usable.
   await db
     .delete(refreshTokens)
-    .where(and(eq(refreshTokens.userId, userId), lt(refreshTokens.expiresAt, now)));
+    .where(
+      and(eq(refreshTokens.userId, userId), lt(refreshTokens.expiresAt, now)),
+    );
 
   const sessions = await db
     .select({
@@ -445,8 +445,8 @@ export const getActiveSessions = async (userId: string) => {
       and(
         eq(refreshTokens.userId, userId),
         eq(refreshTokens.revoked, false),
-        gt(refreshTokens.expiresAt, now)
-      )
+        gt(refreshTokens.expiresAt, now),
+      ),
     )
     .orderBy(desc(refreshTokens.expiresAt));
 
@@ -465,12 +465,14 @@ export const getActiveSessions = async (userId: string) => {
  */
 export const getSessionIdByToken = async (
   token: string,
-  userId: string
+  userId: string,
 ): Promise<string | null> => {
   const [row] = await db
     .select({ id: refreshTokens.id })
     .from(refreshTokens)
-    .where(and(eq(refreshTokens.token, token), eq(refreshTokens.userId, userId)));
+    .where(
+      and(eq(refreshTokens.token, token), eq(refreshTokens.userId, userId)),
+    );
 
   return row?.id ?? null;
 };
@@ -480,7 +482,7 @@ export const revokeSession = async (sessionId: string, userId: string) => {
     .update(refreshTokens)
     .set({ revoked: true })
     .where(
-      and(eq(refreshTokens.id, sessionId), eq(refreshTokens.userId, userId))
+      and(eq(refreshTokens.id, sessionId), eq(refreshTokens.userId, userId)),
     );
 
   return { success: true, message: "Session signed out successfully" };
@@ -488,7 +490,7 @@ export const revokeSession = async (sessionId: string, userId: string) => {
 
 export const revokeAllOtherSessions = async (
   currentSessionId: string,
-  userId: string
+  userId: string,
 ) => {
   await db
     .update(refreshTokens)
@@ -496,8 +498,8 @@ export const revokeAllOtherSessions = async (
     .where(
       and(
         eq(refreshTokens.userId, userId),
-        ne(refreshTokens.id, currentSessionId)
-      )
+        ne(refreshTokens.id, currentSessionId),
+      ),
     );
 
   return { success: true, message: "All other sessions signed out" };
