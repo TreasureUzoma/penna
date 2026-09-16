@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Globe,
   X,
+  Tags,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Logo from "@workspace/ui/components/logo";
@@ -131,6 +132,11 @@ export default function AppSidebar({
           label: "Subscribers",
           href: `/newsletters/${newsletterSlug}/subscribers`,
           icon: <Users className="w-4 h-4" />,
+        },
+        {
+          label: "Segments",
+          href: `/newsletters/${newsletterSlug}/segments`,
+          icon: <Tags className="w-4 h-4" />,
         },
         {
           label: "Domains",

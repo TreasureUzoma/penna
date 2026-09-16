@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   useSegments,
   useCreateSegment,
@@ -50,7 +50,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { Loader2, Plus, Trash2, Users, X } from "lucide-react";
+import { Loader2, Plus, Trash2, Users, X, Eye } from "lucide-react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -76,7 +77,7 @@ function ManageSegmentDialog({
 }) {
   const { data: members, isLoading: isLoadingMembers } = useSegmentSubscribers(
     newsletterId,
-    segment.id
+    segment.id,
   );
   const { data: subscribersData } = useSubscribers(newsletterId, 1, 100);
   const { mutate: addSubscriber, isPending: isAdding } =
@@ -86,7 +87,7 @@ function ManageSegmentDialog({
 
   const memberIds = new Set((members || []).map((m) => m.id));
   const available = (subscribersData?.data || []).filter(
-    (s) => !memberIds.has(s.id)
+    (s) => !memberIds.has(s.id),
   );
 
   return (
@@ -185,15 +186,20 @@ function ManageSegmentDialog({
 
 export default function NewsletterSegmentsPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const newsletterId = params.id as string;
   const { data: segments, isLoading } = useSegments(newsletterId);
   const { mutate: createSegment, isPending: isCreating } =
     useCreateSegment(newsletterId);
   const { mutate: deleteSegment } = useDeleteSegment(newsletterId);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [managingSegment, setManagingSegment] = useState<Segment | null>(
-    null
-  );
+  const [managingSegment, setManagingSegment] = useState<Segment | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setIsDialogOpen(true);
+    }
+  }, [searchParams]);
 
   const form = useForm<CreateSegment>({
     resolver: zodResolver(createSegmentSchema),
@@ -208,7 +214,7 @@ export default function NewsletterSegmentsPage() {
           setIsDialogOpen(false);
           form.reset();
         },
-      }
+      },
     );
   };
 
@@ -227,12 +233,6 @@ export default function NewsletterSegmentsPage() {
           Group subscribers together to target them with specific emails.
         </p>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Segment
-            </Button>
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[450px]">
             <DialogHeader>
               <DialogTitle>Create Segment</DialogTitle>
@@ -275,7 +275,11 @@ export default function NewsletterSegmentsPage() {
                   )}
                 />
                 <DialogFooter>
-                  <Button type="submit" disabled={isCreating} className="w-full">
+                  <Button
+                    type="submit"
+                    disabled={isCreating}
+                    className="w-full"
+                  >
                     {isCreating && (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     )}
@@ -325,6 +329,13 @@ export default function NewsletterSegmentsPage() {
                       {new Date(segment.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right space-x-1">
+                      <Button variant="ghost" size="icon" asChild>
+                        <Link
+                          href={`/newsletters/${newsletterId}/segments/${segment.id}`}
+                        >
+                          <Eye className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                        </Link>
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

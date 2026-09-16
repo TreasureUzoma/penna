@@ -27,7 +27,14 @@ export const getSegments = async (
         eq(segmentSubscribers.segmentId, segments.id),
       )
       .where(eq(segments.newsletterId, newsletterId))
-      .groupBy(segments.id)
+      .groupBy(
+        segments.id,
+        segments.name,
+        segments.description,
+        segments.criteria,
+        segments.createdAt,
+        segments.updatedAt,
+      )
       .orderBy(desc(segments.createdAt));
 
     return {
@@ -36,6 +43,7 @@ export const getSegments = async (
       data: segmentList,
     };
   } catch (err) {
+    console.error("getSegments error:", err);
     return {
       success: false,
       message: err instanceof Error ? err.message : "Failed to fetch segments",
@@ -53,7 +61,10 @@ export const getSegment = async (
       .select()
       .from(segments)
       .where(
-        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
+        and(
+          eq(segments.id, segmentId),
+          eq(segments.newsletterId, newsletterId),
+        ),
       );
 
     if (!segment) {
@@ -92,7 +103,10 @@ export const updateSegment = async (
       .update(segments)
       .set({ ...updates, updatedAt: new Date() })
       .where(
-        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
+        and(
+          eq(segments.id, segmentId),
+          eq(segments.newsletterId, newsletterId),
+        ),
       )
       .returning();
 
@@ -159,7 +173,10 @@ export const getSegmentSubscribers = async (
       .select()
       .from(segments)
       .where(
-        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
+        and(
+          eq(segments.id, segmentId),
+          eq(segments.newsletterId, newsletterId),
+        ),
       );
 
     if (!segment) {
@@ -208,7 +225,10 @@ export const addSubscriberToSegment = async (
       .select()
       .from(segments)
       .where(
-        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
+        and(
+          eq(segments.id, segmentId),
+          eq(segments.newsletterId, newsletterId),
+        ),
       );
 
     if (!segment) {
@@ -274,7 +294,10 @@ export const removeSubscriberFromSegment = async (
       .select()
       .from(segments)
       .where(
-        and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)),
+        and(
+          eq(segments.id, segmentId),
+          eq(segments.newsletterId, newsletterId),
+        ),
       );
 
     if (!segment) {
@@ -327,7 +350,12 @@ export const deleteSegment = async (
   try {
     const [deleted] = await db
       .delete(segments)
-      .where(and(eq(segments.id, segmentId), eq(segments.newsletterId, newsletterId)))
+      .where(
+        and(
+          eq(segments.id, segmentId),
+          eq(segments.newsletterId, newsletterId),
+        ),
+      )
       .returning();
 
     if (!deleted) {

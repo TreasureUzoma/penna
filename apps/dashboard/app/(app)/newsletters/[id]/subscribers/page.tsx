@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   useSubscribers,
   useCreateSubscriber,
   useDeleteSubscriber,
   useImportSubscribers,
 } from "@/hooks/use-subscribers";
+import { useSegments } from "@/hooks/use-segments";
+import { useAddSubscriberToSegment } from "@/hooks/use-segments";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -17,6 +19,8 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { Checkbox } from "@workspace/ui/components/checkbox";
+import { Label } from "@workspace/ui/components/label";
 import {
   Table,
   TableBody,
@@ -61,6 +65,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -81,6 +86,7 @@ import { SubscriberAvatar } from "@/components/subscriber-avatar";
 
 export default function NewsletterSubscribersPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const newsletterId = params.id as string;
   const [page, setPage] = useState(1);
   const { data, isLoading } = useSubscribers(newsletterId, page);
@@ -90,9 +96,19 @@ export default function NewsletterSubscribersPage() {
     useDeleteSubscriber(newsletterId);
   const { mutate: importSubscribers, isPending: isImporting } =
     useImportSubscribers(newsletterId);
+  const { data: segments } = useSegments(newsletterId);
+  const { mutate: addSubscriberToSegment } =
+    useAddSubscriberToSegment(newsletterId);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [csvFileName, setCsvFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setIsDialogOpen(true);
+    }
+  }, [searchParams]);
 
   const subscribers = data?.data || [];
   const meta = data?.meta;
@@ -113,11 +129,29 @@ export default function NewsletterSubscribersPage() {
         name: values.name || undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: (subscriber) => {
+          // Add subscriber to selected segments
+          if (selectedSegments.length > 0 && subscriber) {
+            selectedSegments.forEach((segmentId) => {
+              addSubscriberToSegment({
+                segmentId,
+                subscriberId: subscriber.id,
+              });
+            });
+          }
           setIsDialogOpen(false);
+          setSelectedSegments([]);
           form.reset();
         },
       },
+    );
+  };
+
+  const handleSegmentToggle = (segmentId: string) => {
+    setSelectedSegments((prev) =>
+      prev.includes(segmentId)
+        ? prev.filter((id) => id !== segmentId)
+        : [...prev, segmentId],
     );
   };
 
@@ -150,9 +184,108 @@ export default function NewsletterSubscribersPage() {
 
   return (
     <div className="space-y-6">
-      <p className="text-muted-foreground">
-        Manage your newsletter subscribers.
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-muted-foreground">
+          Manage your newsletter subscribers.
+        </p>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Subscriber
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Add Subscriber</DialogTitle>
+              <DialogDescription>
+                Add a new subscriber to your newsletter
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="subscriber@example.com"
+                          type="email"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {segments && segments.length > 0 && (
+                  <div className="space-y-3">
+                    <Label>Add to Segments (Optional)</Label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border p-3">
+                      {segments.map((segment) => (
+                        <div
+                          key={segment.id}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={`segment-${segment.id}`}
+                            checked={selectedSegments.includes(segment.id)}
+                            onCheckedChange={() =>
+                              handleSegmentToggle(segment.id)
+                            }
+                          />
+                          <label
+                            htmlFor={`segment-${segment.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {segment.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <FormDescription>
+                      Select which segments this subscriber should be added to
+                    </FormDescription>
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <Button
+                    type="submit"
+                    disabled={isCreating}
+                    className="w-full"
+                  >
+                    {isCreating && (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    )}
+                    Add Subscriber
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <Card>
         <CardHeader>

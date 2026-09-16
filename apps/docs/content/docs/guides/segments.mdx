@@ -20,11 +20,35 @@ Segments are custom groups of subscribers that share common characteristics. Use
 
 ### Via Dashboard
 
-1. Navigate to **Segments** in the sidebar
+1. Navigate to **Segments** in the newsletter sidebar
 2. Click **"New Segment"**
 3. Enter a segment name (e.g., "Premium Users", "Blog Readers")
 4. Add an optional description
-5. Click **"Create"**
+5. Click **"Create Segment"**
+
+Your new segment is created immediately and ready to use.
+
+### Via API
+
+```javascript
+const response = await fetch(
+  "https://api.penna.dev/api/v1/segments/YOUR_NEWSLETTER_ID",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer YOUR_TOKEN",
+    },
+    body: JSON.stringify({
+      name: "Premium Users",
+      description: "Subscribers on paid plans",
+    }),
+  },
+);
+
+const { data } = await response.json();
+console.log("Segment ID:", data.id);
+```
 
 ### Segment Naming Best Practices
 
@@ -43,48 +67,210 @@ Segments are custom groups of subscribers that share common characteristics. Use
 
 ## Adding Subscribers to Segments
 
-### During Subscription
+### During Subscriber Creation
 
-When adding a subscriber manually:
+When adding a subscriber in the dashboard:
 
-1. Enter their email
-2. Check the segments you want to add them to
-3. Click "Create"
+1. Click **"Add Subscriber"** on the Subscribers page
+2. Enter their email and name (optional)
+3. Check the segments you want to add them to
+4. Click **"Add Subscriber"**
+
+The subscriber is automatically added to all selected segments.
 
 ### For Existing Subscribers
 
-**Single subscriber:**
+**Via Segment Detail Page:**
 
-1. Open subscriber profile
-2. Click "Edit Segments"
-3. Select/deselect segments
-4. Save changes
+1. Go to **Segments** and click on a segment
+2. Click **"Add Subscribers"**
+3. Search and select subscribers to add
+4. Click the **"Add"** button next to each subscriber
 
-**Bulk addition:**
+**Via Segment List Page:**
 
-1. Select multiple subscribers from list
-2. Click "Add to Segment"
-3. Choose segment(s)
-4. Confirm
+1. Go to **Segments**
+2. Click the **Users icon** next to any segment
+3. Use the quick-add dialog to manage subscribers
 
-### Via API (Coming Soon)
+### Via API
+
+Add a subscriber to a segment:
 
 ```javascript
 await fetch(
-  "https://api.penna.dev/api/v1/external/newsletters/subscriber/new",
+  "https://api.penna.dev/api/v1/segments/NEWSLETTER_ID/SEGMENT_ID/subscribers/SUBSCRIBER_ID",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer YOUR_TOKEN",
+    },
+  },
+);
+```
+
+Create a subscriber and add to segments in one call:
+
+```javascript
+const subscriber = await fetch(
+  "https://api.penna.dev/api/v1/newsletters/NEWSLETTER_ID/subscribers",
   {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-penna-public-key": "YOUR_PUBLIC_KEY",
+      Authorization: "Bearer YOUR_TOKEN",
     },
     body: JSON.stringify({
       email: "user@example.com",
-      segmentIds: ["segment-id-1", "segment-id-2"],
+      name: "John Doe",
     }),
   },
 );
+
+const { data: newSubscriber } = await subscriber.json();
+
+// Add to segments
+for (const segmentId of ["segment-1", "segment-2"]) {
+  await fetch(
+    `https://api.penna.dev/api/v1/segments/NEWSLETTER_ID/${segmentId}/subscribers/${newSubscriber.id}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer YOUR_TOKEN",
+      },
+    },
+  );
+}
 ```
+
+## Managing Segments
+
+### Viewing Segment Details
+
+Click any segment name or the **Eye icon** to see:
+
+- Total subscriber count
+- Created and last updated dates
+- Complete list of subscribers in the segment
+- Quick add/remove subscriber actions
+
+### Viewing All Segments
+
+The segments list shows:
+
+- Segment name and description
+- Subscriber count for each segment
+- Creation date
+- Quick action buttons (View, Manage, Delete)
+
+### Removing Subscribers from Segments
+
+**Via Segment Detail Page:**
+
+1. Open the segment
+2. Find the subscriber in the list
+3. Click the **Trash icon** next to their name
+4. Confirm removal
+
+**Via API:**
+
+```javascript
+await fetch(
+  "https://api.penna.dev/api/v1/segments/NEWSLETTER_ID/SEGMENT_ID/subscribers/SUBSCRIBER_ID",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer YOUR_TOKEN",
+    },
+  },
+);
+```
+
+**Note:** Removing from a segment does NOT unsubscribe them from your newsletter.
+
+### Deleting Segments
+
+To remove a segment entirely:
+
+1. Open the segment or find it in the list
+2. Click **"Delete"** (trash icon)
+3. Confirm deletion
+
+**Via API:**
+
+```javascript
+await fetch("https://api.penna.dev/api/v1/segments/NEWSLETTER_ID/SEGMENT_ID", {
+  method: "DELETE",
+  headers: {
+    Authorization: "Bearer YOUR_TOKEN",
+  },
+});
+```
+
+**Important:** Deleting a segment does NOT delete or unsubscribe any subscribers - they remain in your database and other segments.
+
+## Sending to Segments
+
+### Via Dashboard
+
+When creating a new post:
+
+1. Write your subject and content
+2. Click the **"Recipients"** button in the top toolbar
+3. Select specific segments, or leave all unchecked to send to everyone
+4. The recipient count updates based on your selection
+5. **Publish Now** or **Schedule** your post
+
+The email will be sent only to subscribers in the selected segments.
+
+### Via API
+
+Send to specific segments using the external API:
+
+```javascript
+await fetch("https://api.penna.dev/api/v1/external/newsletters/send", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-penna-public-key": "YOUR_PUBLIC_KEY",
+    "x-penna-private-key": "YOUR_PRIVATE_KEY",
+  },
+  body: JSON.stringify({
+    subject: "New React tutorial",
+    content: "# Hello!\n\nCheck out our latest tutorial...",
+    segmentIds: ["web-dev-segment-id"],
+  }),
+});
+```
+
+### Combining Segments
+
+Select multiple segments to send to a combined audience:
+
+**Example:**
+
+- Segment A: "Pro Users" (1,000 subscribers)
+- Segment B: "Beta Testers" (500 subscribers)
+- Combined: 1,350 unique subscribers (150 are in both)
+
+The system automatically deduplicates - subscribers in multiple segments only receive one email.
+
+**Via API:**
+
+```javascript
+{
+  "subject": "Important update",
+  "content": "...",
+  "segmentIds": ["pro-users-id", "beta-testers-id"]
+}
+```
+
+### Sending to All Subscribers
+
+To send to your entire list:
+
+- **Dashboard:** Leave all segments unchecked in the Recipients selector
+- **API:** Omit the `segmentIds` field entirely
 
 ## Common Segment Strategies
 
@@ -133,7 +319,7 @@ Track where subscribers came from:
 
 **Use case:** Understand which channels drive best subscribers, tailor welcome series.
 
-### By Location (Manual)
+### By Location
 
 Geographic segments for local content:
 
@@ -153,86 +339,6 @@ Where they are in the customer journey:
 - "VIP Customers"
 
 **Use case:** Send appropriate messaging for each stage.
-
-## Sending to Segments
-
-### Via Dashboard
-
-When composing a newsletter:
-
-1. Write your content
-2. In the recipients section, select:
-   - **All subscribers**, or
-   - **Specific segments** (choose one or more)
-3. Review the total recipient count
-4. Send or schedule
-
-**Example:**
-
-```
-To: Web Development + Design Resources segments
-Recipients: 2,345 subscribers
-```
-
-### Via API
-
-```javascript
-await fetch("https://api.penna.dev/api/v1/external/newsletters/send", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "x-penna-public-key": "YOUR_PUBLIC_KEY",
-    "x-penna-private-key": "YOUR_PRIVATE_KEY",
-  },
-  body: JSON.stringify({
-    subject: "New React tutorial",
-    content: "# Hello!\n\nCheck out our latest tutorial...",
-    segmentIds: ["web-dev-segment-id"],
-  }),
-});
-```
-
-### Combining Segments
-
-Select multiple segments to send to combined audience:
-
-**Example:**
-
-- Segment A: "Pro Users" (1,000 subscribers)
-- Segment B: "Beta Testers" (500 subscribers)
-- Combined: 1,350 unique subscribers (150 are in both)
-
-Penna automatically deduplicates - subscribers in multiple segments only receive one email.
-
-## Managing Segments
-
-### Viewing Segment Details
-
-Click any segment to see:
-
-- Total subscriber count
-- Growth over time (coming soon)
-- Recent additions
-- Engagement metrics (coming soon)
-
-### Editing Segments
-
-To rename or update description:
-
-1. Open segment
-2. Click "Edit"
-3. Update name/description
-4. Save changes
-
-### Deleting Segments
-
-To remove a segment:
-
-1. Open segment
-2. Click "Delete"
-3. Confirm deletion
-
-**Note:** Deleting a segment does NOT delete the subscribers - they remain in your database and other segments.
 
 ## Advanced Segment Strategies
 
@@ -293,9 +399,9 @@ Give them exclusive content, early access, or special treatment.
 
 Don't over-segment initially:
 
-**Phase 1:** Just your main list
-**Phase 2:** 2-3 basic segments (by interest or source)
-**Phase 3:** Add engagement-based segments
+**Phase 1:** Just your main list  
+**Phase 2:** 2-3 basic segments (by interest or source)  
+**Phase 3:** Add engagement-based segments  
 **Phase 4:** Advanced lifecycle or behavior segments
 
 ### Keep Segments Meaningful
@@ -455,8 +561,8 @@ Track these metrics per segment:
 
 - [Send targeted newsletters](/docs/guides/compose-send)
 - [Manage subscribers effectively](/docs/guides/managing-subscribers)
-- [Improve engagement](/docs/best-practices/subscriber-engagement)
 - [Track analytics](/docs/guides/analytics)
+- [Learn about best practices](/docs/best-practices)
 
 ---
 

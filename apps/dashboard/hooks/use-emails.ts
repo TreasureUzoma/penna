@@ -22,7 +22,7 @@ export function useEmails(newsletterId: string) {
     queryKey: ["emails", newsletterId],
     queryFn: async () => {
       const res = await api.get<{ data: Email[] }>(
-        `/newsletters/${newsletterId}/emails`
+        `/newsletters/${newsletterId}/emails`,
       );
       return res.data.data;
     },
@@ -35,7 +35,7 @@ export function useEmail(newsletterId: string, emailId: string) {
     queryKey: ["email", newsletterId, emailId],
     queryFn: async () => {
       const res = await api.get<{ data: Email }>(
-        `/newsletters/${newsletterId}/emails/${emailId}`
+        `/newsletters/${newsletterId}/emails/${emailId}`,
       );
       return res.data.data;
     },
@@ -48,6 +48,7 @@ interface CreateEmailData {
   body: string;
   sentAt?: string;
   status?: "published" | "draft";
+  segmentIds?: string[];
 }
 
 export function useCreateEmail(newsletterId: string) {
@@ -57,7 +58,7 @@ export function useCreateEmail(newsletterId: string) {
     mutationFn: async (data: CreateEmailData) => {
       const res = await api.post<{ data: Email }>(
         `/newsletters/${newsletterId}/emails`,
-        data
+        data,
       );
       return res.data.data;
     },
@@ -88,7 +89,7 @@ export function useUpdateEmail(newsletterId: string) {
       const { emailId, ...data } = values;
       const res = await api.patch<ServiceResponse<any>>(
         `/newsletters/${newsletterId}/emails/${emailId}`,
-        data
+        data,
       );
       return res.data;
     },
@@ -106,7 +107,7 @@ export function useUpdateEmail(newsletterId: string) {
       toast.error(
         error?.response?.data?.message ||
           error.message ||
-          "Something went wrong"
+          "Something went wrong",
       );
     },
   });
@@ -117,7 +118,9 @@ export function useDeleteEmail(newsletterId: string) {
 
   return useMutation({
     mutationFn: async (emailId: string) => {
-      const res = await api.delete(`/newsletters/${newsletterId}/emails/${emailId}`);
+      const res = await api.delete(
+        `/newsletters/${newsletterId}/emails/${emailId}`,
+      );
       return res.data;
     },
     onSuccess: () => {

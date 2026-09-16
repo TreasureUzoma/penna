@@ -3,12 +3,17 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useCreateEmail } from "@/hooks/use-emails";
+import { useSegments } from "@/hooks/use-segments";
+import { useSubscribers } from "@/hooks/use-subscribers";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { MarkdownSplitEditor } from "@/components/markdown-split-editor";
-import { Loader2, Save, Send } from "lucide-react";
+import { Loader2, Save, Send, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@workspace/ui/components/card";
+import { Checkbox } from "@workspace/ui/components/checkbox";
+import { Label } from "@workspace/ui/components/label";
+import { Badge } from "@workspace/ui/components/badge";
 import {
   Popover,
   PopoverContent,
@@ -23,11 +28,16 @@ export default function NewPostPage(): React.JSX.Element {
 
   const { mutate: createEmail, isPending: isCreating } =
     useCreateEmail(newsletterId);
+  const { data: segments } = useSegments(newsletterId);
+  const { data: subscribersData } = useSubscribers(newsletterId, 1, 1000);
 
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [scheduledDate, setScheduledDate] = useState<string>("");
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+  const [isRecipientsOpen, setIsRecipientsOpen] = useState(false);
+
   // Save/Schedule/Publish all share one mutation, so `isCreating` alone
   // can't tell them apart — without this, clicking one spins every button.
   const [pendingAction, setPendingAction] = useState<
@@ -43,6 +53,30 @@ export default function NewPostPage(): React.JSX.Element {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
   const minScheduleValue = toLocalDatetimeValue(new Date());
+
+  const handleSegmentToggle = (segmentId: string) => {
+    setSelectedSegments((prev) =>
+      prev.includes(segmentId)
+        ? prev.filter((id) => id !== segmentId)
+        : [...prev, segmentId],
+    );
+  };
+
+  const getRecipientCount = () => {
+    if (selectedSegments.length === 0) {
+      // All subscribers
+      return subscribersData?.meta?.total || 0;
+    }
+    // Sum up unique subscribers from selected segments
+    const selectedSegmentData = segments?.filter((s) =>
+      selectedSegments.includes(s.id),
+    );
+    const uniqueCount = selectedSegmentData?.reduce(
+      (sum, seg) => sum + seg.subscriberCount,
+      0,
+    );
+    return uniqueCount || 0;
+  };
 
   const validateFields = () => {
     if (!subject) {
@@ -67,6 +101,7 @@ export default function NewPostPage(): React.JSX.Element {
         body: content,
         sentAt: new Date(scheduledDate).toISOString(),
         status: "published",
+        segmentIds: selectedSegments.length > 0 ? selectedSegments : undefined,
       },
       {
         onSuccess: () => {
@@ -90,6 +125,7 @@ export default function NewPostPage(): React.JSX.Element {
         subject,
         body: content,
         status: "published",
+        segmentIds: selectedSegments.length > 0 ? selectedSegments : undefined,
       },
       {
         onSuccess: () => {
@@ -109,6 +145,7 @@ export default function NewPostPage(): React.JSX.Element {
       {
         subject,
         body: content,
+        segmentIds: selectedSegments.length > 0 ? selectedSegments : undefined,
       },
       {
         onSuccess: () => {
@@ -133,6 +170,62 @@ export default function NewPostPage(): React.JSX.Element {
           >
             Cancel
           </Button>
+          <Popover open={isRecipientsOpen} onOpenChange={setIsRecipientsOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" disabled={isCreating}>
+                <Users className="w-4 h-4 mr-2" />
+                Recipients{" "}
+                <Badge variant="secondary" className="ml-2">
+                  {getRecipientCount()}
+                </Badge>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" align="end">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">
+                    Select Recipients
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which segments to send to, or leave all unchecked to
+                    send to all subscribers.
+                  </p>
+                </div>
+                {segments && segments.length > 0 ? (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {segments.map((segment) => (
+                      <div
+                        key={segment.id}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={`segment-${segment.id}`}
+                          checked={selectedSegments.includes(segment.id)}
+                          onCheckedChange={() =>
+                            handleSegmentToggle(segment.id)
+                          }
+                        />
+                        <label
+                          htmlFor={`segment-${segment.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                        >
+                          {segment.name}
+                          <span className="text-muted-foreground ml-2">
+                            ({segment.subscriberCount})
+                          </span>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No segments available. All subscribers will receive this
+                    post.
+                  </p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
           <Button
             variant="outline"
             onClick={handleSaveDraft}
@@ -156,8 +249,8 @@ export default function NewPostPage(): React.JSX.Element {
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">Schedule Post</h4>
                   <p className="text-sm text-muted-foreground">
-                    Pick a future date and time — the post sends
-                    automatically then. To send right away, use{" "}
+                    Pick a future date and time — the post sends automatically
+                    then. To send right away, use{" "}
                     <span className="font-medium text-foreground">
                       Publish Now
                     </span>{" "}

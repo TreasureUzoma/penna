@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   useDomains,
   useAddDomain,
@@ -60,6 +61,8 @@ interface DomainsTabProps {
 }
 
 export function DomainsTab({ newsletter }: DomainsTabProps) {
+  const searchParams = useSearchParams();
+  const inputRef = useRef<HTMLInputElement>(null);
   const { data: domains, isLoading } = useDomains(newsletter.id);
   // Unfiltered, just to find domains the user has already verified under
   // their account but hasn't assigned anywhere yet — offered below as
@@ -76,6 +79,12 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
   const [name, setName] = useState("");
   const [attachPick, setAttachPick] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      inputRef.current?.focus();
+    }
+  }, [searchParams]);
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -140,6 +149,7 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
             className="flex flex-col sm:flex-row gap-2"
           >
             <Input
+              ref={inputRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="news.yoursite.com"

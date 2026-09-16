@@ -11,11 +11,34 @@ import Link from "next/link";
 const SECTION_TITLES: Record<string, string> = {
   "": "Overview",
   posts: "Posts",
-  analytics: "Analytics",
   subscribers: "Subscribers",
   segments: "Segments",
   domains: "Domains",
+  analytics: "Analytics",
   settings: "Settings",
+};
+
+const ACTION_BUTTON_CONFIG: Record<
+  string,
+  { label: string; getHref: (slug: string) => string }
+> = {
+  subscribers: {
+    label: "New Subscriber",
+    getHref: (slug) => `/newsletters/${slug}/subscribers?action=new`,
+  },
+  segments: {
+    label: "New Segment",
+    getHref: (slug) => `/newsletters/${slug}/segments?action=new`,
+  },
+  domains: {
+    label: "New Domain",
+    getHref: (slug) => `/newsletters/${slug}/domains?action=new`,
+  },
+};
+
+const DEFAULT_ACTION = {
+  label: "New Post",
+  getHref: (slug: string) => `/newsletters/${slug}/posts/new`,
 };
 
 export default function NewsletterLayout({
@@ -39,6 +62,7 @@ export default function NewsletterLayout({
   // above them would just be redundant chrome eating into their height.
   const isFullBleedEditor = rest[0] === "posts" && rest.length > 1;
   const title = SECTION_TITLES[rest[0] ?? ""] ?? "";
+  const action = ACTION_BUTTON_CONFIG[rest[0] ?? ""] ?? DEFAULT_ACTION;
 
   // Scroll to top when navigating between pages in this newsletter group
   useEffect(() => {
@@ -66,9 +90,9 @@ export default function NewsletterLayout({
             {title}
           </h1>
           <Button asChild size="sm" className="justify-self-end">
-            <Link href={`/newsletters/${slug}/posts/new`}>
+            <Link href={action.getHref(slug)}>
               <Plus className="w-4 h-4" />
-              New Post
+              {action.label}
             </Link>
           </Button>
         </div>
