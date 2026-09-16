@@ -35,6 +35,9 @@
         "PADDLE_ENVIRONMENT",
         "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN",
         "NEXT_PUBLIC_PADDLE_ENV",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_ACCOUNT_HASH",
         "PORT"
       ]
     },
@@ -75,6 +78,9 @@
         "PADDLE_ENVIRONMENT",
         "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN",
         "NEXT_PUBLIC_PADDLE_ENV",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_ACCOUNT_HASH",
         "PORT"
       ]
     }

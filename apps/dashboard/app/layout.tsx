@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist_Mono } from "next/font/google";
 import "@workspace/ui/globals.css";
 import "./globals.css";
@@ -6,6 +6,12 @@ import QueryProvider from "@/providers/tanstack-query";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { BotIdClient } from "botid/client";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const switzer = {
   variable: "--font-switzer",

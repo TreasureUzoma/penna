@@ -21,6 +21,7 @@ import segmentRoutes from "./routes/api/v1/segments";
 import domainsRoute from "./routes/api/v1/domains";
 import publicNewslettersRoute from "./routes/api/v1/public/newsletters";
 import trackingRoute from "./routes/api/v1/tracking";
+import uploadRoute from "./routes/api/v1/upload";
 import { start } from "workflow/api";
 import { myTestWorkflow } from "./tests/workflow";
 
@@ -150,6 +151,9 @@ v1.route("/segments", segmentRoutes.use(rateLimiter(60 * 60 * 1000, 70)));
 
 // domains (account-wide view), 70 req per hour
 v1.route("/domains", domainsRoute.use(rateLimiter(60 * 60 * 1000, 70)));
+
+// image uploads, 100 req per hour
+v1.route("/upload", uploadRoute.use(rateLimiter(60 * 60 * 1000, 100)));
 
 app.route("/", v1);
 

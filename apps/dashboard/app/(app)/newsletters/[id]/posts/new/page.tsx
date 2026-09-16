@@ -158,7 +158,7 @@ export default function NewPostPage(): React.JSX.Element {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] -m-8 px-8 py-4 gap-4">
+    <div className="flex flex-col h-[calc(100vh-4rem)] -m-4 sm:-m-8 px-4 sm:px-8 py-4 gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Create Post</h2>
@@ -263,6 +263,7 @@ export default function NewPostPage(): React.JSX.Element {
                     min={minScheduleValue}
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
+                    className="text-base md:text-sm"
                   />
                   <Button
                     onClick={handleSchedule}

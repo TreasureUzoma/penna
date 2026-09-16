@@ -4,6 +4,8 @@ import React, { useState, useRef } from "react";
 import { cn } from "@workspace/ui/lib/utils";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
+import api from "@workspace/axios";
+import { toast } from "sonner";
 import {
   Bold,
   Italic,
@@ -14,6 +16,9 @@ import {
   Link as LinkIcon,
   Quote,
   Code,
+  Loader2,
+  Eye,
+  PenSquare,
 } from "lucide-react";
 
 interface MarkdownSplitEditorProps {
@@ -31,6 +36,8 @@ export function MarkdownSplitEditor({
   readOnly = false,
 }: MarkdownSplitEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Simple Markdown Parser (Regex based)
   const parseMarkdown = (text: string) => {
@@ -105,127 +112,212 @@ export function MarkdownSplitEditor({
     }, 0);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      insertText(`![${file.name}](${base64})`);
-    };
-    reader.readAsDataURL(file);
+    e.target.value = "";
+    setIsUploadingImage(true);
+    const placeholder = `![Uploading ${file.name}...]()`;
+    insertText(placeholder);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await api.post<{
+        success: boolean;
+        data: { url: string };
+        message?: string;
+      }>("/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const url = res.data?.data?.url;
+      if (url) {
+        const textarea = textareaRef.current;
+        const currentVal = textarea ? textarea.value : value;
+        const updatedVal = currentVal.replace(
+          placeholder,
+          `![${file.name}](${url})`,
+        );
+        onChange(updatedVal);
+        toast.success("Image uploaded successfully");
+      } else {
+        throw new Error(res.data?.message || "No image URL returned");
+      }
+    } catch (err: any) {
+      const textarea = textareaRef.current;
+      const currentVal = textarea ? textarea.value : value;
+      onChange(currentVal.replace(placeholder, ""));
+      toast.error(err.message || "Failed to upload image");
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   return (
     <div
       className={cn(
-        "flex flex-col border rounded-md overflow-hidden bg-background h-full",
+        "flex flex-col border rounded-md overflow-hidden bg-background h-full min-h-0",
         className,
       )}
     >
       {/* Toolbar */}
       {!readOnly && (
-        <div className="flex items-center gap-1 p-2 border-b bg-muted/30 overflow-x-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => insertText("# ")}
-            title="Heading 1"
-          >
-            <Heading1 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => insertText("## ")}
-            title="Heading 2"
-          >
-            <Heading2 className="h-4 w-4" />
-          </Button>
-          <div className="w-px h-4 bg-border mx-1" />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => insertText("**", "**")}
-            title="Bold"
-          >
-            <Bold className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => insertText("*", "*")}
-            title="Italic"
-          >
-            <Italic className="h-4 w-4" />
-          </Button>
-          <div className="w-px h-4 bg-border mx-1" />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => insertText("- ")}
-            title="List"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => insertText("> ")}
-            title="Quote"
-          >
-            <Quote className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => insertText("```\n", "\n```")}
-            title="Code Block"
-          >
-            <Code className="h-4 w-4" />
-          </Button>
-          <div className="w-px h-4 bg-border mx-1" />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => insertText("[", "](url)")}
-            title="Link"
-          >
-            <LinkIcon className="h-4 w-4" />
-          </Button>
-          <div className="relative">
-            <Button variant="ghost" size="icon" className="relative">
-              <ImageIcon className="h-4 w-4" />
-              <input
-                type="file"
-                accept="image/*"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                onChange={handleImageUpload}
-              />
+        <div className="flex items-center justify-between gap-1 p-2 border-b bg-muted/30 overflow-x-auto shrink-0">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => insertText("# ")}
+              title="Heading 1"
+            >
+              <Heading1 className="h-4 w-4" />
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => insertText("## ")}
+              title="Heading 2"
+            >
+              <Heading2 className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-4 bg-border mx-1" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => insertText("**", "**")}
+              title="Bold"
+            >
+              <Bold className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => insertText("*", "*")}
+              title="Italic"
+            >
+              <Italic className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-4 bg-border mx-1" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => insertText("- ")}
+              title="List"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => insertText("> ")}
+              title="Quote"
+            >
+              <Quote className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => insertText("```\n", "\n```")}
+              title="Code Block"
+            >
+              <Code className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-4 bg-border mx-1" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => insertText("[", "](url)")}
+              title="Link"
+            >
+              <LinkIcon className="h-4 w-4" />
+            </Button>
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                disabled={isUploadingImage}
+                title="Upload image to Cloudflare"
+              >
+                {isUploadingImage ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                ) : (
+                  <ImageIcon className="h-4 w-4" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                  onChange={handleImageUpload}
+                  disabled={isUploadingImage}
+                />
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Tab Toggle Switch (Write / Preview) */}
+          <div className="flex md:hidden items-center ml-2 border rounded-md overflow-hidden p-0.5 bg-muted shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab("write")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-sm transition-colors",
+                activeTab === "write"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <PenSquare className="h-3 w-3" />
+              Write
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("preview")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-sm transition-colors",
+                activeTab === "preview"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Eye className="h-3 w-3" />
+              Preview
+            </button>
           </div>
         </div>
       )}
 
-      {/* Editor Area — side-by-side split on md+; stacked (write above
-          preview) on mobile, since two half-width panes are unusably
-          narrow on a phone. */}
+      {/* Editor Area — Side-by-side split on desktop; Tabbed view on mobile */}
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
         {/* Input */}
-        <div className="w-full md:w-1/2 h-64 md:h-full border-b md:border-b-0 md:border-r flex flex-col shrink-0 md:shrink">
+        <div
+          className={cn(
+            "w-full md:w-1/2 flex-1 md:h-full border-b md:border-b-0 md:border-r flex flex-col shrink-0 md:shrink",
+            activeTab === "write" ? "flex" : "hidden md:flex",
+          )}
+        >
           <Textarea
             ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={readOnly}
-            className="flex-1 w-full h-full resize-none border-0 rounded-none focus-visible:ring-0 p-4 font-mono text-sm leading-relaxed disabled:opacity-100 disabled:cursor-not-allowed"
+            className="flex-1 w-full h-full resize-none border-0 rounded-none focus-visible:ring-0 p-4 font-mono text-base md:text-sm leading-relaxed disabled:opacity-100 disabled:cursor-not-allowed"
             placeholder="Type your markdown here..."
           />
         </div>
 
         {/* Preview */}
-        <div className="w-full md:w-1/2 h-64 md:h-full overflow-y-auto p-6 prose dark:prose-invert max-w-none">
+        <div
+          className={cn(
+            "w-full md:w-1/2 flex-1 md:h-full overflow-y-auto p-4 md:p-6 prose dark:prose-invert max-w-none",
+            activeTab === "preview" ? "block" : "hidden md:block",
+          )}
+        >
           {value ? (
             <div dangerouslySetInnerHTML={{ __html: parseMarkdown(value) }} />
           ) : (
