@@ -39,10 +39,10 @@ export const sendSubscriberVerificationEmail = async ({
   const greetingName = firstName?.trim() || "there";
 
   const html = `
-    <p>hi ${greetingName},</p>
-    <p>please confirm your subscription to <strong>${newsletterName}</strong>.</p>
-    <p><a href="${verifyUrl}">confirm subscription</a></p>
-    <p>if you didn't request this, you can safely ignore this email.</p>
+    <p>Hi ${greetingName},</p>
+    <p>Please confirm your subscription to <strong>${newsletterName}</strong>.</p>
+    <p><a href="${verifyUrl}">Confirm subscription</a></p>
+    <p>If you didn't request this, you can safely ignore this email.</p>
     <p>— ${meta.name}</p>
   `;
 
