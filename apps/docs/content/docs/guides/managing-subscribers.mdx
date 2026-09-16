@@ -26,17 +26,17 @@ For automated subscription flows on your website:
 ```javascript
 async function subscribeUser(email) {
   const response = await fetch(
-    'https://api.penna.dev/api/v1/external/newsletters/subscriber/new',
+    "https://api.penna.dev/api/v1/external/newsletters/subscriber/new",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'x-penna-public-key': 'YOUR_PUBLIC_KEY'
+        "Content-Type": "application/json",
+        "x-penna-public-key": "YOUR_PUBLIC_KEY",
       },
-      body: JSON.stringify({ email })
-    }
+      body: JSON.stringify({ email }),
+    },
   );
-  
+
   return response.json();
 }
 ```
@@ -56,6 +56,7 @@ Import subscribers from CSV:
 ### Subscriber List
 
 Your subscriber list shows:
+
 - Email address
 - Subscription date
 - Segments
@@ -74,6 +75,7 @@ Find subscribers quickly:
 ### Subscriber Details
 
 Click any subscriber to view:
+
 - Full email address
 - Subscription date and time
 - Source (API, manual, import)
@@ -86,6 +88,7 @@ Click any subscriber to view:
 ### Creating Segments
 
 Segments help you organize subscribers by:
+
 - Interest (e.g., "Web Development", "Design")
 - Plan type (e.g., "Free Users", "Pro Users")
 - Behavior (e.g., "Highly Engaged", "New Subscribers")
@@ -102,15 +105,18 @@ To create a segment:
 ### Adding Subscribers to Segments
 
 **During subscriber creation:**
+
 - Check the segments when adding a new subscriber
 
 **For existing subscribers:**
+
 1. Select subscriber(s) from the list
 2. Click **"Add to Segment"**
 3. Choose segment(s)
 4. Confirm
 
 **From subscriber profile:**
+
 1. Open subscriber details
 2. Click **"Edit Segments"**
 3. Select or deselect segments
@@ -120,7 +126,7 @@ To create a segment:
 
 When composing a newsletter:
 
-1. Click **"Compose"** 
+1. Click **"Compose"**
 2. Write your content
 3. In recipients section, select:
    - **All subscribers**, or
@@ -137,6 +143,7 @@ Normal subscribers who can receive newsletters.
 ### Unsubscribed
 
 Subscribers who opted out. They:
+
 - Won't receive newsletters
 - Remain in your database
 - Can resubscribe at any time
@@ -144,6 +151,7 @@ Subscribers who opted out. They:
 ### Bounced (Coming Soon)
 
 Emails that repeatedly bounce are automatically marked:
+
 - **Soft bounce** - Temporary issues (full inbox, server down)
 - **Hard bounce** - Permanent issues (invalid email)
 
@@ -176,12 +184,12 @@ If someone wants to re-subscribe:
 2. Change status to **"Active"**
 3. They'll start receiving newsletters again
 
-> [!WARNING]
-> Only re-subscribe users who explicitly requested it. Re-subscribing without consent violates anti-spam laws and can harm your sender reputation.
+**Important:** Only re-subscribe users who explicitly requested it. Re-subscribing without consent violates anti-spam laws and can harm your sender reputation.
 
 ## Exporting Subscribers
 
 Export your subscriber data for:
+
 - Backups
 - Analysis in external tools
 - Migration to other platforms
@@ -196,6 +204,7 @@ To export:
 5. Download file
 
 Exported data includes:
+
 - Email address
 - Subscription date
 - Segments
@@ -221,8 +230,7 @@ To permanently delete a subscriber:
 2. Click **"Delete"**
 3. Confirm deletion
 
-> [!WARNING]
-> Deletion is permanent and cannot be undone. The email address and all associated data will be removed.
+**Warning:** Deletion is permanent and cannot be undone. The email address and all associated data will be removed.
 
 ## Best Practices
 
@@ -232,7 +240,7 @@ To permanently delete a subscriber:
 ✅ **Segment early and often** - Organize from day one  
 ✅ **Respect unsubscribes** - Never try to re-add someone who opted out  
 ✅ **Monitor engagement** - Track who opens and clicks  
-✅ **Keep data secure** - Use 2FA and limit team access  
+✅ **Keep data secure** - Use 2FA and limit team access
 
 ### Don'ts
 
@@ -240,7 +248,7 @@ To permanently delete a subscriber:
 ❌ **Don't re-subscribe without consent** - Violates anti-spam laws  
 ❌ **Don't ignore bounces** - Remove hard bounces to protect sender reputation  
 ❌ **Don't spam** - Send valuable content at reasonable frequency  
-❌ **Don't make unsubscribe hard** - Always include clear unsubscribe links  
+❌ **Don't make unsubscribe hard** - Always include clear unsubscribe links
 
 ## Subscriber Growth Tips
 

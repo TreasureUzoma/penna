@@ -44,23 +44,28 @@ Add a simple subscription form to your website:
 </form>
 
 <script>
-  document.getElementById('subscribe-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    
-    const response = await fetch('https://api.penna.dev/api/v1/external/newsletters/subscriber/new', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-penna-public-key': 'YOUR_PUBLIC_KEY'
-      },
-      body: JSON.stringify({ email })
+  document
+    .getElementById("subscribe-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+
+      const response = await fetch(
+        "https://api.penna.dev/api/v1/external/newsletters/subscriber/new",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-penna-public-key": "YOUR_PUBLIC_KEY",
+          },
+          body: JSON.stringify({ email }),
+        },
+      );
+
+      if (response.ok) {
+        alert("Successfully subscribed!");
+      }
     });
-    
-    if (response.ok) {
-      alert('Successfully subscribed!');
-    }
-  });
 </script>
 ```
 
@@ -78,23 +83,25 @@ Add a simple subscription form to your website:
 ### Using the API
 
 ```javascript
-const response = await fetch('https://api.penna.dev/api/v1/external/newsletters/send', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-penna-public-key': 'YOUR_PUBLIC_KEY',
-    'x-penna-private-key': 'YOUR_PRIVATE_KEY'
+const response = await fetch(
+  "https://api.penna.dev/api/v1/external/newsletters/send",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-penna-public-key": "YOUR_PUBLIC_KEY",
+      "x-penna-private-key": "YOUR_PRIVATE_KEY",
+    },
+    body: JSON.stringify({
+      subject: "Welcome to my newsletter!",
+      content: "# Hello!\n\nThanks for subscribing.",
+      segmentIds: [], // Send to all subscribers
+    }),
   },
-  body: JSON.stringify({
-    subject: 'Welcome to my newsletter!',
-    content: '# Hello!\n\nThanks for subscribing.',
-    segmentIds: [] // Send to all subscribers
-  })
-});
+);
 ```
 
-> [!WARNING]
-> Keep your private key secure! Never expose it in client-side code.
+**Important:** Keep your private key secure! Never expose it in client-side code.
 
 ## Next Steps
 

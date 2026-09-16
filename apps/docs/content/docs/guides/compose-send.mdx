@@ -142,8 +142,7 @@ x-penna-public-key: penn_your_public_key
 x-penna-private-key: pk_your_private_key
 ```
 
-> [!WARNING]
-> Never expose your Private Key in client-side code. Only use it from your backend server.
+**Important:** Never expose your Private Key in client-side code. Only use it from your backend server.
 
 ### Basic Send Request
 
@@ -226,8 +225,7 @@ Send to specific subscribers:
 }
 ```
 
-> [!NOTE]
-> `recipientEmails` must be actual subscribers. Non-subscribers are automatically skipped.
+**Note:** `recipientEmails` must be actual subscribers. Non-subscribers are automatically skipped.
 
 ### Combining Recipients
 
@@ -366,8 +364,7 @@ Limits by plan:
 - **Business:** 100 newsletter sends/day
 - **Enterprise:** Unlimited
 
-> [!NOTE]
-> A "newsletter send" is one broadcast to multiple recipients. Individual subscriber additions don't count toward this limit.
+**Note:** A "newsletter send" is one broadcast to multiple recipients. Individual subscriber additions don't count toward this limit.
 
 ### Handling Large Lists
 
@@ -712,5 +709,4 @@ cron.schedule("0 10 * * 2", async () => {
 
 ---
 
-> [!TIP]
-> Start simple: compose, preview, test, then send. As you grow, add automation, segmentation, and optimization. The key is consistency and delivering value with every send.
+**Tip:** Start simple: compose, preview, test, then send. As you grow, add automation, segmentation, and optimization. The key is consistency and delivering value with every send.

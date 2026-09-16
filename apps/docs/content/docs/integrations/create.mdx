@@ -17,8 +17,7 @@ Include the key in the `x-penna-public-key` header of your requests.
 x-penna-public-key: penn_your_public_key_here
 ```
 
-> [!WARNING]
-> Your Public Key is exposed to anyone who visits your website. While it creates a seamless integration, we recommend proxying these requests through your own backend API if you want to control rate limits or add additional spam protection layers before calling Penna.
+**Important:** Your Public Key is exposed to anyone who visits your website. While it creates a seamless integration, we recommend proxying these requests through your own backend API if you want to control rate limits or add additional spam protection layers before calling Penna.
 
 ## Endpoints
 
@@ -68,7 +67,7 @@ export function NewsletterForm() {
             "x-penna-public-key": "penn_abc1234567890", // Replace with your public key
           },
           body: JSON.stringify({ email }),
-        }
+        },
       );
 
       if (!res.ok) throw new Error("Failed to subscribe");
@@ -131,7 +130,7 @@ export function NewsletterForm() {
             "x-penna-public-key": "penn_abc1234567890",
           },
           body: JSON.stringify({ email }),
-        }
+        },
       );
 
       if (response.ok) {

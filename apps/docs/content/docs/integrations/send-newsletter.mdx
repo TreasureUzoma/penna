@@ -19,17 +19,16 @@ This endpoint uses both the Public Key and Private Key for authentication.
 - `x-penna-public-key: <YOUR_PUBLIC_KEY>`
 - `x-penna-private-key: <YOUR_PRIVATE_KEY>`
 
-> [!WARNING]
-> Never expose your Private Key on the client. This endpoint should only be called from your own backend.
+**Important:** Never expose your Private Key on the client. This endpoint should only be called from your own backend.
 
 ## Body
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `subject` | `string` | Yes | The email subject line. |
-| `content` | `string` | Yes | The newsletter body. Supports a small markdown subset (`#`, `##`, `###`, blank lines) which is converted to basic HTML before sending. |
-| `recipientEmails` | `string[]` | No* | Email addresses to send to. **Must belong to actual subscribers of this newsletter** — see [Recipient scoping](#recipient-scoping) below. Max 5,000 entries per request. |
-| `segmentIds` | `string[]` | No* | A list of segment IDs. Subscribers belonging to these segments are resolved and merged with `recipientEmails`. |
+| Field             | Type       | Required | Description                                                                                                                                                              |
+| ----------------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `subject`         | `string`   | Yes      | The email subject line.                                                                                                                                                  |
+| `content`         | `string`   | Yes      | The newsletter body. Supports a small markdown subset (`#`, `##`, `###`, blank lines) which is converted to basic HTML before sending.                                   |
+| `recipientEmails` | `string[]` | No\*     | Email addresses to send to. **Must belong to actual subscribers of this newsletter** — see [Recipient scoping](#recipient-scoping) below. Max 5,000 entries per request. |
+| `segmentIds`      | `string[]` | No\*     | A list of segment IDs. Subscribers belonging to these segments are resolved and merged with `recipientEmails`.                                                           |
 
 \* At least one of `recipientEmails` or `segmentIds` must resolve to at least one actual subscriber, or the request fails with `400`.
 
@@ -120,7 +119,7 @@ async function sendNewsletter() {
           "x-penna-public-key": "penn_your_public_key",
           "x-penna-private-key": "pk_your_private_key",
         },
-      }
+      },
     );
     console.log(response.data);
   } catch (error) {
@@ -156,5 +155,4 @@ else:
     print(f"Failed: {response.text}")
 ```
 
-> [!NOTE]
-> Markdown-to-HTML conversion is currently basic — it only recognizes `#`/`##`/`###` headings and blank lines as paragraph breaks. Rich formatting (lists, links, bold/italic, images) is not yet converted and will be sent as plain text.
+**Note:** Markdown-to-HTML conversion is currently basic — it only recognizes `#`/`##`/`###` headings and blank lines as paragraph breaks. Rich formatting (lists, links, bold/italic, images) is not yet converted and will be sent as plain text.

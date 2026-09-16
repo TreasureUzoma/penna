@@ -29,12 +29,14 @@ Segments are custom groups of subscribers that share common characteristics. Use
 ### Segment Naming Best Practices
 
 **Good names:**
+
 - ✅ "Weekly Newsletter Subscribers"
 - ✅ "Product Launch Interest"
 - ✅ "Beta Testers"
 - ✅ "Enterprise Customers"
 
 **Avoid:**
+
 - ❌ "Segment 1", "Test", "Misc"
 - ❌ Vague names without clear purpose
 - ❌ Overlapping segment definitions
@@ -44,6 +46,7 @@ Segments are custom groups of subscribers that share common characteristics. Use
 ### During Subscription
 
 When adding a subscriber manually:
+
 1. Enter their email
 2. Check the segments you want to add them to
 3. Click "Create"
@@ -51,12 +54,14 @@ When adding a subscriber manually:
 ### For Existing Subscribers
 
 **Single subscriber:**
+
 1. Open subscriber profile
 2. Click "Edit Segments"
 3. Select/deselect segments
 4. Save changes
 
 **Bulk addition:**
+
 1. Select multiple subscribers from list
 2. Click "Add to Segment"
 3. Choose segment(s)
@@ -65,17 +70,20 @@ When adding a subscriber manually:
 ### Via API (Coming Soon)
 
 ```javascript
-await fetch('https://api.penna.dev/api/v1/external/newsletters/subscriber/new', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-penna-public-key': 'YOUR_PUBLIC_KEY'
+await fetch(
+  "https://api.penna.dev/api/v1/external/newsletters/subscriber/new",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-penna-public-key": "YOUR_PUBLIC_KEY",
+    },
+    body: JSON.stringify({
+      email: "user@example.com",
+      segmentIds: ["segment-id-1", "segment-id-2"],
+    }),
   },
-  body: JSON.stringify({
-    email: 'user@example.com',
-    segmentIds: ['segment-id-1', 'segment-id-2']
-  })
-});
+);
 ```
 
 ## Common Segment Strategies
@@ -160,6 +168,7 @@ When composing a newsletter:
 4. Send or schedule
 
 **Example:**
+
 ```
 To: Web Development + Design Resources segments
 Recipients: 2,345 subscribers
@@ -168,18 +177,18 @@ Recipients: 2,345 subscribers
 ### Via API
 
 ```javascript
-await fetch('https://api.penna.dev/api/v1/external/newsletters/send', {
-  method: 'POST',
+await fetch("https://api.penna.dev/api/v1/external/newsletters/send", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'x-penna-public-key': 'YOUR_PUBLIC_KEY',
-    'x-penna-private-key': 'YOUR_PRIVATE_KEY'
+    "Content-Type": "application/json",
+    "x-penna-public-key": "YOUR_PUBLIC_KEY",
+    "x-penna-private-key": "YOUR_PRIVATE_KEY",
   },
   body: JSON.stringify({
-    subject: 'New React tutorial',
-    content: '# Hello!\n\nCheck out our latest tutorial...',
-    segmentIds: ['web-dev-segment-id']
-  })
+    subject: "New React tutorial",
+    content: "# Hello!\n\nCheck out our latest tutorial...",
+    segmentIds: ["web-dev-segment-id"],
+  }),
 });
 ```
 
@@ -188,6 +197,7 @@ await fetch('https://api.penna.dev/api/v1/external/newsletters/send', {
 Select multiple segments to send to combined audience:
 
 **Example:**
+
 - Segment A: "Pro Users" (1,000 subscribers)
 - Segment B: "Beta Testers" (500 subscribers)
 - Combined: 1,350 unique subscribers (150 are in both)
@@ -199,6 +209,7 @@ Penna automatically deduplicates - subscribers in multiple segments only receive
 ### Viewing Segment Details
 
 Click any segment to see:
+
 - Total subscriber count
 - Growth over time (coming soon)
 - Recent additions
@@ -207,6 +218,7 @@ Click any segment to see:
 ### Editing Segments
 
 To rename or update description:
+
 1. Open segment
 2. Click "Edit"
 3. Update name/description
@@ -215,12 +227,12 @@ To rename or update description:
 ### Deleting Segments
 
 To remove a segment:
+
 1. Open segment
 2. Click "Delete"
 3. Confirm deletion
 
-> [!NOTE]
-> Deleting a segment does NOT delete the subscribers - they remain in your database and other segments.
+**Note:** Deleting a segment does NOT delete the subscribers - they remain in your database and other segments.
 
 ## Advanced Segment Strategies
 
@@ -267,6 +279,7 @@ Trigger relevant emails based on product behavior.
 ### VIP/High-Value Segment
 
 Create special segment for:
+
 - Long-time subscribers
 - High engagement users
 - Premium customers
@@ -303,6 +316,7 @@ Every segment should have a clear purpose:
 ### Don't Over-Segment
 
 Too many segments can:
+
 - Make management complex
 - Dilute your audience
 - Cause confusion
@@ -313,6 +327,7 @@ Too many segments can:
 ### Document Your Segments
 
 Keep notes on:
+
 - Segment purpose
 - How subscribers are added
 - Typical content sent to them
@@ -445,5 +460,4 @@ Track these metrics per segment:
 
 ---
 
-> [!TIP]
-> Effective segmentation is about understanding your audience and delivering relevant content. Start simple, measure results, and refine over time.
+**Tip:** Effective segmentation is about understanding your audience and delivering relevant content. Start simple, measure results, and refine over time.
