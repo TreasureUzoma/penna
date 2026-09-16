@@ -12,10 +12,11 @@ Email deliverability is the measure of how successfully your emails reach subscr
 **Deliverability** = The percentage of sent emails that reach subscribers' inboxes (not spam, not bounced).
 
 **Key metrics:**
-- **Delivery rate** - % of emails accepted by receiving servers (should be >98%)
-- **Inbox placement rate** - % that reach inbox vs spam (should be >90%)
-- **Bounce rate** - % that fail to deliver (should be <2%)
-- **Spam complaint rate** - % marked as spam (should be <0.1%)
+
+- **Delivery rate** - % of emails accepted by receiving servers (should be above 98%)
+- **Inbox placement rate** - % that reach inbox vs spam (should be above 90%)
+- **Bounce rate** - % that fail to deliver (should be below 2%)
+- **Spam complaint rate** - % marked as spam (should be below 0.1%)
 
 ## The Email Deliverability Stack
 
@@ -24,6 +25,7 @@ Deliverability depends on three layers:
 ### 1. Technical Foundation (Must Have)
 
 Infrastructure and authentication:
+
 - ✅ Custom domain setup
 - ✅ SPF records configured
 - ✅ DKIM signing enabled
@@ -35,6 +37,7 @@ Infrastructure and authentication:
 ### 2. Content Quality (Should Have)
 
 Email content and structure:
+
 - ✅ Spam-trigger-free language
 - ✅ Proper HTML structure
 - ✅ Text/image balance
@@ -46,6 +49,7 @@ Email content and structure:
 ### 3. Sender Reputation (Must Maintain)
 
 Long-term performance:
+
 - ✅ Consistent sending patterns
 - ✅ High engagement rates
 - ✅ Low bounce rates
@@ -60,6 +64,7 @@ Long-term performance:
 Using a custom domain dramatically improves deliverability.
 
 **Why it matters:**
+
 - Shared domains have shared reputations
 - Custom domains give you full control
 - Better trust from email servers
@@ -87,11 +92,13 @@ Value: v=spf1 include:_spf.penna.dev ~all
 **If you already have SPF:**
 
 Merge the records:
+
 ```
 v=spf1 include:existing.com include:_spf.penna.dev ~all
 ```
 
 **Verify SPF:**
+
 ```bash
 nslookup -type=txt yourdomain.com
 ```
@@ -117,6 +124,7 @@ Value: [provided by Penna]
 **Verification takes 24-48 hours.**
 
 **Check DKIM:**
+
 ```bash
 nslookup -type=txt penna._domainkey.yourdomain.com
 ```
@@ -134,6 +142,7 @@ Value: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com; pct=100; adkim=s
 ```
 
 **DMARC policy options:**
+
 - `p=none` - Monitor only (start here)
 - `p=quarantine` - Send to spam if fails (recommended after monitoring)
 - `p=reject` - Block if fails (strictest)
@@ -163,6 +172,7 @@ Use these tools to verify:
 ### Understanding Sender Reputation
 
 Email servers assign a reputation score to:
+
 - **Your domain** (e.g., yourdomain.com)
 - **Sending IP** (managed by Penna)
 - **Your sending patterns**
@@ -173,17 +183,19 @@ Email servers assign a reputation score to:
 ### Factors Affecting Reputation
 
 **Positive factors (+):**
-- High open rates (>20%)
-- High click rates (>2%)
-- Low bounce rates (<2%)
-- Low spam complaints (<0.1%)
+
+- High open rates (above 20%)
+- High click rates (above 2%)
+- Low bounce rates (below 2%)
+- Low spam complaints (below 0.1%)
 - Consistent sending schedule
 - Engaged subscriber list
 - Proper authentication (SPF/DKIM/DMARC)
 
 **Negative factors (-):**
-- High bounce rates (>5%)
-- High spam complaints (>0.3%)
+
+- High bounce rates (above 5%)
+- High spam complaints (above 0.3%)
 - Sudden volume spikes
 - Sending to spam traps
 - Buying email lists
@@ -195,23 +207,28 @@ Email servers assign a reputation score to:
 If you're starting fresh, warm up slowly:
 
 **Week 1:**
+
 - Send to 50-100 of your most engaged subscribers
 - Monitor for bounces and spam complaints
 - Ensure high engagement
 
 **Week 2:**
+
 - Double your volume to 100-200
 - Continue monitoring
 
 **Week 3:**
+
 - Double again to 200-400
 - Maintain quality
 
 **Week 4+:**
+
 - Continue doubling until reaching full list
 - Process takes 4-6 weeks for large lists
 
 **Why warming matters:**
+
 - Sudden volume spikes trigger spam filters
 - Gradual increase builds trust
 - Gives time to identify issues
@@ -219,6 +236,7 @@ If you're starting fresh, warm up slowly:
 ### Maintaining Sender Reputation
 
 **Do:**
+
 - ✅ Send consistently (same days/times)
 - ✅ Monitor engagement metrics
 - ✅ Clean list regularly
@@ -227,6 +245,7 @@ If you're starting fresh, warm up slowly:
 - ✅ Send valuable content
 
 **Don't:**
+
 - ❌ Buy or rent email lists
 - ❌ Send to old/stale lists
 - ❌ Ignore bounce rates
@@ -247,6 +266,7 @@ If you're starting fresh, warm up slowly:
 5. **Inactive subscribers** (optional) - No engagement in 6+ months
 
 **How often:**
+
 - After every send: Remove hard bounces
 - Weekly: Review soft bounces
 - Monthly: Analyze inactive subscribers
@@ -255,6 +275,7 @@ If you're starting fresh, warm up slowly:
 ### Managing Bounces
 
 **Hard bounces** (permanent):
+
 - Invalid email address
 - Domain doesn't exist
 - Recipient doesn't exist
@@ -262,6 +283,7 @@ If you're starting fresh, warm up slowly:
 **Action:** Remove immediately after first occurrence.
 
 **Soft bounces** (temporary):
+
 - Inbox full
 - Server temporarily unavailable
 - Email too large
@@ -286,18 +308,19 @@ If someone marks your email as spam:
 For inactive subscribers (no opens in 3-6 months):
 
 **Option 1: Re-engagement email**
+
 ```
 Subject: Should we break up?
 
 Hi [Name],
 
-I noticed you haven't opened our emails in a while. 
+I noticed you haven't opened our emails in a while.
 That's totally fine - inboxes are crowded!
 
-If you'd still like to hear from us, click here to 
+If you'd still like to hear from us, click here to
 stay subscribed: [link]
 
-If not, no hard feelings. You'll be automatically 
+If not, no hard feelings. You'll be automatically
 removed if we don't hear from you.
 
 Thanks,
@@ -305,11 +328,13 @@ Thanks,
 ```
 
 **Option 2: Automatic suppression**
+
 - After 6-12 months of no engagement
 - Move to separate "inactive" segment
 - Stop sending to them
 
 **Why remove inactives:**
+
 - Improves overall engagement rates
 - Reduces spam complaints
 - Protects sender reputation
@@ -320,6 +345,7 @@ Thanks,
 ### Subject Line Guidelines
 
 **Do:**
+
 - Keep under 50 characters
 - Be specific and honest
 - Create curiosity (not clickbait)
@@ -327,6 +353,7 @@ Thanks,
 - A/B test regularly
 
 **Don't:**
+
 - Use all caps
 - Overuse punctuation (!!!)
 - Use excessive emoji
@@ -366,6 +393,7 @@ Hi [Name],
 ```
 
 **Content ratio:**
+
 - 80% text, 20% images
 - More text is better for deliverability
 - Alt text for all images
@@ -373,6 +401,7 @@ Hi [Name],
 ### HTML Best Practices
 
 **Good HTML:**
+
 - Simple, clean structure
 - Inline CSS (not external stylesheets)
 - Semantic HTML tags
@@ -380,24 +409,27 @@ Hi [Name],
 - Plain text version included
 
 **Avoid:**
+
 - JavaScript (stripped by most clients)
 - Forms in emails
 - Complex tables
 - Background images
 - Video embeds (link instead)
-- Massive file sizes (>100KB)
+- Massive file sizes (above 100KB)
 
 ### Required Elements
 
 **Every email must have:**
 
 1. **Working unsubscribe link**
+
    ```
-   If you no longer wish to receive these emails, 
+   If you no longer wish to receive these emails,
    you can unsubscribe here.
    ```
 
 2. **Physical address**
+
    ```
    Your Company Name
    123 Main Street
@@ -419,52 +451,56 @@ Hi [Name],
 **Monitor these in Penna dashboard:**
 
 1. **Delivery Rate**
-   - Target: >98%
+   - Target: above 98%
    - Formula: (Sent - Bounces) / Sent
-   - Flag if: <95%
+   - Flag if: below 95%
 
 2. **Bounce Rate**
-   - Target: <2%
+   - Target: below 2%
    - Formula: Bounces / Sent
-   - Flag if: >5%
+   - Flag if: above 5%
 
 3. **Spam Complaint Rate**
-   - Target: <0.1%
+   - Target: below 0.1%
    - Formula: Complaints / Delivered
-   - Flag if: >0.3%
+   - Flag if: above 0.3%
 
 4. **Open Rate**
    - Target: 15-30% (varies by industry)
-   - Flag if: Drops suddenly by >25%
+   - Flag if: Drops suddenly by more than 25%
 
 5. **Click Rate**
    - Target: 2-5% (varies by content)
    - Shows engagement quality
 
 6. **Unsubscribe Rate**
-   - Target: <0.5%
-   - Flag if: >1%
+   - Target: below 0.5%
+   - Flag if: above 1%
 
 ### Warning Signs & Actions
 
 🚨 **Delivery rate drops below 95%**
+
 - Check DNS records
 - Verify domain reputation
 - Review recent content
 - Check for blocklist
 
 🚨 **Bounce rate above 5%**
+
 - Clean list immediately
 - Verify email collection process
 - Check for list hygiene issues
 
 🚨 **Spam complaints above 0.3%**
+
 - Review content and frequency
 - Check subscription process
 - Ensure expectations are clear
 - Improve content quality
 
-🚨 **Sudden drop in opens (>25%)**
+🚨 **Sudden drop in opens (more than 25%)**
+
 - May indicate spam folder placement
 - Review recent changes
 - Check sender reputation
@@ -473,6 +509,7 @@ Hi [Name],
 ### Tools for Monitoring
 
 **Check sender reputation:**
+
 1. **SenderScore** - https://senderscore.org/
    - Free reputation score (0-100)
    - 80+ is good
@@ -485,6 +522,7 @@ Hi [Name],
    - Outlook/Hotmail reputation
 
 **Check blocklists:**
+
 1. **MXToolbox Blacklist Check** - https://mxtoolbox.com/blacklists.aspx
 2. **Spamhaus** - https://www.spamhaus.org/lookup/
 3. **Barracuda** - http://www.barracudacentral.org/lookups
@@ -525,12 +563,14 @@ Hi [Name],
 ### Issue: High Bounce Rate
 
 **Common causes:**
+
 - Old/purchased email list
 - Typos in email addresses
 - Invalid domains
 - Spam traps
 
 **Solutions:**
+
 1. Stop sending immediately
 2. Clean list thoroughly
 3. Remove all hard bounces
@@ -540,12 +580,14 @@ Hi [Name],
 ### Issue: Low Engagement
 
 **Common causes:**
+
 - Poor content-audience fit
 - Too frequent sending
 - Unclear value proposition
 - List fatigue
 
 **Solutions:**
+
 1. Survey subscribers
 2. Improve content quality
 3. Reduce frequency
@@ -571,16 +613,19 @@ Hi [Name],
 Send different content to different engagement levels:
 
 **Highly engaged (opened last 3 emails):**
+
 - Send all content
 - Try new approaches
 - Request feedback
 
 **Moderately engaged (opened 1-2 of last 5):**
+
 - Send best content only
 - Re-engagement campaigns
 - Survey their interests
 
 **Low engagement (no opens in 3+ months):**
+
 - Final re-engagement attempt
 - Suppress if no response
 - Remove after 6 months
@@ -598,11 +643,13 @@ After 12 months: Delete from database
 ### 3. Engagement-Based Sending
 
 Send to most engaged subscribers first:
+
 - Builds positive engagement signals
 - Boosts overall metrics
 - Helps with deliverability
 
 **Example schedule:**
+
 - Monday: Send to highly engaged (50%)
 - Tuesday: Send to moderately engaged (30%)
 - Wednesday: Send to newer subscribers (20%)
@@ -610,6 +657,7 @@ Send to most engaged subscribers first:
 ### 4. Domain Segmentation
 
 For large senders, separate domains by:
+
 - **Marketing:** promo.yourdomain.com
 - **Transactional:** transact.yourdomain.com
 - **Newsletter:** news.yourdomain.com
@@ -619,6 +667,7 @@ Keeps reputations separate.
 ### 5. Feedback Loops
 
 Set up ISP feedback loops to receive spam complaints:
+
 - Gmail Postmaster Tools
 - Microsoft SNDS
 - Yahoo FBL
@@ -630,6 +679,7 @@ Act on complaints immediately.
 ### CAN-SPAM Act (US)
 
 **Requirements:**
+
 - Include physical address
 - Accurate from/subject lines
 - Clear sender identification
@@ -641,6 +691,7 @@ Act on complaints immediately.
 ### GDPR (EU)
 
 **Requirements:**
+
 - Explicit consent required
 - Clear privacy policy
 - Easy opt-out
@@ -652,6 +703,7 @@ Act on complaints immediately.
 ### CASL (Canada)
 
 **Requirements:**
+
 - Express or implied consent
 - Identification of sender
 - Unsubscribe mechanism
@@ -662,6 +714,7 @@ Act on complaints immediately.
 ### Best Practice: Follow Strictest Rules
 
 Comply with GDPR globally - it's the strictest:
+
 - Get explicit consent
 - Document consent
 - Make unsubscribe easy
@@ -694,11 +747,11 @@ Comply with GDPR globally - it's the strictest:
 ✅ List cleaned regularly
 
 **Monitoring:**
-✅ Delivery rate >98%  
-✅ Bounce rate <2%  
-✅ Spam complaint rate <0.1%  
+✅ Delivery rate above 98%  
+✅ Bounce rate below 2%  
+✅ Spam complaint rate below 0.1%  
 ✅ Not on any blocklists  
-✅ Sender reputation >80
+✅ Sender reputation above 80
 
 ## Resources
 

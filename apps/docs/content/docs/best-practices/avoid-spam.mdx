@@ -20,7 +20,7 @@ Spam filters evaluate multiple factors:
 
 ## Technical Setup (Critical)
 
-### 1. Verify Your Domain
+### Step 1: Verify Your Domain
 
 Custom domains have much better deliverability than generic ones:
 
@@ -28,12 +28,13 @@ Custom domains have much better deliverability than generic ones:
 ❌ **Bad:** Using only Penna's shared sending domain
 
 **Setup:**
+
 1. Go to **Settings** → **Domain**
 2. Add your custom domain
 3. Add DNS records provided by Penna
 4. Wait for verification (usually 24-48 hours)
 
-### 2. Configure SPF Record
+### Step 2: Configure SPF Record
 
 SPF (Sender Policy Framework) tells email servers which IPs can send from your domain.
 
@@ -46,9 +47,9 @@ v=spf1 include:_spf.penna.dev ~all
 **Where:** Your domain DNS settings  
 **Type:** TXT  
 **Name:** @ (or your domain)  
-**Value:** v=spf1 include:_spf.penna.dev ~all
+**Value:** v=spf1 include:\_spf.penna.dev ~all
 
-### 3. Set Up DKIM
+### Step 3: Set Up DKIM
 
 DKIM (DomainKeys Identified Mail) digitally signs your emails to prove authenticity.
 
@@ -59,7 +60,7 @@ Penna automatically generates DKIM keys. You just need to add the record:
 3. Add to your DNS as TXT record
 4. Wait for verification
 
-### 4. Enable DMARC
+### Step 4: Enable DMARC
 
 DMARC tells email servers what to do if SPF/DKIM checks fail.
 
@@ -69,11 +70,11 @@ Add this TXT record:
 v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
 ```
 
-**Where:** _dmarc.yourdomain.com  
+**Where:** \_dmarc.yourdomain.com  
 **Type:** TXT  
 **Value:** v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
 
-### 5. Set Up rDNS (Reverse DNS)
+### Step 5: Set Up rDNS (Reverse DNS)
 
 Penna handles this automatically, but verify it's configured correctly.
 
@@ -84,6 +85,7 @@ Penna handles this automatically, but verify it's configured correctly.
 These words and phrases commonly trigger spam filters:
 
 ❌ **Urgency/Pressure:**
+
 - "Act now"
 - "Limited time"
 - "Urgent"
@@ -91,6 +93,7 @@ These words and phrases commonly trigger spam filters:
 - "Once in a lifetime"
 
 ❌ **Money/Free stuff:**
+
 - "Make money fast"
 - "Get paid"
 - "Cash bonus"
@@ -98,6 +101,7 @@ These words and phrases commonly trigger spam filters:
 - "Prize"
 
 ❌ **Excessive claims:**
+
 - "100% free"
 - "Guaranteed"
 - "No risk"
@@ -105,6 +109,7 @@ These words and phrases commonly trigger spam filters:
 - "You won't believe"
 
 ❌ **Deceptive:**
+
 - "Not spam"
 - "This isn't junk"
 - "Not a scam"
@@ -119,12 +124,14 @@ These words and phrases commonly trigger spam filters:
 ### Subject Line Guidelines
 
 **Do:**
+
 - Keep under 50 characters
 - Be specific and relevant
 - Use personalization sparingly
 - Test different approaches
 
 **Don't:**
+
 - Use all caps
 - Overuse exclamation marks (!!!)
 - Use excessive emoji 🎉🎉🎉
@@ -163,6 +170,7 @@ Unsubscribe | Update preferences
 ```
 
 **Key elements:**
+
 - Clear from name and address
 - Personalization (optional, don't overdo)
 - Valuable content upfront
@@ -178,6 +186,7 @@ Unsubscribe | Update preferences
 ✅ **Test before sending** - Preview in multiple email clients
 
 ❌ **Don't use:**
+
 - All images, no text
 - Excessive colors
 - Invisible text (white on white)
@@ -186,23 +195,26 @@ Unsubscribe | Update preferences
 
 ## List Management
 
-### 1. Only Email Subscribers
+### Only Email Subscribers
 
 **Never:**
+
 - Buy email lists
 - Scrape emails from websites
 - Add people without permission
 - Import contacts from other services without consent
 
 **Always:**
+
 - Use double opt-in (recommended)
 - Get explicit consent
 - Document how they subscribed
 - Make unsubscribe easy
 
-### 2. Monitor Engagement
+### Monitor Engagement
 
 Spam filters track:
+
 - Open rates
 - Click rates
 - Reply rates
@@ -216,16 +228,17 @@ Spam filters track:
 - Remove inactive subscribers
 - Segment your audience
 
-### 3. Clean Your List Regularly
+### Clean Your List Regularly
 
 Remove or suppress:
+
 - **Hard bounces** - Invalid email addresses
 - **Repeated soft bounces** - Temporary issues that persist
 - **Unsubscribes** - Respect opt-outs immediately
 - **Spam complaints** - Never email again
 - **Inactive users** - No opens/clicks in 6+ months (optional)
 
-### 4. Handle Bounces
+### Handle Bounces
 
 Penna automatically manages bounces, but you should:
 
@@ -252,11 +265,13 @@ This builds sender reputation slowly.
 Sudden volume spikes trigger spam filters.
 
 ❌ **Don't:**
+
 - Go from 100 to 10,000 emails overnight
 - Skip months then send massive blast
 - Send irregularly
 
 ✅ **Do:**
+
 - Maintain steady sending schedule
 - Gradually increase volume
 - Send consistently
@@ -269,11 +284,13 @@ There's no perfect frequency, but:
 - **Too rare:** Subscribers forget they signed up, mark as spam
 
 **Recommended:**
+
 - Weekly for most newsletters
 - 2-3x week for news/updates
 - Daily only for time-sensitive content
 
 **Test and adjust based on:**
+
 - Unsubscribe rate
 - Engagement metrics
 - Industry standards
@@ -283,7 +300,8 @@ There's no perfect frequency, but:
 Varies by audience, but generally:
 
 **Best days:** Tuesday, Wednesday, Thursday  
-**Best times:** 
+**Best times:**
+
 - 10 AM - 11 AM (workday start)
 - 2 PM - 3 PM (post-lunch)
 - 8 PM - 9 PM (evening)
@@ -292,38 +310,42 @@ Varies by audience, but generally:
 
 ## Engagement Strategies
 
-### 1. Encourage Interaction
+### Encourage Interaction
 
 Higher engagement = better deliverability.
 
 **Ask subscribers to:**
+
 - Reply to your emails
 - Click links in content
 - Forward to friends
 - Add you to contacts/address book
 - Mark as "not spam" if in spam folder
 
-### 2. Write Compelling Subject Lines
+### Write Compelling Subject Lines
 
 Subject lines that get opens:
+
 - Create curiosity without clickbait
 - Promise clear value
 - Use numbers and lists
 - Keep it short
 - A/B test different approaches
 
-### 3. Provide Value Consistently
+### Provide Value Consistently
 
 Every email should give value:
+
 - Educational content
 - Exclusive insights
 - Useful resources
 - Early access
 - Special offers (not every email)
 
-### 4. Make Content Scannable
+### Make Content Scannable
 
 Most people skim emails:
+
 - Use short paragraphs
 - Add subheadings
 - Include bullet points
@@ -336,28 +358,31 @@ Most people skim emails:
 
 Monitor these in your dashboard:
 
-- **Delivery rate** - % successfully delivered (should be >98%)
-- **Bounce rate** - % bounced (should be <2%)
-- **Spam complaint rate** - % marked as spam (should be <0.1%)
+- **Delivery rate** - % successfully delivered (should be above 98%)
+- **Bounce rate** - % bounced (should be below 2%)
+- **Spam complaint rate** - % marked as spam (should be below 0.1%)
 - **Open rate** - % opened (varies by industry, 15-25% is typical)
 - **Click rate** - % clicked (2-5% is common)
-- **Unsubscribe rate** - % unsubscribed (should be <0.5%)
+- **Unsubscribe rate** - % unsubscribed (should be below 0.5%)
 
 ### Warning Signs
 
 Take action if you see:
 
 🚨 **Delivery rate drops below 95%**
+
 - Check DNS records
 - Review content for spam triggers
 - Verify domain reputation
 
 🚨 **Spam complaints above 0.1%**
+
 - Review your signup process
 - Ensure clear expectations
 - Improve content quality
 
 🚨 **Unsubscribe rate above 1%**
+
 - Content may not match expectations
 - Sending too frequently
 - Poor targeting
@@ -403,35 +428,39 @@ If your domain is flagged:
 
 ## Advanced Tips
 
-### 1. Segment for Better Engagement
+### Segment for Better Engagement
 
 Send targeted content to engaged segments:
+
 - Recent signups
 - Active readers
 - Specific interests
 - Geographic regions
 
-### 2. Re-engagement Campaigns
+### Re-engagement Campaigns
 
 For inactive subscribers:
+
 1. Send "Are you still interested?" email
 2. Offer to update preferences
 3. Remove if no response
 
-### 3. Use Plain Text Versions
+### Use Plain Text Versions
 
 Some users prefer plain text. Always include:
+
 - Simple formatting
 - Clear links
 - Minimal styling
 
-### 4. Authenticate Your "From" Address
+### Authenticate Your "From" Address
 
 Use an email address at your domain:
+
 - ✅ newsletter@yourdomain.com
 - ❌ noreply@penna.dev
 
-### 5. Include Physical Address
+### Include Physical Address
 
 Many countries require a physical address in commercial emails. Add yours in the footer.
 

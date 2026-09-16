@@ -17,6 +17,7 @@ This guide walks you through creating and sending newsletters using both the Pen
 ### Step 2: Write Your Subject Line
 
 **Best practices:**
+
 - Keep under 50 characters
 - Be specific and compelling
 - Avoid spam trigger words
@@ -24,6 +25,7 @@ This guide walks you through creating and sending newsletters using both the Pen
 - Test different approaches
 
 **Examples:**
+
 - ✅ "New React hooks pattern you'll love"
 - ✅ "This week's web dev insights"
 - ❌ "Newsletter #47"
@@ -40,7 +42,7 @@ Penna supports basic markdown formatting:
 
 ## Subheading
 
-Here's a paragraph with **bold text** and *italic text*.
+Here's a paragraph with **bold text** and _italic text_.
 
 - Bullet point 1
 - Bullet point 2
@@ -49,6 +51,7 @@ Here's a paragraph with **bold text** and *italic text*.
 ```
 
 **Formatting tips:**
+
 - Use headings to structure content
 - Keep paragraphs short (2-3 sentences)
 - Use bullet points for scanability
@@ -64,6 +67,7 @@ Here's a paragraph with **bold text** and *italic text*.
 5. Proofread for typos
 
 **Preview checklist:**
+
 - ✅ Subject line displays correctly
 - ✅ Content formats properly
 - ✅ Links all work
@@ -74,22 +78,26 @@ Here's a paragraph with **bold text** and *italic text*.
 ### Step 5: Select Recipients
 
 **Option 1: All Subscribers**
+
 - Send to your entire list
 - Good for general announcements
 - Maximum reach
 
 **Option 2: Specific Segments**
+
 - Target specific groups
 - Better engagement
 - More relevant content
 - Can select multiple segments
 
 **Option 3: Individual Emails** (Coming Soon)
+
 - Send to specific addresses
 - Good for testing
 - Personal outreach
 
 **Example:**
+
 ```
 To: Web Development + React segments
 Total recipients: 2,345 subscribers
@@ -100,12 +108,14 @@ Penna automatically deduplicates if someone is in multiple segments.
 ### Step 6: Send or Schedule
 
 **Send Now:**
+
 - Click **Send** button
 - Confirm your selection
 - Newsletter sends immediately
 - Can't be undone
 
 **Schedule for Later:** (Coming Soon)
+
 - Choose date and time
 - Timezone-aware sending
 - Cancel before send time
@@ -143,20 +153,20 @@ x-penna-private-key: pk_your_private_key
 
 ```javascript
 const response = await fetch(
-  'https://api.penna.dev/api/v1/external/newsletters/send',
+  "https://api.penna.dev/api/v1/external/newsletters/send",
   {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'x-penna-public-key': 'penn_your_public_key',
-      'x-penna-private-key': 'pk_your_private_key'
+      "Content-Type": "application/json",
+      "x-penna-public-key": "penn_your_public_key",
+      "x-penna-private-key": "pk_your_private_key",
     },
     body: JSON.stringify({
-      subject: 'Your newsletter subject',
-      content: '# Hello!\n\nYour content here...',
-      segmentIds: ['segment-id-1']
-    })
-  }
+      subject: "Your newsletter subject",
+      content: "# Hello!\n\nYour content here...",
+      segmentIds: ["segment-id-1"],
+    }),
+  },
 );
 
 const result = await response.json();
@@ -165,12 +175,12 @@ console.log(result);
 
 ### Request Parameters
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `subject` | string | Yes | Email subject line |
-| `content` | string | Yes | Newsletter body (supports basic markdown) |
-| `recipientEmails` | string[] | No* | Specific email addresses |
-| `segmentIds` | string[] | No* | Segment IDs to send to |
+| Field             | Type     | Required | Description                               |
+| ----------------- | -------- | -------- | ----------------------------------------- |
+| `subject`         | string   | Yes      | Email subject line                        |
+| `content`         | string   | Yes      | Newsletter body (supports basic markdown) |
+| `recipientEmails` | string[] | No\*     | Specific email addresses                  |
+| `segmentIds`      | string[] | No\*     | Segment IDs to send to                    |
 
 \* At least one of `recipientEmails` or `segmentIds` required
 
@@ -258,11 +268,13 @@ Check it out: [link](https://example.com)
 ```
 
 **Currently supported:**
+
 - `#`, `##`, `###` headings
 - Blank lines (paragraph breaks)
 - Basic text formatting
 
 **Coming soon:**
+
 - Lists, links, bold, italic
 - Images
 - Tables
@@ -283,48 +295,58 @@ Check it out: [link](https://example.com)
 ### Error Responses
 
 **Missing Private Key:**
+
 ```json
 {
   "success": false,
   "message": "Unauthorized: Private key required"
 }
 ```
+
 Status: 401
 
 **No Recipients:**
+
 ```json
 {
   "success": false,
   "message": "No recipients specified"
 }
 ```
+
 Status: 400
 
 **Too Many Recipients:**
+
 ```json
 {
   "success": false,
   "message": "This request resolved to 7000 recipients, which exceeds the 5000 limit per request."
 }
 ```
+
 Status: 400
 
 **Daily Limit Reached:**
+
 ```json
 {
   "success": false,
   "message": "Your newsletter has reached its professional plan limit of 20 newsletter sends per day."
 }
 ```
+
 Status: 429
 
 **Content Moderation Block:**
+
 ```json
 {
   "success": false,
   "message": "This newsletter was blocked by content moderation: spam detected"
 }
 ```
+
 Status: 403
 
 ## Rate Limits
@@ -338,6 +360,7 @@ Status: 403
 ### Daily Send Limits
 
 Limits by plan:
+
 - **Hobby:** 3 newsletter sends/day
 - **Professional:** 20 newsletter sends/day
 - **Business:** 100 newsletter sends/day
@@ -351,6 +374,7 @@ Limits by plan:
 For lists over 5,000 subscribers:
 
 **Option 1: Use segments**
+
 ```javascript
 // Send to all by using empty segmentIds
 {
@@ -361,17 +385,18 @@ For lists over 5,000 subscribers:
 ```
 
 **Option 2: Batch sends**
+
 ```javascript
 // Split into chunks of 5,000
 const batches = chunkArray(subscribers, 5000);
 
 for (const batch of batches) {
   await sendNewsletter({
-    subject: 'Update',
-    content: '...',
-    recipientEmails: batch
+    subject: "Update",
+    content: "...",
+    recipientEmails: batch,
   });
-  
+
   // Small delay between batches
   await sleep(1000);
 }
@@ -380,6 +405,7 @@ for (const batch of batches) {
 ## Content Moderation
 
 All newsletters are automatically scanned for:
+
 - Spam content
 - Phishing attempts
 - Scam language
@@ -391,6 +417,7 @@ All newsletters are automatically scanned for:
 This is an anti-abuse check, not editorial review. Normal promotional content, product announcements, and marketing emails are fine.
 
 **If blocked:**
+
 1. Review your content
 2. Remove any problematic language
 3. Retry
@@ -401,6 +428,7 @@ This is an anti-abuse check, not editorial review. Normal promotional content, p
 ### Send Test Email
 
 **Dashboard:**
+
 1. Compose your newsletter
 2. Click **Send Test**
 3. Enter test email addresses
@@ -409,12 +437,13 @@ This is an anti-abuse check, not editorial review. Normal promotional content, p
 6. Send live when ready
 
 **API:**
+
 ```javascript
 // Send to your test email first
 await sendNewsletter({
-  subject: '[TEST] Your subject',
-  content: 'Your content...',
-  recipientEmails: ['yourtest@email.com']
+  subject: "[TEST] Your subject",
+  content: "Your content...",
+  recipientEmails: ["yourtest@email.com"],
 });
 
 // Review, then send to full list
@@ -440,11 +469,13 @@ Before sending to full list:
 ### Timing
 
 **Best days to send:**
+
 - Tuesday, Wednesday, Thursday (highest engagement)
 - Monday (good for B2B)
 - Weekend (depends on audience)
 
 **Best times:**
+
 - 10-11 AM (start of workday)
 - 2-3 PM (post-lunch)
 - 8-9 PM (evening)
@@ -454,6 +485,7 @@ Before sending to full list:
 ### Frequency
 
 **Common schedules:**
+
 - **Weekly** - Most popular, consistent
 - **Bi-weekly** - Good balance
 - **Monthly** - Risk being forgotten
@@ -466,10 +498,12 @@ Before sending to full list:
 A/B test subject lines:
 
 **Test 1:**
+
 - A: "New React tutorial"
 - B: "The React pattern we use in production"
 
 **Test 2:**
+
 - A: "This week's roundup"
 - B: "5 tools to boost your productivity"
 
@@ -478,6 +512,7 @@ Send each to 10% of list, then send winner to remaining 80%.
 ### Content Guidelines
 
 **Do:**
+
 - ✅ Deliver value upfront
 - ✅ Keep it scannable
 - ✅ One main message
@@ -485,6 +520,7 @@ Send each to 10% of list, then send winner to remaining 80%.
 - ✅ Personable tone
 
 **Don't:**
+
 - ❌ Long walls of text
 - ❌ Multiple competing CTAs
 - ❌ Excessive promotion
@@ -496,11 +532,13 @@ Send each to 10% of list, then send winner to remaining 80%.
 **Send targeted content:**
 
 Instead of:
+
 ```
 Send "Weekly Update" to All Subscribers
 ```
 
 Try:
+
 ```
 Send "React Tips" to React Developers segment
 Send "Design Resources" to Designers segment
@@ -514,6 +552,7 @@ Better relevance = higher engagement.
 ### Newsletter Not Sending
 
 **Check:**
+
 1. Valid API keys
 2. Recipients specified
 3. Within rate limits
@@ -523,6 +562,7 @@ Better relevance = higher engagement.
 ### Low Open Rates
 
 **Possible causes:**
+
 - Subject line not compelling
 - Sending at wrong time
 - Emails going to spam
@@ -530,6 +570,7 @@ Better relevance = higher engagement.
 - Sender reputation problems
 
 **Solutions:**
+
 - Test different subject lines
 - Try different send times
 - Check DNS records
@@ -538,13 +579,15 @@ Better relevance = higher engagement.
 
 ### High Unsubscribe Rate
 
-**If >1%, investigate:**
+**If above 1%, investigate:**
+
 - Content not matching expectations
 - Sending too frequently
 - Poor targeting
 - Not enough value
 
 **Solutions:**
+
 - Survey subscribers
 - Reduce frequency
 - Improve segmentation
@@ -553,6 +596,7 @@ Better relevance = higher engagement.
 ### Emails Going to Spam
 
 See our comprehensive guides:
+
 - [Avoiding Spam Filters](/docs/best-practices/avoid-spam)
 - [Email Deliverability](/docs/best-practices/email-deliverability)
 - [Avoiding Gmail Promotions Tab](/docs/best-practices/avoid-promotions-tab)
@@ -566,28 +610,28 @@ async function sendNewsletter(data, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
     try {
       const response = await fetch(
-        'https://api.penna.dev/api/v1/external/newsletters/send',
+        "https://api.penna.dev/api/v1/external/newsletters/send",
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'x-penna-public-key': process.env.PENNA_PUBLIC_KEY,
-            'x-penna-private-key': process.env.PENNA_PRIVATE_KEY
+            "Content-Type": "application/json",
+            "x-penna-public-key": process.env.PENNA_PUBLIC_KEY,
+            "x-penna-private-key": process.env.PENNA_PRIVATE_KEY,
           },
-          body: JSON.stringify(data)
-        }
+          body: JSON.stringify(data),
+        },
       );
 
       if (response.status === 429) {
         // Rate limited, wait and retry
         const waitTime = Math.pow(2, i) * 1000;
         console.log(`Rate limited, waiting ${waitTime}ms...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
         continue;
       }
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.message);
       }
@@ -614,20 +658,20 @@ def send_newsletter(data, max_retries=3):
         "x-penna-public-key": os.getenv("PENNA_PUBLIC_KEY"),
         "x-penna-private-key": os.getenv("PENNA_PRIVATE_KEY"),
     }
-    
+
     for attempt in range(max_retries):
         try:
             response = requests.post(url, json=data, headers=headers)
-            
+
             if response.status_code == 429:
                 wait_time = 2 ** attempt
                 print(f"Rate limited, waiting {wait_time}s...")
                 time.sleep(wait_time)
                 continue
-                
+
             response.raise_for_status()
             return response.json()
-            
+
         except requests.exceptions.RequestException as e:
             if attempt == max_retries - 1:
                 raise
@@ -638,22 +682,22 @@ def send_newsletter(data, max_retries=3):
 ### Scheduled Sending (Node.js)
 
 ```javascript
-import cron from 'node-cron';
+import cron from "node-cron";
 
 // Send newsletter every Tuesday at 10 AM
-cron.schedule('0 10 * * 2', async () => {
-  console.log('Sending weekly newsletter...');
-  
+cron.schedule("0 10 * * 2", async () => {
+  console.log("Sending weekly newsletter...");
+
   try {
     await sendNewsletter({
-      subject: 'This week\'s highlights',
+      subject: "This week's highlights",
       content: generateWeeklyContent(),
-      segmentIds: []
+      segmentIds: [],
     });
-    
-    console.log('Newsletter sent successfully!');
+
+    console.log("Newsletter sent successfully!");
   } catch (error) {
-    console.error('Failed to send newsletter:', error);
+    console.error("Failed to send newsletter:", error);
     // Alert admin
   }
 });
