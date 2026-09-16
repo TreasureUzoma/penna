@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import Logo from "@workspace/ui/components/logo";
-import { meta } from "@workspace/constants/meta";
 import { ModeToggle } from "./theme-toggle";
 
 export const Footer = () => {
@@ -15,14 +14,14 @@ export const Footer = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-5 md:gap-7 justify-center">
-          <a
-            href={meta.socials.github}
+          <Link
+            href="/contact"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:underline"
           >
-            <span className="hidden md-block">View </span>Source
-          </a>
+            Contact Us
+          </Link>
         </div>
         <div>
           <div className="scale-80">

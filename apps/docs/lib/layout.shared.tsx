@@ -1,11 +1,10 @@
-import { meta } from "@workspace/constants/meta";
-
+import Logo from "@workspace/ui/components/logo";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: meta.name,
+      title: <Logo />,
     },
   };
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import React from "react";
-import { meta } from "@workspace/constants/meta";
+import Logo from "@workspace/ui/components/logo";
 
 export const AuthHeader = () => {
   return (
@@ -8,7 +8,7 @@ export const AuthHeader = () => {
       <div className="flex items-center justify-between w-full max-w-4xl">
         <div>
           <Link href="/" className="font-bold">
-            {meta.name}
+            <Logo />
           </Link>
         </div>
       </div>
