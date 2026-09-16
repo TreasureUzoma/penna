@@ -11,7 +11,7 @@ const Logo = ({ className, showText = true, imageClassName }: LogoProps) => {
   const logoSrc =
     typeof logoImg === "string"
       ? logoImg
-      : (logoImg as { src?: string })?.src || logoImg;
+      : (logoImg as { src?: string })?.src || "";
 
   return (
     <div
