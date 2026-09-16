@@ -80,7 +80,7 @@ export default function AccountDomainsPage() {
     setPendingId(domainId);
     assignDomain(
       { domainId, newsletterId },
-      { onSettled: () => setPendingId(null) }
+      { onSettled: () => setPendingId(null) },
     );
   }
 
@@ -89,8 +89,8 @@ export default function AccountDomainsPage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Domains</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Verify a domain here, then assign it to a newsletter whenever you're
-          ready — or add one straight from a newsletter's Domains tab.
+          Verify your domain, then assign it to a newsletter whenever you're
+          ready.
         </p>
       </div>
 
@@ -148,152 +148,160 @@ export default function AccountDomainsPage() {
             <TableBody>
               {domains.map((domain) => (
                 <Fragment key={domain.id}>
-                <TableRow>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      {domain.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {domain.newsletter ? (
-                      <Link
-                        href={`/newsletters/${domain.newsletter.slug}/domains`}
-                        className="text-muted-foreground hover:text-foreground hover:underline"
-                      >
-                        {domain.newsletter.name}
-                      </Link>
-                    ) : domain.verified ? (
-                      <div className="flex items-center gap-1.5">
-                        <Select
-                          value={assignPicks[domain.id] ?? ""}
-                          onValueChange={(value) =>
-                            setAssignPicks((picks) => ({
-                              ...picks,
-                              [domain.id]: value,
-                            }))
-                          }
-                        >
-                          <SelectTrigger className="h-8 w-[160px]">
-                            <SelectValue placeholder="Assign to…" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {newsletters?.map((newsletter) => (
-                              <SelectItem key={newsletter.id} value={newsletter.id}>
-                                {newsletter.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={
-                            !assignPicks[domain.id] ||
-                            (isAssigning && pendingId === domain.id)
-                          }
-                          onClick={() => handleAssign(domain.id)}
-                        >
-                          {isAssigning && pendingId === domain.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            "Assign"
-                          )}
-                        </Button>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        {domain.name}
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        Unassigned
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        domain.verified
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                          : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
-                      )}
-                    >
-                      {domain.verified ? (
-                        <CheckCircle2 className="w-3 h-3" />
-                      ) : (
-                        <Clock className="w-3 h-3" />
-                      )}
-                      {domain.verified ? "Verified" : "DNS verification pending"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {!domain.verified && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Recheck"
-                          onClick={() => handleVerify(domain.id)}
-                          disabled={isVerifying && pendingId === domain.id}
+                    </TableCell>
+                    <TableCell>
+                      {domain.newsletter ? (
+                        <Link
+                          href={`/newsletters/${domain.newsletter.slug}/domains`}
+                          className="text-muted-foreground hover:text-foreground hover:underline"
                         >
-                          {isVerifying && pendingId === domain.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-4 h-4" />
-                          )}
-                        </Button>
+                          {domain.newsletter.name}
+                        </Link>
+                      ) : domain.verified ? (
+                        <div className="flex items-center gap-1.5">
+                          <Select
+                            value={assignPicks[domain.id] ?? ""}
+                            onValueChange={(value) =>
+                              setAssignPicks((picks) => ({
+                                ...picks,
+                                [domain.id]: value,
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="h-8 w-[160px]">
+                              <SelectValue placeholder="Assign to…" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {newsletters?.map((newsletter) => (
+                                <SelectItem
+                                  key={newsletter.id}
+                                  value={newsletter.id}
+                                >
+                                  {newsletter.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={
+                              !assignPicks[domain.id] ||
+                              (isAssigning && pendingId === domain.id)
+                            }
+                            onClick={() => handleAssign(domain.id)}
+                          >
+                            {isAssigning && pendingId === domain.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              "Assign"
+                            )}
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          Unassigned
+                        </span>
                       )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          domain.verified
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                            : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
+                        )}
+                      >
+                        {domain.verified ? (
+                          <CheckCircle2 className="w-3 h-3" />
+                        ) : (
+                          <Clock className="w-3 h-3" />
+                        )}
+                        {domain.verified
+                          ? "Verified"
+                          : "DNS verification pending"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {!domain.verified && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            disabled={isDeleting}
+                            title="Recheck"
+                            onClick={() => handleVerify(domain.id)}
+                            disabled={isVerifying && pendingId === domain.id}
                           >
-                            <Trash2 className="w-4 h-4 text-destructive" />
+                            {isVerifying && pendingId === domain.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-4 h-4" />
+                            )}
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remove domain</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Remove <strong>{domain.name}</strong>?
-                              {domain.newsletter && (
-                                <>
-                                  {" "}
-                                  Newsletters will go back to sending from the
-                                  shared Penna domain.
-                                </>
-                              )}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteDomain(domain.id)}
-                              className="bg-destructive text-white hover:bg-destructive/90"
+                        )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled={isDeleting}
                             >
-                              Remove
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-                {!domain.verified && domain.dnsRecords.length > 0 && (
-                  <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={4} className="bg-muted/30 p-5">
-                      <div className="max-w-4xl">
-                        <p className="font-medium">Finish verifying {domain.name}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Add all three records at your DNS provider. DNS can take a few minutes to propagate; then use Recheck.
-                        </p>
-                        <div className="mt-4">
-                          <DnsRecordsTable records={domain.dnsRecords} />
-                        </div>
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove domain</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Remove <strong>{domain.name}</strong>?
+                                {domain.newsletter && (
+                                  <>
+                                    {" "}
+                                    Newsletters will go back to sending from the
+                                    shared Penna domain.
+                                  </>
+                                )}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteDomain(domain.id)}
+                                className="bg-destructive text-white hover:bg-destructive/90"
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
-                )}
+                  {!domain.verified && domain.dnsRecords.length > 0 && (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={4} className="bg-muted/30 p-5">
+                        <div className="max-w-4xl">
+                          <p className="font-medium">
+                            Finish verifying {domain.name}
+                          </p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Add all three records at your DNS provider. DNS can
+                            take a few minutes to propagate; then use Recheck.
+                          </p>
+                          <div className="mt-4">
+                            <DnsRecordsTable records={domain.dnsRecords} />
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </Fragment>
               ))}
             </TableBody>
