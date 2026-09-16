@@ -1,0 +1,175 @@
+---
+title: Segmentations & External API
+description: "Target subscriber segments programmatically using Penna's External API."
+---
+
+# Segmentations & External API
+
+Subscriber segments allow you to target specific groups of subscribers with relevant content. When using Penna's External API, you can send newsletters to one or more segments using your API keys.
+
+---
+
+## Architecture Overview
+
+It's important to understand how segment management differs from segment targeting in Penna:
+
+1. **Segment Management (Dashboard / Management API):**
+   Creating segments, defining subscriber criteria, and adding/removing subscribers are managed in the Penna Dashboard or via session-authenticated Management API endpoints.
+
+2. **Segment Targeting (External API):**
+   When sending newsletters programmatically using External API keys (`x-penna-public-key` & `x-penna-private-key`), you reference pre-created segment IDs in the `segmentIds` field of your send request.
+
+---
+
+## Finding Segment IDs
+
+You can find the ID for any segment in the Penna Dashboard:
+
+1. Navigate to **Segments** in the sidebar.
+2. Select a segment to view its details.
+3. Copy the Segment ID (a UUID string, e.g., `b1e2c3d4-5678-90ab-cdef-1234567890ab`) from the segment header or URL.
+
+---
+
+## Sending to Segments
+
+To send a newsletter to specific segments, include their IDs in the `segmentIds` array of the `POST /api/v1/external/newsletters/send` endpoint.
+
+### Endpoint
+
+`POST /api/v1/external/newsletters/send`
+
+### Headers
+
+- `Content-Type: application/json`
+- `x-penna-public-key: <YOUR_PUBLIC_KEY>`
+- `x-penna-private-key: <YOUR_PRIVATE_KEY>`
+
+### Request Body Example
+
+```json
+{
+  "subject": "Exclusive Pro Feature Update",
+  "content": "# Hello Pro Subscribers!\n\nHere is what's new in our latest release...",
+  "segmentIds": [
+    "b1e2c3d4-5678-90ab-cdef-1234567890ab",
+    "f9e8d7c6-5432-10fe-dcba-0987654321ba"
+  ]
+}
+```
+
+---
+
+## Recipient Resolution & Rules
+
+When you specify `segmentIds` in a send call, Penna processes the recipients according to these rules:
+
+### 1. Merging & Deduplication
+If you pass multiple `segmentIds` (or combine `segmentIds` with `recipientEmails`), Penna automatically merges all resolved subscribers and removes duplicates. A subscriber belonging to multiple specified segments will receive **only one email**.
+
+### 2. Subscriber Status Scoping
+Only active, subscribed recipients receive the email. If a subscriber in a segment has unsubscribed or been removed, Penna automatically skips them.
+
+### 3. Per-Request Recipient Cap (5,000 Limit)
+A single send request can resolve to a maximum of **5,000 unique recipients** (`MAX_RECIPIENTS_PER_SEND = 5000`).
+
+- The limit applies to the combined total of individual `recipientEmails` and resolved subscribers across all `segmentIds`.
+- If the total resolved recipients exceed 5,000, the API rejects the request with a `400 Bad Request` status before sending any emails.
+- **Handling Large Audiences:** If your target segment exceeds 5,000 subscribers, split your send across multiple API calls using smaller segments or targeted email batches.
+
+---
+
+## Combining `recipientEmails` and `segmentIds`
+
+You can combine both fields in a single API call to reach a specific list of individual subscribers alongside your segments:
+
+```json
+{
+  "subject": "Weekly Tech Digest",
+  "content": "# Weekly Digest\n\nLatest updates for our community...",
+  "recipientEmails": ["vip-tester@example.com"],
+  "segmentIds": ["b1e2c3d4-5678-90ab-cdef-1234567890ab"]
+}
+```
+
+*Note: At least one recipient must resolve to an active subscriber across `recipientEmails` and `segmentIds`, or the endpoint returns `400 Bad Request` (`"No recipients specified"`).*
+
+---
+
+## Code Examples
+
+### cURL
+
+```bash
+curl -X POST https://api.penna.dev/api/v1/external/newsletters/send \
+  -H "Content-Type: application/json" \
+  -H "x-penna-public-key: penn_your_public_key" \
+  -H "x-penna-private-key: pk_your_private_key" \
+  -d '{
+    "subject": "Product Announcement",
+    "content": "# New Feature Released\n\nCheck out the details below...",
+    "segmentIds": ["b1e2c3d4-5678-90ab-cdef-1234567890ab"]
+  }'
+```
+
+### Node.js (Axios)
+
+```javascript
+const axios = require("axios");
+
+async function sendToSegment() {
+  try {
+    const response = await axios.post(
+      "https://api.penna.dev/api/v1/external/newsletters/send",
+      {
+        subject: "Product Announcement",
+        content: "# New Feature Released\n\nCheck out the details below...",
+        segmentIds: ["b1e2c3d4-5678-90ab-cdef-1234567890ab"],
+      },
+      {
+        headers: {
+          "x-penna-public-key": "penn_your_public_key",
+          "x-penna-private-key": "pk_your_private_key",
+        },
+      }
+    );
+    console.log("Send result:", response.data);
+  } catch (error) {
+    console.error("Failed to send:", error.response?.data || error.message);
+  }
+}
+
+sendToSegment();
+```
+
+### Python (Requests)
+
+```python
+import requests
+
+url = "https://api.penna.dev/api/v1/external/newsletters/send"
+headers = {
+    "Content-Type": "application/json",
+    "x-penna-public-key": "penn_your_public_key",
+    "x-penna-private-key": "pk_your_private_key",
+}
+data = {
+    "subject": "Product Announcement",
+    "content": "# New Feature Released\n\nCheck out the details below...",
+    "segmentIds": ["b1e2c3d4-5678-90ab-cdef-1234567890ab"],
+}
+
+response = requests.post(url, json=data, headers=headers)
+print(response.json())
+```
+
+---
+
+## Error Handling
+
+| Status Code | Error Message | Description |
+| ----------- | ------------- | ----------- |
+| `400` | `"This request resolved to X recipients, which exceeds the 5000 limit per request..."` | Total resolved recipients across segments and emails exceed 5,000. Split the request into smaller calls. |
+| `400` | `"No recipients specified"` | Neither `recipientEmails` nor `segmentIds` resolved to any valid active subscribers. |
+| `401` | `"Unauthorized: Private key required"` | Missing or invalid `x-penna-private-key` header. |
+| `403` | `"Unauthorized: this API key is not scoped for 'newsletter:send'"` | Key lacks the required `newsletter:send` scope. |

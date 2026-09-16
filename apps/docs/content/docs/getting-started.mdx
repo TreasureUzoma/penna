@@ -95,13 +95,13 @@ const response = await fetch(
     body: JSON.stringify({
       subject: "Welcome to my newsletter!",
       content: "# Hello!\n\nThanks for subscribing.",
-      segmentIds: [], // Send to all subscribers
+      segmentIds: ["YOUR_SEGMENT_ID"], // Pass segment IDs or recipientEmails (max 5,000 resolved recipients per request)
     }),
   },
 );
 ```
 
-**Important:** Keep your private key secure! Never expose it in client-side code.
+**Important:** Keep your private key secure! Never expose it in client-side code. Note that single send calls resolve to a maximum of 5,000 recipients (`MAX_RECIPIENTS_PER_SEND = 5000`). See [Send Newsletter API reference](/docs/integrations/send-newsletter) and [Segmentations API](/docs/integrations/segments) for details.
 
 ## Next Steps
 

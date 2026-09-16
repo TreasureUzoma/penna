@@ -3,6 +3,7 @@
   "pages": [
     "create",
     "get",
-    "send-newsletter"
+    "send-newsletter",
+    "segments"
   ]
 }

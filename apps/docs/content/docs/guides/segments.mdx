@@ -28,7 +28,9 @@ Segments are custom groups of subscribers that share common characteristics. Use
 
 Your new segment is created immediately and ready to use.
 
-### Via API
+### Via Dashboard / Management API
+
+*Note: Segment creation and definition management use session token authentication (`Authorization: Bearer <token>`), distinct from External API keys.*
 
 ```javascript
 const response = await fetch(
@@ -223,9 +225,9 @@ When creating a new post:
 
 The email will be sent only to subscribers in the selected segments.
 
-### Via API
+### Via External API
 
-Send to specific segments using the external API:
+Send to specific segments using the External API (`x-penna-public-key` and `x-penna-private-key` headers). Note that single send calls resolve to a maximum of **5,000 unique recipients** (`MAX_RECIPIENTS_PER_SEND = 5000`).
 
 ```javascript
 await fetch("https://api.penna.dev/api/v1/external/newsletters/send", {
@@ -242,6 +244,8 @@ await fetch("https://api.penna.dev/api/v1/external/newsletters/send", {
   }),
 });
 ```
+
+For complete details on segment resolution, recipient deduplication, and limits, see [Segmentations & External API](/docs/integrations/segments).
 
 ### Combining Segments
 

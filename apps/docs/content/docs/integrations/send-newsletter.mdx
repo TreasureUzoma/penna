@@ -28,7 +28,7 @@ This endpoint uses both the Public Key and Private Key for authentication.
 | `subject`         | `string`   | Yes      | The email subject line.                                                                                                                                                  |
 | `content`         | `string`   | Yes      | The newsletter body. Supports a small markdown subset (`#`, `##`, `###`, blank lines) which is converted to basic HTML before sending.                                   |
 | `recipientEmails` | `string[]` | No\*     | Email addresses to send to. **Must belong to actual subscribers of this newsletter** — see [Recipient scoping](#recipient-scoping) below. Max 5,000 entries per request. |
-| `segmentIds`      | `string[]` | No\*     | A list of segment IDs. Subscribers belonging to these segments are resolved and merged with `recipientEmails`.                                                           |
+| `segmentIds`      | `string[]` | No\*     | A list of segment IDs. Subscribers belonging to these segments are resolved, merged, and deduplicated with `recipientEmails`. See [Segmentations & External API](/docs/integrations/segments) for details. |
 
 \* At least one of `recipientEmails` or `segmentIds` must resolve to at least one actual subscriber, or the request fails with `400`.
 
@@ -41,11 +41,21 @@ This endpoint uses both the Public Key and Private Key for authentication.
 }
 ```
 
-## Recipient scoping
+## Recipient Scoping & Per-Request Limit
 
-`recipientEmails` is **not** an open list of arbitrary addresses — every address is checked against this newsletter's subscribed subscribers (via `POST /subscriber/new` or the dashboard), and anything that doesn't match is silently dropped rather than erroring the whole request. The response's `data.skippedNonSubscribers` tells you how many were dropped. Combined with `segmentIds`, the total resolved recipient count (after merging, before scoping) is also capped at 5,000 per request — split larger sends across multiple calls.
+`recipientEmails` is **not** an open list of arbitrary addresses — every address is checked against this newsletter's active subscribers (added via `POST /subscriber/new` or the dashboard). Any address that is not an active subscriber is silently skipped rather than failing the whole request. The response field `data.skippedNonSubscribers` reports how many were dropped.
 
-## Rate limits
+### 5,000 Recipient Per-Request Cap (`MAX_RECIPIENTS_PER_SEND`)
+
+A single API call to `POST /send` can target a maximum of **5,000 unique resolved recipients** (`MAX_RECIPIENTS_PER_SEND = 5000`):
+
+- **Combined Resolution:** This cap applies to the total count of valid unique recipient emails after merging `recipientEmails` and all subscribers from `segmentIds`.
+- **Exceeding the Limit:** If the total resolved recipient count exceeds 5,000, the API returns a `400 Bad Request` status (`"This request resolved to X recipients, which exceeds the 5000 limit per request..."`) and no emails are sent.
+- **Handling Large Sends:** To send to lists larger than 5,000, split your target audience across multiple API requests (e.g. by using smaller segments or batching email arrays of up to 5,000 recipients each).
+
+For an in-depth breakdown of segment targeting, deduplication, and resolution, see [Segmentations & External API](/docs/integrations/segments).
+
+## Rate Limits
 
 Each newsletter has a daily cap on newsletter sends, based on its plan (roughly: hobby 3/day, professional 20/day, business 100/day, enterprise unlimited — see your plan for the exact number). Exceeding it returns `429`. This is separate from the general per-IP rate limit on the `/external/newsletters` API group.
 
