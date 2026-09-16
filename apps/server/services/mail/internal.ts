@@ -25,14 +25,51 @@ export const sendWelcomeEmail = async (name: string, email: string) => {
   return result;
 };
 
+export const sendSubscriberVerificationEmail = async ({
+  email,
+  firstName,
+  newsletterName,
+  verifyUrl,
+}: {
+  email: string;
+  firstName?: string | null;
+  newsletterName: string;
+  verifyUrl: string;
+}) => {
+  const greetingName = firstName?.trim() || "there";
+
+  const html = `
+    <p>hi ${greetingName},</p>
+    <p>please confirm your subscription to <strong>${newsletterName}</strong>.</p>
+    <p><a href="${verifyUrl}">confirm subscription</a></p>
+    <p>if you didn't request this, you can safely ignore this email.</p>
+    <p>— ${meta.name}</p>
+  `;
+
+  const result = await sendSystemEmail({
+    to: email,
+    subject: `Confirm your subscription to ${newsletterName}`,
+    html,
+  });
+
+  if (!result.success) {
+    console.error(
+      "Failed to send subscriber verification email:",
+      result.error,
+    );
+  }
+
+  return result;
+};
+
 export const sendForgottenPasswordEmail = async (
   email: string,
   expiresAt: Date,
-  token: string
+  token: string,
 ) => {
   const resetUrl = `${envConfig.DASHBOARD_SITE}/reset-password?token=${token}`;
   const expiresInMinutes = Math.round(
-    (expiresAt.getTime() - Date.now()) / (60 * 1000)
+    (expiresAt.getTime() - Date.now()) / (60 * 1000),
   );
 
   const html = `
@@ -59,7 +96,7 @@ export const sendNewsletterInviteEmail = async (
   email: string,
   inviterName: string,
   newsletterName: string,
-  role: NewsletterRoles
+  role: NewsletterRoles,
 ) => {
   // No accept-invite page exists in the dashboard yet — this links to the
   // dashboard root and relies on the invitee signing in to see/accept it
@@ -96,7 +133,7 @@ export const sendTeamInviteEmail = async (
   inviterName: string,
   teamName: string,
   role: TeamRoles,
-  token: string
+  token: string,
 ) => {
   const acceptUrl = `${envConfig.DASHBOARD_SITE}/accept-invite?token=${encodeURIComponent(token)}`;
 
@@ -123,7 +160,7 @@ export const sendTeamInviteEmail = async (
 export const sendUnsubscribeCofirmationEmail = async (
   email: string,
   newsletterName: string,
-  confirmUrl: string
+  confirmUrl: string,
 ) => {
   const html = `
     <p>hi,</p>
@@ -142,7 +179,7 @@ export const sendUnsubscribeCofirmationEmail = async (
   if (!result.success) {
     console.error(
       "Failed to send unsubscribe confirmation email:",
-      result.error
+      result.error,
     );
   }
   return result;
@@ -168,7 +205,7 @@ export interface SubscriberLimitWarningOptions {
  * single subscriber added.
  */
 export const sendSubscriberLimitWarningEmail = async (
-  options: SubscriberLimitWarningOptions
+  options: SubscriberLimitWarningOptions,
 ) => {
   const {
     ownerEmail,
@@ -202,7 +239,7 @@ export const sendSubscriberLimitWarningEmail = async (
   if (!result.success) {
     console.error(
       "Failed to send subscriber limit warning email:",
-      result.error
+      result.error,
     );
   }
   return result;

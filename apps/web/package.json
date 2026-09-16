@@ -14,6 +14,7 @@
   "dependencies": {
     "@workspace/constants": "workspace:*",
     "@workspace/ui": "workspace:*",
+    "@workspace/validations": "workspace:*",
     "botid": "^1.5.11",
     "fumadocs-ui": "16.4.2",
     "lucide-react": "^0.475.0",

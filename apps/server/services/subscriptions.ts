@@ -12,12 +12,118 @@ import {
   syncSubscriberLimitWarnings,
   SubscriberLimitError,
 } from "./limits";
+import { sendSubscriberVerificationEmail } from "./mail/internal";
+import { envConfig } from "@/config";
+import { sign } from "hono/jwt";
+
+const getSubscriberFirstName = (name?: string | null) => {
+  const trimmed = name?.trim();
+  if (!trimmed) return "there";
+  return trimmed.split(/\s+/)[0];
+};
+
+const sendVerificationLink = async (
+  newsletterId: string,
+  email: string,
+  name?: string | null,
+) => {
+  const [newsletter] = await db
+    .select({ name: newsletters.name })
+    .from(newsletters)
+    .where(eq(newsletters.id, newsletterId));
+
+  const token = await sign(
+    {
+      newsletterId,
+      email,
+      type: "subscriber-confirmation",
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+    },
+    envConfig.UNSUBSCRIBE_SECRET || "",
+  );
+
+  const confirmUrl = `${envConfig.APP_URL}/subscribe/confirm?token=${encodeURIComponent(token)}`;
+
+  await sendSubscriberVerificationEmail({
+    email,
+    firstName: getSubscriberFirstName(name),
+    newsletterName: newsletter?.name || "this newsletter",
+    verifyUrl: confirmUrl,
+  });
+};
+
+export const confirmNewsletterSubscriber = async (
+  newsletterId: string,
+  email: string,
+): Promise<ServiceResponse> => {
+  const [subscriber] = await db
+    .select()
+    .from(subscribers)
+    .where(
+      and(
+        eq(subscribers.newsletterId, newsletterId),
+        eq(subscribers.email, email),
+      ),
+    );
+
+  if (!subscriber) {
+    return {
+      success: false,
+      message: "Subscriber not found.",
+      data: null,
+    };
+  }
+
+  if (subscriber.status === "subscribed") {
+    return {
+      success: true,
+      message: "This email is already subscribed.",
+      data: subscriber,
+    };
+  }
+
+  if (subscriber.status === "unsubscribed") {
+    return {
+      success: false,
+      message:
+        "This email has been unsubscribed. Re-subscribe to verify again.",
+      data: null,
+    };
+  }
+
+  const [confirmed] = await db
+    .update(subscribers)
+    .set({ status: "subscribed", updatedAt: new Date() })
+    .where(eq(subscribers.id, subscriber.id))
+    .returning();
+
+  return {
+    success: true,
+    message: "Subscription confirmed successfully.",
+    data: confirmed,
+  };
+};
+
+export const getRecentSubscribers = async (newsletterId: string) => {
+  const recent = await db
+    .select()
+    .from(subscribers)
+    .where(eq(subscribers.newsletterId, newsletterId))
+    .orderBy(desc(subscribers.createdAt))
+    .limit(5);
+
+  return {
+    success: true,
+    message: "Fetched recent subscribers successfully",
+    data: recent,
+  };
+};
 
 export const getNewsletterSubscribers = (
   newsletterId: string,
   page = 1,
   limit = 10,
-  status: SubscriberStatus = "subscribed"
+  status: SubscriberStatus = "subscribed",
 ) => {
   const offset = (page - 1) * limit;
 
@@ -25,7 +131,10 @@ export const getNewsletterSubscribers = (
     .select()
     .from(subscribers)
     .where(
-      and(eq(subscribers.newsletterId, newsletterId), eq(subscribers.status, status))
+      and(
+        eq(subscribers.newsletterId, newsletterId),
+        eq(subscribers.status, status),
+      ),
     )
     .limit(limit)
     .offset(offset);
@@ -46,14 +155,10 @@ export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
       .where(
         and(
           eq(subscribers.newsletterId, body.newsletterId),
-          eq(subscribers.email, body.email)
-        )
+          eq(subscribers.email, body.email),
+        ),
       );
 
-    // Keep unsubscribe records for compliance/auditing, but let a subscriber
-    // explicitly opt back in from a public page. A unique row already exists,
-    // so inserting again would otherwise incorrectly report that they are
-    // still subscribed.
     if (existingSubscriber) {
       if (existingSubscriber.status === "subscribed") {
         return {
@@ -63,61 +168,84 @@ export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
         };
       }
 
+      if (existingSubscriber.status === "pending") {
+        await sendVerificationLink(
+          body.newsletterId,
+          body.email,
+          body.name ?? existingSubscriber.name,
+        );
+
+        return {
+          success: true,
+          data: existingSubscriber,
+          message:
+            "Verification email sent again. Check your inbox to confirm.",
+        };
+      }
+
       if (existingSubscriber.status !== "unsubscribed") {
         return {
           success: false,
           data: null,
-          message: "This email cannot be re-subscribed because delivery to it has been suppressed.",
+          message:
+            "This email cannot be re-subscribed because delivery to it has been suppressed.",
         };
       }
 
       const [resubscribed] = await db
         .update(subscribers)
         .set({
-          status: "subscribed",
-          ...(body.name !== undefined ? { name: body.name } : {}),
+          status: "pending",
+          name: body.name ?? existingSubscriber.name,
+          updatedAt: new Date(),
         })
         .where(eq(subscribers.id, existingSubscriber.id))
         .returning();
 
+      await sendVerificationLink(
+        body.newsletterId,
+        body.email,
+        body.name ?? existingSubscriber.name,
+      );
+
       return {
         success: true,
         data: resubscribed,
-        message: "Subscription restored successfully.",
+        message: "Verification email sent. Check your inbox to confirm.",
       };
     }
 
     const usage = await assertSubscriberCapacity(body.newsletterId);
 
-    const subscriber = await db
+    const [subscriber] = await db
       .insert(subscribers)
       .values({
         name: body?.name ?? null,
         email: body.email,
         newsletterId: body.newsletterId,
+        status: "pending",
       })
       .returning();
 
-    void syncSubscriberLimitWarnings({ ...usage, count: usage.count + 1 });
+    void syncSubscriberLimitWarnings({ ...usage, count: usage.count });
+
+    await sendVerificationLink(
+      body.newsletterId,
+      body.email,
+      body.name ?? null,
+    );
 
     return {
       success: true,
       data: subscriber,
-      message: "Created subscriber successfully.",
+      message:
+        "Verification email sent. Check your inbox to confirm your subscription.",
     };
   } catch (err) {
     if (err instanceof SubscriberLimitError) {
       return { success: false, data: null, message: err.message };
     }
 
-    // Duplicate email for this newsletter trips the
-    // subscribers_newsletter_email_idx unique constraint — surface a
-    // friendly message instead of the raw SQL error (which otherwise leaks
-    // table/column names and query params to callers of the public API).
-    // Drizzle wraps the driver error in a DrizzleQueryError whose own
-    // `.message` is just "Failed query: ...\nparams: ..." — the real
-    // Postgres error (code 23505, "duplicate key value violates unique
-    // constraint ...") lives on `.cause`, so check both.
     const cause = (err as { cause?: { code?: string; message?: string } })
       ?.cause;
     const isDuplicate =
@@ -143,13 +271,16 @@ export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
 
 export const removeNewsletterSubscriber = async (
   newsletterId: string,
-  email: string
+  email: string,
 ) => {
   try {
     await db
       .delete(subscribers)
       .where(
-        and(eq(subscribers.newsletterId, newsletterId), eq(subscribers.email, email))
+        and(
+          eq(subscribers.newsletterId, newsletterId),
+          eq(subscribers.email, email),
+        ),
       );
 
     return {
@@ -167,14 +298,17 @@ export const removeNewsletterSubscriber = async (
 };
 
 export const getNewsletterSubscriberExistence = async (
-  body: UnsubscribeRequest
+  body: UnsubscribeRequest,
 ): Promise<ServiceResponse> => {
   const { newsletterId, email } = body;
   const [subscriber] = await db
     .select()
     .from(subscribers)
     .where(
-      and(eq(subscribers.newsletterId, newsletterId), eq(subscribers.email, email))
+      and(
+        eq(subscribers.newsletterId, newsletterId),
+        eq(subscribers.email, email),
+      ),
     );
 
   if (!subscriber)
@@ -206,8 +340,8 @@ export const confirmUnsubscribe = async (body: UnsubscribeRequest) => {
       .where(
         and(
           eq(subscribers.newsletterId, body.newsletterId),
-          eq(subscribers.email, body.email)
-        )
+          eq(subscribers.email, body.email),
+        ),
       );
 
     const [newsletter] = await db
@@ -217,51 +351,14 @@ export const confirmUnsubscribe = async (body: UnsubscribeRequest) => {
 
     return {
       success: true,
-      data: {
-        newsletterName: newsletter?.name ?? null,
-      },
-      message: "Subscribed sucessfully",
+      data: { newsletterName: newsletter?.name ?? null },
+      message: "Unsubscribed successfully",
     };
   } catch (err) {
     return {
       success: false,
       data: null,
-      message:
-        err instanceof Error
-          ? err.message
-          : "Failed to unsubscribe from newsletter.",
-    };
-  }
-};
-
-export const getRecentSubscribers = async (newsletterId: string, limit = 5) => {
-  try {
-    const recentSubscribers = await db
-      .select({
-        id: subscribers.id,
-        email: subscribers.email,
-        name: subscribers.name,
-        status: subscribers.status,
-        createdAt: subscribers.createdAt,
-      })
-      .from(subscribers)
-      .where(eq(subscribers.newsletterId, newsletterId))
-      .orderBy(desc(subscribers.createdAt))
-      .limit(limit);
-
-    return {
-      success: true,
-      data: recentSubscribers,
-      message: "Fetched recent subscribers successfully",
-    };
-  } catch (err) {
-    return {
-      success: false,
-      data: null,
-      message:
-        err instanceof Error
-          ? err.message
-          : "Something went wrong fetching recent subscribers",
+      message: "Failed to unsubscribe",
     };
   }
 };

@@ -327,8 +327,25 @@ export type UnsubscribeRequest = z.infer<
 >;
 
 export const createNewsletterSubscriberSchema = z.object({
-  name: z.string().min(2).max(40).optional().or(z.literal("")),
-  email: z.string().email(),
+  name: z
+    .string()
+    .min(2, "Enter a valid name")
+    .max(40, "Name must be 40 characters or less")
+    .optional()
+    .or(z.literal("")),
+  email: z
+    .string()
+    .transform((val) => {
+      const parts = val.trim().split("@");
+      if (parts.length !== 2) return val;
+
+      const [local, domain] = parts;
+      if (!local || !domain) return val;
+
+      const cleanLocal = local.split("+")[0];
+      return `${cleanLocal || local}@${domain}`;
+    })
+    .pipe(z.string().email("Enter a valid email")),
   newsletterId: z.string().min(1),
 });
 

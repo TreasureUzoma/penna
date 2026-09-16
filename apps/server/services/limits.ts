@@ -102,7 +102,12 @@ export const getNewsletterSubscriberUsage = async (
   const [subscriberStats] = await db
     .select({ value: count() })
     .from(subscribers)
-    .where(eq(subscribers.newsletterId, newsletterId));
+    .where(
+      and(
+        eq(subscribers.newsletterId, newsletterId),
+        eq(subscribers.status, "subscribed"),
+      ),
+    );
   const subscriberCount = subscriberStats?.value ?? 0;
 
   return {

@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { subscribers } from "@workspace/db/schema";
+import { newsletters, subscribers } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { paginate } from "@/utils/pagination";
@@ -10,11 +10,52 @@ import {
   syncSubscriberLimitWarnings,
   SubscriberLimitError,
 } from "./limits";
+import { sendSubscriberVerificationEmail } from "./mail/internal";
+import { envConfig } from "@/config";
+import { sign } from "hono/jwt";
+
+const getSubscriberFirstName = (name?: string | null) => {
+  const trimmed = name?.trim();
+  if (!trimmed) return "there";
+  return trimmed.split(/\s+/)[0];
+};
+
+const sendVerificationLink = async (
+  newsletterId: string,
+  email: string,
+  name?: string | null,
+) => {
+  const [newsletter] = await db
+    .select({ name: newsletters.name })
+    .from(newsletters)
+    .where(eq(newsletters.id, newsletterId));
+
+  const token = await sign(
+    {
+      newsletterId,
+      email,
+      type: "subscriber-confirmation",
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+    },
+    envConfig.UNSUBSCRIBE_SECRET || "",
+  );
+
+  const confirmUrl = `${envConfig.API_URL}/api/v1/public/newsletters/verify/${encodeURIComponent(
+    token,
+  )}`;
+
+  await sendSubscriberVerificationEmail({
+    email,
+    firstName: getSubscriberFirstName(name),
+    newsletterName: newsletter?.name || "this newsletter",
+    verifyUrl: confirmUrl,
+  });
+};
 
 export const getSubscribers = async (
   newsletterId: string,
   page = 1,
-  limit = 10
+  limit = 10,
 ): Promise<ServiceResponse> => {
   try {
     const offset = (page - 1) * limit;
@@ -54,17 +95,67 @@ export const getSubscribers = async (
 export const createSubscriber = async (
   newsletterId: string,
   email: string,
-  name?: string
+  name?: string,
 ): Promise<ServiceResponse> => {
   try {
     const [existingSubscriber] = await db
       .select()
       .from(subscribers)
       .where(
-        and(eq(subscribers.newsletterId, newsletterId), eq(subscribers.email, email))
+        and(
+          eq(subscribers.newsletterId, newsletterId),
+          eq(subscribers.email, email),
+        ),
       );
 
     if (existingSubscriber) {
+      if (existingSubscriber.status === "pending") {
+        await sendVerificationLink(
+          newsletterId,
+          email,
+          name ?? existingSubscriber.name,
+        );
+        return {
+          success: true,
+          message:
+            "Verification email sent again. Check your inbox to confirm.",
+          data: existingSubscriber,
+        };
+      }
+
+      if (existingSubscriber.status === "subscribed") {
+        return {
+          success: false,
+          message:
+            "Subscriber with this email already exists in the newsletter",
+          data: null,
+        };
+      }
+
+      if (existingSubscriber.status === "unsubscribed") {
+        const [resubscribed] = await db
+          .update(subscribers)
+          .set({
+            status: "pending",
+            name: name ?? existingSubscriber.name,
+            updatedAt: new Date(),
+          })
+          .where(eq(subscribers.id, existingSubscriber.id))
+          .returning();
+
+        await sendVerificationLink(
+          newsletterId,
+          email,
+          name ?? existingSubscriber.name,
+        );
+
+        return {
+          success: true,
+          message: "Verification email sent. Check your inbox to confirm.",
+          data: resubscribed,
+        };
+      }
+
       return {
         success: false,
         message: "Subscriber with this email already exists in the newsletter",
@@ -80,15 +171,17 @@ export const createSubscriber = async (
         newsletterId,
         email,
         name,
-        status: "subscribed",
+        status: "pending",
       })
       .returning();
 
-    void syncSubscriberLimitWarnings({ ...usage, count: usage.count + 1 });
+    void syncSubscriberLimitWarnings({ ...usage, count: usage.count });
+
+    await sendVerificationLink(newsletterId, email, name);
 
     return {
       success: true,
-      message: "Subscriber created successfully",
+      message: "Verification email sent. Check your inbox to confirm.",
       data: newSubscriber,
     };
   } catch (err) {
@@ -111,7 +204,7 @@ const MAX_IMPORT_ROWS = 10_000;
 
 export const importSubscribersFromCsv = async (
   newsletterId: string,
-  csvContent: string
+  csvContent: string,
 ): Promise<ServiceResponse> => {
   try {
     let rows: Record<string, string>[];
@@ -206,7 +299,7 @@ export const importSubscribersFromCsv = async (
           email: row.email,
           name: row.name,
           status: "subscribed" as const,
-        }))
+        })),
       )
       .onConflictDoNothing({
         target: [subscribers.newsletterId, subscribers.email],
@@ -252,7 +345,7 @@ export const importSubscribersFromCsv = async (
  * sends, not UI listing.
  */
 export const getSubscribedEmails = async (
-  newsletterId: string
+  newsletterId: string,
 ): Promise<string[]> => {
   const rows = await db
     .select({ email: subscribers.email })
@@ -260,8 +353,8 @@ export const getSubscribedEmails = async (
     .where(
       and(
         eq(subscribers.newsletterId, newsletterId),
-        eq(subscribers.status, "subscribed")
-      )
+        eq(subscribers.status, "subscribed"),
+      ),
     );
 
   return rows.map((r) => r.email);
@@ -275,7 +368,7 @@ export const getSubscribedEmails = async (
  */
 export const getSubscribedEmailsFromList = async (
   newsletterId: string,
-  emails: string[]
+  emails: string[],
 ): Promise<string[]> => {
   if (emails.length === 0) return [];
 
@@ -286,8 +379,8 @@ export const getSubscribedEmailsFromList = async (
       and(
         eq(subscribers.newsletterId, newsletterId),
         eq(subscribers.status, "subscribed"),
-        inArray(subscribers.email, emails)
-      )
+        inArray(subscribers.email, emails),
+      ),
     );
 
   return rows.map((r) => r.email);
@@ -295,7 +388,7 @@ export const getSubscribedEmailsFromList = async (
 
 export const deleteSubscriber = async (
   newsletterId: string,
-  subscriberId: string
+  subscriberId: string,
 ): Promise<ServiceResponse> => {
   try {
     const [deletedSubscriber] = await db
@@ -303,8 +396,8 @@ export const deleteSubscriber = async (
       .where(
         and(
           eq(subscribers.newsletterId, newsletterId),
-          eq(subscribers.id, subscriberId)
-        )
+          eq(subscribers.id, subscriberId),
+        ),
       )
       .returning();
 

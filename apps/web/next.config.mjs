@@ -31,6 +31,7 @@ const nextConfig = {
       "billings/:path+",
       "domains",
       "domains/:path+",
+      "subscribe/confirm",
     ];
 
     const staticRoutes = [
