@@ -187,7 +187,7 @@ publicNewslettersRoute.post(
   "/:slug/subscribe",
   // Tighter than the route-level limit above (60/min) — this one writes,
   // and is the one worth throttling harder against spam-subscribing.
-  rateLimiter(60 * 60 * 1000, 13),
+  rateLimiter(60 * 60 * 1000, 3),
   zValidator("param", slugParam, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),

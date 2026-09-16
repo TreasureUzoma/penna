@@ -1,0 +1,235 @@
+---
+title: Team Collaboration
+description: "Invite team members and manage permissions (Coming Soon)"
+---
+
+# Team Collaboration
+
+> [!NOTE]
+> Team collaboration features are coming soon! This guide will be updated when team features become available.
+
+## What's Coming
+
+Penna will support multi-user collaboration, making it easy for teams to work together on newsletters.
+
+### Planned Features
+
+**Team Management:**
+- Invite team members by email
+- Manage user roles and permissions
+- Track team member activity
+- Remove or update access
+
+**Roles & Permissions:**
+- **Owner** - Full access, billing, team management
+- **Admin** - Manage content, subscribers, settings
+- **Editor** - Create and send newsletters
+- **Viewer** - Read-only access to analytics
+
+**Collaboration Tools:**
+- Draft newsletters with team review
+- Comment and feedback system
+- Approval workflows
+- Activity logs and audit trails
+
+## Current Workaround
+
+While team features are in development, you can share access by:
+
+### Option 1: Shared Account
+
+**Pros:**
+- Everyone can access immediately
+- Simple setup
+
+**Cons:**
+- No individual permissions
+- Harder to track who did what
+- Security concerns
+
+**Best practices:**
+- Use strong password
+- Enable 2FA
+- Keep credentials secure
+- Document who has access
+
+### Option 2: API Key Sharing
+
+For developers on your team:
+
+**Share safely:**
+- Use environment variables
+- Never commit keys to git
+- Rotate keys if compromised
+- Document key usage
+
+**Example secure sharing:**
+```bash
+# Add to team's shared secrets manager
+PENNA_PUBLIC_KEY=penn_xxx
+PENNA_PRIVATE_KEY=pk_xxx
+
+# Reference in code
+const publicKey = process.env.PENNA_PUBLIC_KEY;
+```
+
+### Option 3: External Collaboration
+
+For external contributors:
+
+**Workflow:**
+- Draft content in Google Docs or Notion
+- Review and approve externally
+- Newsletter owner copies to Penna
+- Send through dashboard or API
+
+## Preparing for Team Features
+
+**Best practices to implement now:**
+
+1. **Document processes** - Write down your workflow
+2. **Clear responsibilities** - Who does what?
+3. **Style guide** - Consistent voice and formatting
+4. **Approval process** - How do drafts get approved?
+5. **Emergency contacts** - Who can access if needed?
+
+### Content Workflow Template
+
+```
+1. Content Planning (Team discussion)
+   ↓
+2. Draft Creation (Editor)
+   ↓
+3. Review (Team feedback)
+   ↓
+4. Revisions (Editor)
+   ↓
+5. Final Approval (Admin/Owner)
+   ↓
+6. Send (Editor/Admin)
+   ↓
+7. Post-Send Review (Team)
+```
+
+### Style Guide Checklist
+
+Document these for consistency:
+
+✅ Tone and voice  
+✅ Formatting standards  
+✅ Subject line format  
+✅ Greeting style  
+✅ Sign-off style  
+✅ Link handling  
+✅ Image guidelines  
+✅ Brand compliance
+
+## Security Best Practices
+
+**Until team features launch:**
+
+**Do:**
+- ✅ Use password manager for shared credentials
+- ✅ Enable 2FA on the account
+- ✅ Rotate passwords quarterly
+- ✅ Document who has access
+- ✅ Remove access when team members leave
+
+**Don't:**
+- ❌ Share passwords via Slack/email
+- ❌ Use same password for multiple services
+- ❌ Share private API keys publicly
+- ❌ Leave credentials in code repositories
+
+## Team Communication
+
+**Recommended tools while team features are in development:**
+
+**For content collaboration:**
+- Google Docs
+- Notion
+- Dropbox Paper
+- Confluence
+
+**For approvals:**
+- Slack workflows
+- Email threads
+- Project management tools (Asana, Trello)
+
+**For analytics sharing:**
+- Shared spreadsheets
+- Regular team sync meetings
+- Dashboard screenshots in Slack
+
+## When Team Features Launch
+
+**You'll be able to:**
+
+**Invite team members:**
+1. Go to Settings → Team
+2. Click "Invite Member"
+3. Enter email and select role
+4. Send invitation
+5. Member accepts and gains access
+
+**Manage permissions:**
+- Update roles anytime
+- Temporarily suspend access
+- Remove members
+- Transfer ownership
+
+**Track activity:**
+- See who sent what
+- View edit history
+- Audit logs
+- Activity notifications
+
+## Common Team Scenarios
+
+### Small Team (2-3 people)
+
+**Recommended setup:**
+- 1 Owner (handles billing, strategy)
+- 1-2 Editors (create and send content)
+
+**Workflow:**
+- Editors draft in shared doc
+- Quick review in Slack
+- Editor sends via Penna
+
+### Medium Team (4-10 people)
+
+**Recommended setup:**
+- 1 Owner
+- 1-2 Admins (manage subscribers, settings)
+- 2-5 Editors (content creation)
+- 1-2 Viewers (analytics, reporting)
+
+**Workflow:**
+- Structured approval process
+- Regular content calendar
+- Weekly analytics review
+
+### Agency/Multi-Client
+
+**Recommended setup (per client):**
+- Separate Penna account per client
+- Agency team members as admins/editors
+- Client stakeholder as viewer
+
+**Workflow:**
+- Client provides content
+- Agency drafts in Penna
+- Client reviews and approves
+- Agency sends
+
+## Resources
+
+- [Dashboard Overview](/docs/guides/dashboard-overview)
+- [Managing Subscribers](/docs/guides/managing-subscribers)
+- [Compose and Send](/docs/guides/compose-send)
+
+---
+
+> [!TIP]
+> Even with a shared account, document your processes now. When team features launch, you'll have a smooth transition and clear workflows already in place.

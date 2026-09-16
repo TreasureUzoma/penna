@@ -1,0 +1,461 @@
+---
+title: How to Avoid Spam Folders
+description: "Proven strategies to ensure your newsletters reach the inbox, not spam"
+---
+
+# How to Avoid Spam Folders
+
+Getting your newsletters into the inbox instead of spam is crucial for engagement. This guide covers proven strategies to maximize deliverability.
+
+## Why Emails Go to Spam
+
+Spam filters evaluate multiple factors:
+
+1. **Sender reputation** - Your domain and IP reputation
+2. **Authentication** - SPF, DKIM, DMARC records
+3. **Content quality** - Spam trigger words and patterns
+4. **Engagement** - How recipients interact with your emails
+5. **Infrastructure** - Proper email server configuration
+6. **List quality** - Bounce rates and spam complaints
+
+## Technical Setup (Critical)
+
+### 1. Verify Your Domain
+
+Custom domains have much better deliverability than generic ones:
+
+✅ **Good:** newsletters@yourdomain.com  
+❌ **Bad:** Using only Penna's shared sending domain
+
+**Setup:**
+1. Go to **Settings** → **Domain**
+2. Add your custom domain
+3. Add DNS records provided by Penna
+4. Wait for verification (usually 24-48 hours)
+
+### 2. Configure SPF Record
+
+SPF (Sender Policy Framework) tells email servers which IPs can send from your domain.
+
+Add this TXT record to your DNS:
+
+```
+v=spf1 include:_spf.penna.dev ~all
+```
+
+**Where:** Your domain DNS settings  
+**Type:** TXT  
+**Name:** @ (or your domain)  
+**Value:** v=spf1 include:_spf.penna.dev ~all
+
+### 3. Set Up DKIM
+
+DKIM (DomainKeys Identified Mail) digitally signs your emails to prove authenticity.
+
+Penna automatically generates DKIM keys. You just need to add the record:
+
+1. Go to **Settings** → **Domain** → **DNS Records**
+2. Copy the DKIM record provided
+3. Add to your DNS as TXT record
+4. Wait for verification
+
+### 4. Enable DMARC
+
+DMARC tells email servers what to do if SPF/DKIM checks fail.
+
+Add this TXT record:
+
+```
+v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
+```
+
+**Where:** _dmarc.yourdomain.com  
+**Type:** TXT  
+**Value:** v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
+
+### 5. Set Up rDNS (Reverse DNS)
+
+Penna handles this automatically, but verify it's configured correctly.
+
+## Content Best Practices
+
+### Avoid Spam Trigger Words
+
+These words and phrases commonly trigger spam filters:
+
+❌ **Urgency/Pressure:**
+- "Act now"
+- "Limited time"
+- "Urgent"
+- "Don't wait"
+- "Once in a lifetime"
+
+❌ **Money/Free stuff:**
+- "Make money fast"
+- "Get paid"
+- "Cash bonus"
+- "Free money"
+- "Prize"
+
+❌ **Excessive claims:**
+- "100% free"
+- "Guaranteed"
+- "No risk"
+- "No obligation"
+- "You won't believe"
+
+❌ **Deceptive:**
+- "Not spam"
+- "This isn't junk"
+- "Not a scam"
+
+### Instead, Use:
+
+✅ Descriptive, honest language  
+✅ Specific value propositions  
+✅ Professional tone  
+✅ Clear, straightforward messaging
+
+### Subject Line Guidelines
+
+**Do:**
+- Keep under 50 characters
+- Be specific and relevant
+- Use personalization sparingly
+- Test different approaches
+
+**Don't:**
+- Use all caps
+- Overuse exclamation marks (!!!)
+- Use excessive emoji 🎉🎉🎉
+- Mislead about content
+
+**Examples:**
+
+❌ "FREE MONEY NOW!!! Open immediately 💰💰💰"  
+✅ "Your weekly development newsletter"
+
+❌ "RE: Your account (urgent action required)"  
+✅ "New features in our January update"
+
+### Email Content Structure
+
+**Good structure:**
+
+```
+Subject: Weekly Product Updates
+
+Hi [Name],
+
+Here's what's new this week:
+
+1. New feature: Dark mode
+2. Bug fixes in the editor
+3. Performance improvements
+
+[Read full changelog]
+
+Thanks,
+The Team
+
+---
+Unsubscribe | Update preferences
+```
+
+**Key elements:**
+- Clear from name and address
+- Personalization (optional, don't overdo)
+- Valuable content upfront
+- Clear call-to-action
+- Unsubscribe link (required)
+
+### Formatting Tips
+
+✅ **Use plain text or simple HTML** - Overly complex HTML triggers filters  
+✅ **Balance text and images** - 80% text, 20% images is a good ratio  
+✅ **Include alt text for images** - Helps accessibility and deliverability  
+✅ **Avoid large attachments** - Link to files instead  
+✅ **Test before sending** - Preview in multiple email clients
+
+❌ **Don't use:**
+- All images, no text
+- Excessive colors
+- Invisible text (white on white)
+- Misleading formatting
+- Forms in emails
+
+## List Management
+
+### 1. Only Email Subscribers
+
+**Never:**
+- Buy email lists
+- Scrape emails from websites
+- Add people without permission
+- Import contacts from other services without consent
+
+**Always:**
+- Use double opt-in (recommended)
+- Get explicit consent
+- Document how they subscribed
+- Make unsubscribe easy
+
+### 2. Monitor Engagement
+
+Spam filters track:
+- Open rates
+- Click rates
+- Reply rates
+- Delete rates
+- Spam complaints
+
+**Low engagement signals spam.** Keep your list engaged:
+
+- Send valuable content
+- Maintain consistent schedule
+- Remove inactive subscribers
+- Segment your audience
+
+### 3. Clean Your List Regularly
+
+Remove or suppress:
+- **Hard bounces** - Invalid email addresses
+- **Repeated soft bounces** - Temporary issues that persist
+- **Unsubscribes** - Respect opt-outs immediately
+- **Spam complaints** - Never email again
+- **Inactive users** - No opens/clicks in 6+ months (optional)
+
+### 4. Handle Bounces
+
+Penna automatically manages bounces, but you should:
+
+1. Monitor bounce rate (keep below 2%)
+2. Investigate high bounce rates
+3. Remove invalid emails quickly
+4. Never retry hard bounces
+
+## Sending Practices
+
+### Warm Up Your Domain (New Senders)
+
+If you're sending from a new domain:
+
+**Week 1:** Send to 50-100 most engaged subscribers  
+**Week 2:** Double the volume  
+**Week 3:** Double again  
+**Week 4:** Continue gradual increase
+
+This builds sender reputation slowly.
+
+### Maintain Consistent Volume
+
+Sudden volume spikes trigger spam filters.
+
+❌ **Don't:**
+- Go from 100 to 10,000 emails overnight
+- Skip months then send massive blast
+- Send irregularly
+
+✅ **Do:**
+- Maintain steady sending schedule
+- Gradually increase volume
+- Send consistently
+
+### Optimal Sending Frequency
+
+There's no perfect frequency, but:
+
+- **Too often:** Annoys subscribers, increases unsubscribes
+- **Too rare:** Subscribers forget they signed up, mark as spam
+
+**Recommended:**
+- Weekly for most newsletters
+- 2-3x week for news/updates
+- Daily only for time-sensitive content
+
+**Test and adjust based on:**
+- Unsubscribe rate
+- Engagement metrics
+- Industry standards
+
+### Best Time to Send
+
+Varies by audience, but generally:
+
+**Best days:** Tuesday, Wednesday, Thursday  
+**Best times:** 
+- 10 AM - 11 AM (workday start)
+- 2 PM - 3 PM (post-lunch)
+- 8 PM - 9 PM (evening)
+
+**Test different times and track engagement.**
+
+## Engagement Strategies
+
+### 1. Encourage Interaction
+
+Higher engagement = better deliverability.
+
+**Ask subscribers to:**
+- Reply to your emails
+- Click links in content
+- Forward to friends
+- Add you to contacts/address book
+- Mark as "not spam" if in spam folder
+
+### 2. Write Compelling Subject Lines
+
+Subject lines that get opens:
+- Create curiosity without clickbait
+- Promise clear value
+- Use numbers and lists
+- Keep it short
+- A/B test different approaches
+
+### 3. Provide Value Consistently
+
+Every email should give value:
+- Educational content
+- Exclusive insights
+- Useful resources
+- Early access
+- Special offers (not every email)
+
+### 4. Make Content Scannable
+
+Most people skim emails:
+- Use short paragraphs
+- Add subheadings
+- Include bullet points
+- Highlight key points
+- Clear call-to-action
+
+## Monitoring & Testing
+
+### Track Key Metrics
+
+Monitor these in your dashboard:
+
+- **Delivery rate** - % successfully delivered (should be >98%)
+- **Bounce rate** - % bounced (should be <2%)
+- **Spam complaint rate** - % marked as spam (should be <0.1%)
+- **Open rate** - % opened (varies by industry, 15-25% is typical)
+- **Click rate** - % clicked (2-5% is common)
+- **Unsubscribe rate** - % unsubscribed (should be <0.5%)
+
+### Warning Signs
+
+Take action if you see:
+
+🚨 **Delivery rate drops below 95%**
+- Check DNS records
+- Review content for spam triggers
+- Verify domain reputation
+
+🚨 **Spam complaints above 0.1%**
+- Review your signup process
+- Ensure clear expectations
+- Improve content quality
+
+🚨 **Unsubscribe rate above 1%**
+- Content may not match expectations
+- Sending too frequently
+- Poor targeting
+
+### Test Before Sending
+
+1. **Send test emails** - Check formatting and links
+2. **Test multiple clients** - Gmail, Outlook, Apple Mail
+3. **Check spam score** - Use tools like Mail-Tester
+4. **Preview on mobile** - Most emails are opened on mobile
+
+## Troubleshooting Spam Issues
+
+### If Your Emails Are Going to Spam
+
+**Immediate actions:**
+
+1. **Check DNS records** - Verify SPF, DKIM, DMARC are correct
+2. **Review recent content** - Look for spam triggers
+3. **Check sender reputation** - Use tools like SenderScore
+4. **Reduce sending volume** - Temporarily slow down
+5. **Contact support** - Penna can help investigate
+
+**Long-term fixes:**
+
+1. **Clean your list** - Remove inactive and invalid addresses
+2. **Improve engagement** - Send better content
+3. **Segment better** - More targeted sends
+4. **Consistent schedule** - Regular, predictable sends
+5. **Build reputation** - Takes time, stay consistent
+
+### Recovery Plan
+
+If your domain is flagged:
+
+1. **Stop sending immediately**
+2. **Identify the issue** - Content, list quality, complaints?
+3. **Fix the root cause**
+4. **Clean your list thoroughly**
+5. **Request delisting** - If on blocklists
+6. **Restart slowly** - Warm up again like new domain
+7. **Monitor closely** - Watch metrics daily
+
+## Advanced Tips
+
+### 1. Segment for Better Engagement
+
+Send targeted content to engaged segments:
+- Recent signups
+- Active readers
+- Specific interests
+- Geographic regions
+
+### 2. Re-engagement Campaigns
+
+For inactive subscribers:
+1. Send "Are you still interested?" email
+2. Offer to update preferences
+3. Remove if no response
+
+### 3. Use Plain Text Versions
+
+Some users prefer plain text. Always include:
+- Simple formatting
+- Clear links
+- Minimal styling
+
+### 4. Authenticate Your "From" Address
+
+Use an email address at your domain:
+- ✅ newsletter@yourdomain.com
+- ❌ noreply@penna.dev
+
+### 5. Include Physical Address
+
+Many countries require a physical address in commercial emails. Add yours in the footer.
+
+## Checklist: Before Every Send
+
+✅ DNS records verified (SPF, DKIM, DMARC)  
+✅ Custom domain configured  
+✅ Subject line under 50 chars, no spam words  
+✅ Content provides clear value  
+✅ Text-to-image ratio is good (80/20)  
+✅ Unsubscribe link included  
+✅ Tested in multiple email clients  
+✅ Links all work  
+✅ Sent to engaged segment  
+✅ Sending volume is consistent with history
+
+## Resources
+
+- [Email Deliverability Guide](/docs/best-practices/email-deliverability)
+- [DNS Configuration](/docs/guides/custom-domain)
+- [Writing Effective Newsletters](/docs/best-practices/writing-effective-newsletters)
+- [List Hygiene](/docs/best-practices/list-hygiene)
+
+---
+
+> [!NOTE]
+> Deliverability is an ongoing process, not a one-time setup. Stay consistent, monitor metrics, and continuously improve your content and practices.

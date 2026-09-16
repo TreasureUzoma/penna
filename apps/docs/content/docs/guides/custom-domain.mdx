@@ -1,0 +1,440 @@
+---
+title: Setting Up a Custom Domain
+description: "Configure your own domain for better deliverability and professional branding"
+---
+
+# Setting Up a Custom Domain
+
+Using a custom domain dramatically improves email deliverability and creates a professional sender identity. This guide walks you through the setup process.
+
+## Why Use a Custom Domain?
+
+**Benefits:**
+- ✅ **Better deliverability** - Own your sender reputation
+- ✅ **Professional branding** - Emails from your@yourdomain.com
+- ✅ **Trust signals** - Recipients recognize your brand
+- ✅ **Full control** - Not affected by shared sending infrastructure
+- ✅ **Analytics** - Track domain-specific metrics
+
+**vs. Shared sending domain:**
+- ❌ Shared reputation with other senders
+- ❌ Generic sender address
+- ❌ Lower trust from recipients
+- ❌ Less control over deliverability
+
+## Prerequisites
+
+Before starting, you need:
+- A registered domain (e.g., yourdomain.com)
+- Access to your domain's DNS settings
+- Admin access to Penna dashboard
+
+## Step 1: Add Domain in Penna
+
+1. Log into your Penna dashboard
+2. Go to **Settings** → **Domain**
+3. Click **"Add Custom Domain"**
+4. Enter your domain (e.g., `yourdomain.com`)
+5. Click **"Add Domain"**
+
+Penna will generate the DNS records you need to add.
+
+## Step 2: Configure DNS Records
+
+You'll need to add several DNS records to verify ownership and enable email sending.
+
+### SPF Record
+
+**What it does:** Authorizes Penna to send emails from your domain
+
+**Record details:**
+```
+Type: TXT
+Name: @ (or your root domain)
+Value: v=spf1 include:_spf.penna.dev ~all
+```
+
+**If you already have an SPF record:**
+
+Merge them - don't create duplicate SPF records:
+
+```
+Existing: v=spf1 include:_spf.google.com ~all
+Updated: v=spf1 include:_spf.google.com include:_spf.penna.dev ~all
+```
+
+### DKIM Record
+
+**What it does:** Digitally signs your emails to prove authenticity
+
+**Record details:**
+```
+Type: TXT
+Name: penna._domainkey.yourdomain.com
+Value: [provided by Penna dashboard]
+```
+
+Copy the full DKIM value from your Penna dashboard - it's long and unique to your account.
+
+### DMARC Record
+
+**What it does:** Tells receiving servers what to do if SPF/DKIM fail
+
+**Record details:**
+```
+Type: TXT
+Name: _dmarc.yourdomain.com
+Value: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com; pct=100
+```
+
+**DMARC policy options:**
+- `p=none` - Monitor only (start here for 2-4 weeks)
+- `p=quarantine` - Send to spam if checks fail (recommended)
+- `p=reject` - Block entirely if checks fail (strictest)
+
+**Recommended approach:**
+1. Start with `p=none` to monitor
+2. After 2-4 weeks, update to `p=quarantine`
+3. Monitor for issues before considering `p=reject`
+
+### MX Record (Optional)
+
+Only needed if you want to receive replies at your domain:
+
+```
+Type: MX
+Name: @ (or your root domain)
+Priority: 10
+Value: [provided by Penna if applicable]
+```
+
+## Step 3: Add Records to Your DNS Provider
+
+Instructions vary by provider. Here are common ones:
+
+### Cloudflare
+
+1. Log into Cloudflare
+2. Select your domain
+3. Go to **DNS** → **Records**
+4. Click **Add record**
+5. Select record type (TXT, MX, etc.)
+6. Enter name and value
+7. Click **Save**
+8. Repeat for each record
+
+### GoDaddy
+
+1. Log into GoDaddy
+2. Go to **My Products** → **DNS**
+3. Scroll to **Records**
+4. Click **Add**
+5. Select record type
+6. Enter details
+7. Click **Save**
+
+### Namecheap
+
+1. Log into Namecheap
+2. Select your domain
+3. Go to **Advanced DNS**
+4. Click **Add New Record**
+5. Fill in details
+6. Click **Save All Changes**
+
+### Google Domains
+
+1. Log into Google Domains
+2. Select your domain
+3. Click **DNS**
+4. Scroll to **Custom resource records**
+5. Add each record
+6. Click **Add**
+
+### AWS Route 53
+
+1. Open Route 53 console
+2. Select your hosted zone
+3. Click **Create record**
+4. Enter record details
+5. Click **Create records**
+
+## Step 4: Verify Configuration
+
+After adding DNS records:
+
+1. Return to Penna dashboard
+2. Go to **Settings** → **Domain**
+3. Click **"Verify Domain"**
+4. Penna will check your DNS records
+
+**Verification timing:**
+- Usually completes in 10-30 minutes
+- Can take up to 48 hours for DNS propagation
+- Check back if not immediate
+
+**Verification checks:**
+- ✅ SPF record found and correct
+- ✅ DKIM record found and correct
+- ✅ DMARC record found and correct
+- ✅ Domain ownership verified
+
+## Step 5: Test Your Setup
+
+Once verified, send a test email:
+
+1. Go to **Compose**
+2. Create a test newsletter
+3. Send to your personal email
+4. Check:
+   - Email arrives
+   - From address shows your@yourdomain.com
+   - Not in spam
+   - Headers show SPF/DKIM pass
+
+### Check Email Headers
+
+To verify proper configuration:
+
+**Gmail:**
+1. Open the test email
+2. Click three dots (⋮)
+3. Select **"Show original"**
+4. Look for:
+   - `SPF: PASS`
+   - `DKIM: PASS`
+   - `DMARC: PASS`
+
+**Outlook:**
+1. Open email
+2. Click **File** → **Properties**
+3. Check **Internet headers**
+
+## Troubleshooting
+
+### Verification Fails
+
+**Common issues:**
+
+**1. DNS not propagated yet**
+- Wait 24-48 hours
+- Check propagation: https://dnschecker.org
+
+**2. Incorrect record value**
+- Copy-paste carefully from Penna dashboard
+- No extra spaces or characters
+- Check for truncation in long values
+
+**3. Duplicate SPF records**
+- Only one SPF record allowed
+- Merge multiple into one
+
+**4. Wrong record name/host**
+- `@` for root domain
+- Full subdomain for DKIM (penna._domainkey.yourdomain.com)
+- Check your DNS provider's syntax
+
+### Emails Still Going to Spam
+
+Even with custom domain configured:
+
+**Check:**
+1. DNS records verified in Penna
+2. Wait 24-48 hours for reputation to build
+3. Review content for spam triggers
+4. Warm up new domain gradually
+5. Check sender reputation: https://senderscore.org
+
+See: [Avoiding Spam Folders](/docs/best-practices/avoid-spam)
+
+### SPF Too Long Error
+
+SPF records have a 255 character limit and 10 DNS lookup limit.
+
+**Solution:**
+- Use SPF flattening services
+- Remove unused includes
+- Consider subdomain delegation
+
+## Domain Warming
+
+**For new domains, warm up gradually:**
+
+**Week 1:** Send to 50-100 most engaged subscribers  
+**Week 2:** Double to 100-200  
+**Week 3:** Double to 200-400  
+**Week 4+:** Continue doubling until full list
+
+**Why:** Sudden volume from new domain triggers spam filters.
+
+## Best Practices
+
+### Use Subdomain for Email
+
+**Option 1: Root domain (common)**
+```
+From: newsletter@yourdomain.com
+```
+
+**Option 2: Subdomain (advanced)**
+```
+From: newsletter@mail.yourdomain.com
+```
+
+**Why use subdomain:**
+- Isolates email reputation from website
+- Protects main domain if issues occur
+- Separate tracking and monitoring
+
+**When to use root:**
+- Simpler setup
+- Better brand recognition
+- Lower volume sending
+
+### Monitor Reputation
+
+**Tools to track:**
+- Google Postmaster Tools: Gmail-specific metrics
+- Microsoft SNDS: Outlook metrics
+- SenderScore: Overall reputation (aim for 80+)
+
+**Set up monitoring:**
+1. Google Postmaster: https://postmaster.google.com
+2. Add your domain
+3. Verify ownership
+4. Monitor weekly
+
+### Keep Records Updated
+
+**Regular maintenance:**
+- Review DNS records quarterly
+- Check for expiring DKIM keys
+- Update DMARC reports address
+- Monitor for unauthorized usage
+
+### Document Your Setup
+
+**Keep records of:**
+- DNS configuration
+- Verification dates
+- Provider access info
+- Record update history
+- Troubleshooting notes
+
+## Multiple Domains
+
+**Can you use multiple domains?**
+
+Yes, you can configure multiple:
+- Different brands/products
+- Regional variations
+- Separate marketing vs transactional
+
+**Setup:**
+1. Add each domain separately in Penna
+2. Configure DNS for each
+3. Verify each domain
+4. Select which domain per newsletter
+
+## Removing a Domain
+
+To remove a custom domain:
+
+1. Go to **Settings** → **Domain**
+2. Select the domain
+3. Click **"Remove Domain"**
+4. Confirm removal
+
+**Note:** Your newsletters will revert to Penna's shared sending domain. Clean up DNS records afterward.
+
+## Security Considerations
+
+### Protect Your DNS
+
+**Best practices:**
+- Enable 2FA on DNS provider
+- Use strong passwords
+- Limit access to DNS admin
+- Monitor for unauthorized changes
+- Keep DNS provider access secure
+
+### DMARC Reporting
+
+Set up DMARC reports to monitor:
+- Who's sending from your domain
+- SPF/DKIM pass rates
+- Potential spoofing attempts
+
+**DMARC report addresses:**
+```
+rua=mailto:dmarc@yourdomain.com
+```
+
+Use a DMARC analyzer service or monitor manually.
+
+## Advanced Configuration
+
+### Separate Sending Subdomain
+
+For high-volume or multiple use cases:
+
+```
+Marketing: marketing.yourdomain.com
+Transactional: transact.yourdomain.com
+Newsletter: news.yourdomain.com
+```
+
+Each has separate reputation and DNS records.
+
+### Custom Return-Path
+
+Advanced setup for bounce handling:
+
+```
+Return-Path: bounce@yourdomain.com
+```
+
+Configured in Penna advanced settings.
+
+### BIMI (Brand Indicators)
+
+Display your logo in Gmail (requires DMARC p=quarantine/reject):
+
+```
+Type: TXT
+Name: default._bimi.yourdomain.com
+Value: v=BIMI1; l=https://yourdomain.com/logo.svg
+```
+
+Requires VMC (Verified Mark Certificate) for Gmail.
+
+## Checklist
+
+**Setup:**
+✅ Domain added in Penna  
+✅ SPF record added to DNS  
+✅ DKIM record added to DNS  
+✅ DMARC record added to DNS  
+✅ DNS propagation complete  
+✅ Domain verified in Penna  
+✅ Test email sent and delivered  
+✅ SPF/DKIM/DMARC passing in headers
+
+**Monitoring:**
+✅ Google Postmaster Tools configured  
+✅ SenderScore checked (80+)  
+✅ DMARC reports received  
+✅ No blocklist listings  
+✅ Regular reputation monitoring scheduled
+
+## Resources
+
+- [Email Deliverability](/docs/best-practices/email-deliverability)
+- [Avoiding Spam](/docs/best-practices/avoid-spam)
+- [DNS Checker Tool](https://dnschecker.org)
+- [MXToolbox](https://mxtoolbox.com)
+
+---
+
+> [!TIP]
+> Take your time with DNS configuration - accuracy matters more than speed. Once properly set up, a custom domain is one of the best investments for email deliverability.

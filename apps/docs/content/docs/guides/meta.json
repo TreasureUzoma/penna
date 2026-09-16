@@ -1,0 +1,13 @@
+{
+  "title": "Guides",
+  "pages": [
+    "dashboard-overview",
+    "managing-subscribers",
+    "segments",
+    "custom-domain",
+    "compose-send",
+    "analytics",
+    "team-collaboration",
+    "billing-plans"
+  ]
+}

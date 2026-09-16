@@ -1,0 +1,8 @@
+{
+  "title": "API Reference",
+  "pages": [
+    "create",
+    "get",
+    "send-newsletter"
+  ]
+}

@@ -1,0 +1,449 @@
+---
+title: Working with Segments
+description: "Organize and target your subscribers with powerful segmentation"
+---
+
+# Working with Segments
+
+Segments allow you to organize subscribers into groups for targeted messaging. This guide shows you how to use segments effectively.
+
+## What Are Segments?
+
+Segments are custom groups of subscribers that share common characteristics. Use them to:
+
+- Send targeted content to specific audiences
+- Track growth of different subscriber groups
+- Organize subscribers by interest, behavior, or source
+- Improve engagement with relevant messaging
+
+## Creating Segments
+
+### Via Dashboard
+
+1. Navigate to **Segments** in the sidebar
+2. Click **"New Segment"**
+3. Enter a segment name (e.g., "Premium Users", "Blog Readers")
+4. Add an optional description
+5. Click **"Create"**
+
+### Segment Naming Best Practices
+
+**Good names:**
+- ✅ "Weekly Newsletter Subscribers"
+- ✅ "Product Launch Interest"
+- ✅ "Beta Testers"
+- ✅ "Enterprise Customers"
+
+**Avoid:**
+- ❌ "Segment 1", "Test", "Misc"
+- ❌ Vague names without clear purpose
+- ❌ Overlapping segment definitions
+
+## Adding Subscribers to Segments
+
+### During Subscription
+
+When adding a subscriber manually:
+1. Enter their email
+2. Check the segments you want to add them to
+3. Click "Create"
+
+### For Existing Subscribers
+
+**Single subscriber:**
+1. Open subscriber profile
+2. Click "Edit Segments"
+3. Select/deselect segments
+4. Save changes
+
+**Bulk addition:**
+1. Select multiple subscribers from list
+2. Click "Add to Segment"
+3. Choose segment(s)
+4. Confirm
+
+### Via API (Coming Soon)
+
+```javascript
+await fetch('https://api.penna.dev/api/v1/external/newsletters/subscriber/new', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-penna-public-key': 'YOUR_PUBLIC_KEY'
+  },
+  body: JSON.stringify({
+    email: 'user@example.com',
+    segmentIds: ['segment-id-1', 'segment-id-2']
+  })
+});
+```
+
+## Common Segment Strategies
+
+### By Interest or Topic
+
+Group subscribers by what they're interested in:
+
+- "Web Development"
+- "Design Resources"
+- "Marketing Tips"
+- "Product Updates"
+
+**Use case:** Send topic-specific content to those who care most.
+
+### By Engagement Level
+
+Segment by how users interact:
+
+- "Highly Engaged" (opened last 5 emails)
+- "Moderately Engaged" (opened 2-4 of last 5)
+- "Low Engagement" (opened 0-1 of last 5)
+- "New Subscribers" (joined in last 30 days)
+
+**Use case:** Tailor content and frequency based on engagement.
+
+### By Product/Plan
+
+Group by what they've purchased or plan:
+
+- "Free Plan Users"
+- "Pro Plan Users"
+- "Enterprise Customers"
+- "Trial Users"
+
+**Use case:** Send plan-specific updates, upsell opportunities, or feature announcements.
+
+### By Source
+
+Track where subscribers came from:
+
+- "Blog Signup"
+- "Homepage Form"
+- "Product Trial"
+- "Event Attendees"
+- "Partner Referral"
+
+**Use case:** Understand which channels drive best subscribers, tailor welcome series.
+
+### By Location (Manual)
+
+Geographic segments for local content:
+
+- "US East Coast"
+- "Europe"
+- "Asia Pacific"
+
+**Use case:** Send timezone-appropriate emails, local event notifications.
+
+### By Lifecycle Stage
+
+Where they are in the customer journey:
+
+- "New Leads"
+- "Active Customers"
+- "Churned Users"
+- "VIP Customers"
+
+**Use case:** Send appropriate messaging for each stage.
+
+## Sending to Segments
+
+### Via Dashboard
+
+When composing a newsletter:
+
+1. Write your content
+2. In the recipients section, select:
+   - **All subscribers**, or
+   - **Specific segments** (choose one or more)
+3. Review the total recipient count
+4. Send or schedule
+
+**Example:**
+```
+To: Web Development + Design Resources segments
+Recipients: 2,345 subscribers
+```
+
+### Via API
+
+```javascript
+await fetch('https://api.penna.dev/api/v1/external/newsletters/send', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-penna-public-key': 'YOUR_PUBLIC_KEY',
+    'x-penna-private-key': 'YOUR_PRIVATE_KEY'
+  },
+  body: JSON.stringify({
+    subject: 'New React tutorial',
+    content: '# Hello!\n\nCheck out our latest tutorial...',
+    segmentIds: ['web-dev-segment-id']
+  })
+});
+```
+
+### Combining Segments
+
+Select multiple segments to send to combined audience:
+
+**Example:**
+- Segment A: "Pro Users" (1,000 subscribers)
+- Segment B: "Beta Testers" (500 subscribers)
+- Combined: 1,350 unique subscribers (150 are in both)
+
+Penna automatically deduplicates - subscribers in multiple segments only receive one email.
+
+## Managing Segments
+
+### Viewing Segment Details
+
+Click any segment to see:
+- Total subscriber count
+- Growth over time (coming soon)
+- Recent additions
+- Engagement metrics (coming soon)
+
+### Editing Segments
+
+To rename or update description:
+1. Open segment
+2. Click "Edit"
+3. Update name/description
+4. Save changes
+
+### Deleting Segments
+
+To remove a segment:
+1. Open segment
+2. Click "Delete"
+3. Confirm deletion
+
+> [!NOTE]
+> Deleting a segment does NOT delete the subscribers - they remain in your database and other segments.
+
+## Advanced Segment Strategies
+
+### The Welcome Series Segment
+
+Create a "New Subscribers" segment:
+
+1. Manually add new subscribers to this segment
+2. Send welcome series only to this segment
+3. Remove from segment after welcome series completes
+
+### Engagement Recovery
+
+Create segments based on last open date:
+
+- "Opened in last 7 days"
+- "Opened 8-30 days ago"
+- "Opened 31-90 days ago"
+- "Opened 90+ days ago"
+
+Send re-engagement campaigns to progressively less engaged segments.
+
+### A/B Testing with Segments
+
+Split a larger audience into test segments:
+
+1. Create "Test Group A" and "Test Group B"
+2. Randomly assign subscribers
+3. Send different content versions
+4. Compare performance
+5. Send winning version to remaining subscribers
+
+### Product-Led Segmentation
+
+For SaaS products:
+
+- "Trial Day 1" → "Trial Day 7" → "Trial Day 14"
+- "Onboarding Incomplete"
+- "Feature X Users"
+- "Power Users"
+
+Trigger relevant emails based on product behavior.
+
+### VIP/High-Value Segment
+
+Create special segment for:
+- Long-time subscribers
+- High engagement users
+- Premium customers
+- Brand advocates
+
+Give them exclusive content, early access, or special treatment.
+
+## Best Practices
+
+### Start Simple
+
+Don't over-segment initially:
+
+**Phase 1:** Just your main list
+**Phase 2:** 2-3 basic segments (by interest or source)
+**Phase 3:** Add engagement-based segments
+**Phase 4:** Advanced lifecycle or behavior segments
+
+### Keep Segments Meaningful
+
+Every segment should have a clear purpose:
+
+✅ "Users interested in React content" → Send React tutorials  
+✅ "Inactive 90+ days" → Re-engagement campaign  
+❌ "Random Group 1" → No clear purpose
+
+### Maintain Segments Regularly
+
+- Review segment definitions monthly
+- Remove or merge unused segments
+- Update subscribers as their interests change
+- Archive segments no longer needed
+
+### Don't Over-Segment
+
+Too many segments can:
+- Make management complex
+- Dilute your audience
+- Cause confusion
+
+**Good:** 5-10 well-defined segments  
+**Too many:** 50+ segments with overlap
+
+### Document Your Segments
+
+Keep notes on:
+- Segment purpose
+- How subscribers are added
+- Typical content sent to them
+- Expected engagement rates
+
+## Common Mistakes to Avoid
+
+### ❌ Mistake 1: Creating Too Many Segments Too Soon
+
+Starting with 20+ segments before you understand your audience.
+
+**Fix:** Start with 2-3 segments, expand as needed.
+
+### ❌ Mistake 2: Overlapping Segments Without Strategy
+
+Having segments like "Active Users" and "Engaged Users" with unclear definitions.
+
+**Fix:** Clear, mutually exclusive definitions or intentional overlap.
+
+### ❌ Mistake 3: Never Removing Subscribers
+
+Leaving subscribers in outdated segments forever.
+
+**Fix:** Regular segment audits, automated rules for removal.
+
+### ❌ Mistake 4: Ignoring Segment Performance
+
+Not tracking which segments perform best.
+
+**Fix:** Monitor engagement by segment, optimize accordingly.
+
+### ❌ Mistake 5: Sending Everything to Everyone
+
+Creating segments but still sending all content to entire list.
+
+**Fix:** Use segments for targeted messaging - that's their purpose!
+
+## Segment Ideas by Industry
+
+### SaaS/Tech
+
+- Trial Users
+- Free vs Paid
+- Feature Adoption Groups
+- Power Users
+- Churned Users
+
+### E-commerce
+
+- Purchase History (0, 1, 2+)
+- Product Category Interest
+- Cart Abandoners
+- VIP Customers
+- Seasonal Shoppers
+
+### Content Creators
+
+- Content Topic Preferences
+- Engagement Level
+- Free vs Paid Members
+- Geographic Location
+- Platform (YouTube, Blog, Podcast)
+
+### Education
+
+- Course Enrollees
+- Completed vs In-Progress
+- Topic Interest
+- Skill Level
+- Certification Status
+
+### Agency/Services
+
+- Industry Vertical
+- Service Interest
+- Lead vs Customer
+- Project Status
+- Company Size
+
+## Measuring Segment Success
+
+Track these metrics per segment:
+
+1. **Growth Rate**
+   - How quickly is segment growing?
+   - Which sources feed this segment?
+
+2. **Engagement Rate**
+   - Higher open/click rates in certain segments?
+   - Which segments are most engaged?
+
+3. **Conversion Rate**
+   - Do certain segments convert better?
+   - Where should you focus efforts?
+
+4. **Unsubscribe Rate**
+   - Do certain segments unsubscribe more?
+   - Is content mismatch occurring?
+
+5. **Revenue (if applicable)**
+   - Which segments drive most revenue?
+   - Prioritize high-value segments
+
+## Troubleshooting
+
+### Segment showing wrong subscriber count
+
+- Subscribers might be in multiple segments
+- Count may be cached - refresh page
+- Check for recently unsubscribed subscribers
+
+### Can't add subscriber to segment
+
+- Verify subscriber exists
+- Check if already in segment
+- Ensure segment wasn't deleted
+
+### Sent to wrong segment
+
+- Double-check segment selection before sending
+- Use preview/confirmation before final send
+- Consider implementing approval workflow
+
+## Next Steps
+
+- [Send targeted newsletters](/docs/guides/compose-send)
+- [Manage subscribers effectively](/docs/guides/managing-subscribers)
+- [Improve engagement](/docs/best-practices/subscriber-engagement)
+- [Track analytics](/docs/guides/analytics)
+
+---
+
+> [!TIP]
+> Effective segmentation is about understanding your audience and delivering relevant content. Start simple, measure results, and refine over time.

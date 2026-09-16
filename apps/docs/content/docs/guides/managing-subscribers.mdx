@@ -1,0 +1,301 @@
+---
+title: Managing Subscribers
+description: "Learn how to add, organize, and manage your newsletter subscribers"
+---
+
+# Managing Subscribers
+
+This guide covers everything you need to know about managing your subscriber base effectively.
+
+## Adding Subscribers
+
+### Manual Addition via Dashboard
+
+Perfect for adding individual subscribers or small batches:
+
+1. Navigate to **Subscribers** in the sidebar
+2. Click **"Add Subscriber"** in the top right
+3. Enter the email address
+4. Optionally select segments
+5. Click **"Create"**
+
+### API Integration
+
+For automated subscription flows on your website:
+
+```javascript
+async function subscribeUser(email) {
+  const response = await fetch(
+    'https://api.penna.dev/api/v1/external/newsletters/subscriber/new',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-penna-public-key': 'YOUR_PUBLIC_KEY'
+      },
+      body: JSON.stringify({ email })
+    }
+  );
+  
+  return response.json();
+}
+```
+
+### Bulk Import (Coming Soon)
+
+Import subscribers from CSV:
+
+1. Prepare a CSV file with email column
+2. Go to **Subscribers** → **Import**
+3. Upload your CSV
+4. Map columns
+5. Review and confirm
+
+## Viewing Subscribers
+
+### Subscriber List
+
+Your subscriber list shows:
+- Email address
+- Subscription date
+- Segments
+- Status (Active, Unsubscribed)
+- Engagement metrics (coming soon)
+
+### Search & Filter
+
+Find subscribers quickly:
+
+- **Search by email** - Type in the search bar
+- **Filter by segment** - Select one or more segments
+- **Filter by status** - Active, unsubscribed, bounced
+- **Sort** - By date, email, or engagement
+
+### Subscriber Details
+
+Click any subscriber to view:
+- Full email address
+- Subscription date and time
+- Source (API, manual, import)
+- Segments they belong to
+- Newsletter engagement history
+- Manage subscription status
+
+## Organizing with Segments
+
+### Creating Segments
+
+Segments help you organize subscribers by:
+- Interest (e.g., "Web Development", "Design")
+- Plan type (e.g., "Free Users", "Pro Users")
+- Behavior (e.g., "Highly Engaged", "New Subscribers")
+- Source (e.g., "Blog Signup", "Product Trial")
+
+To create a segment:
+
+1. Go to **Segments**
+2. Click **"New Segment"**
+3. Name your segment
+4. Add a description (optional)
+5. Click **"Create"**
+
+### Adding Subscribers to Segments
+
+**During subscriber creation:**
+- Check the segments when adding a new subscriber
+
+**For existing subscribers:**
+1. Select subscriber(s) from the list
+2. Click **"Add to Segment"**
+3. Choose segment(s)
+4. Confirm
+
+**From subscriber profile:**
+1. Open subscriber details
+2. Click **"Edit Segments"**
+3. Select or deselect segments
+4. Save changes
+
+### Using Segments for Targeted Sends
+
+When composing a newsletter:
+
+1. Click **"Compose"** 
+2. Write your content
+3. In recipients section, select:
+   - **All subscribers**, or
+   - **Specific segments**
+4. Review recipient count
+5. Send
+
+## Subscriber Status
+
+### Active
+
+Normal subscribers who can receive newsletters.
+
+### Unsubscribed
+
+Subscribers who opted out. They:
+- Won't receive newsletters
+- Remain in your database
+- Can resubscribe at any time
+
+### Bounced (Coming Soon)
+
+Emails that repeatedly bounce are automatically marked:
+- **Soft bounce** - Temporary issues (full inbox, server down)
+- **Hard bounce** - Permanent issues (invalid email)
+
+Hard bounces are automatically removed after confirmation.
+
+## Unsubscribe Management
+
+### Automatic Unsubscribe Links
+
+Every newsletter automatically includes an unsubscribe link at the bottom. When clicked:
+
+1. Subscriber is marked as unsubscribed
+2. They're redirected to confirmation page
+3. They stop receiving newsletters immediately
+
+### Manual Unsubscribe via Dashboard
+
+To manually unsubscribe someone:
+
+1. Find the subscriber
+2. Open their profile
+3. Click **"Unsubscribe"**
+4. Confirm action
+
+### Re-subscribing
+
+If someone wants to re-subscribe:
+
+1. Find their profile
+2. Change status to **"Active"**
+3. They'll start receiving newsletters again
+
+> [!WARNING]
+> Only re-subscribe users who explicitly requested it. Re-subscribing without consent violates anti-spam laws and can harm your sender reputation.
+
+## Exporting Subscribers
+
+Export your subscriber data for:
+- Backups
+- Analysis in external tools
+- Migration to other platforms
+- Compliance requests
+
+To export:
+
+1. Go to **Subscribers**
+2. (Optional) Filter to specific segment or status
+3. Click **"Export"**
+4. Choose format (CSV)
+5. Download file
+
+Exported data includes:
+- Email address
+- Subscription date
+- Segments
+- Status
+- Engagement metrics (if available)
+
+## Subscriber Privacy & Compliance
+
+### GDPR Compliance
+
+Penna helps you stay GDPR compliant:
+
+- **Consent tracking** - Record when and how someone subscribed
+- **Easy unsubscribe** - One-click unsubscribe in every email
+- **Data export** - Users can request their data
+- **Right to deletion** - Delete subscriber data permanently
+
+### Data Deletion
+
+To permanently delete a subscriber:
+
+1. Open subscriber profile
+2. Click **"Delete"**
+3. Confirm deletion
+
+> [!WARNING]
+> Deletion is permanent and cannot be undone. The email address and all associated data will be removed.
+
+## Best Practices
+
+### Do's
+
+✅ **Clean your list regularly** - Remove inactive subscribers periodically  
+✅ **Segment early and often** - Organize from day one  
+✅ **Respect unsubscribes** - Never try to re-add someone who opted out  
+✅ **Monitor engagement** - Track who opens and clicks  
+✅ **Keep data secure** - Use 2FA and limit team access  
+
+### Don'ts
+
+❌ **Don't buy email lists** - They harm deliverability and are often illegal  
+❌ **Don't re-subscribe without consent** - Violates anti-spam laws  
+❌ **Don't ignore bounces** - Remove hard bounces to protect sender reputation  
+❌ **Don't spam** - Send valuable content at reasonable frequency  
+❌ **Don't make unsubscribe hard** - Always include clear unsubscribe links  
+
+## Subscriber Growth Tips
+
+1. **Add signup forms everywhere**
+   - Website footer
+   - Blog posts
+   - Landing pages
+   - Social media bio
+
+2. **Offer value upfront**
+   - Free guide or resource
+   - Exclusive content
+   - Early access to products
+
+3. **Make signup easy**
+   - One-click subscribe
+   - No confirmation hoops
+   - Mobile-friendly forms
+
+4. **Promote your newsletter**
+   - Social media
+   - Guest posts
+   - Partnerships
+   - Cross-promotion
+
+5. **Deliver consistently**
+   - Regular schedule
+   - Quality content
+   - Clear value proposition
+
+## Troubleshooting
+
+### Subscriber not receiving emails
+
+1. Check if they're unsubscribed
+2. Verify email is correct
+3. Ask them to check spam folder
+4. Confirm your domain is verified
+
+### Can't add subscriber
+
+- Email might already exist
+- Check for typos in email address
+- Verify your API key is correct
+- Ensure you haven't hit plan limits
+
+### Segment not showing subscribers
+
+- Subscribers must be manually added to segments
+- Check if you have the right segment selected
+- Refresh the page
+
+## Next Steps
+
+- [Set up segments effectively](/docs/guides/segments)
+- [Compose and send newsletters](/docs/guides/compose-send)
+- [Improve deliverability](/docs/best-practices/email-deliverability)
+- [Avoid spam filters](/docs/best-practices/avoid-spam)
