@@ -155,6 +155,10 @@ export default function AppSidebar({
 
   const isActive = (href: string) => {
     if (isNewsletterRoute) {
+      // Special handling for segments - both list and detail pages
+      if (href.includes("/segments")) {
+        return pathname.includes("/segments");
+      }
       return pathname === href;
     }
     return pathname.startsWith(href);
