@@ -44,60 +44,36 @@ Penna will generate the DNS records you need to add.
 
 ## Step 2: Configure DNS Records
 
-You'll need to add several DNS records to verify ownership and enable email sending.
+**Important:** All DNS records are generated specifically for your account in your Penna dashboard. Always copy the exact values shown there - don't use examples from this guide.
 
-### SPF Record
+### How to Find Your DNS Records
 
-**What it does:** Authorizes Penna to send emails from your domain
+1. Go to **Settings** → **Domain** → **DNS Records** in your Penna dashboard
+2. You'll see all required records with exact values
+3. Copy each record exactly as shown
+4. Add them to your domain's DNS provider
 
-**Record details:**
+### Required DNS Records
 
-```
-Type: TXT
-Name: @ (or your root domain)
-Value: v=spf1 include:_spf.penna.dev ~all
-```
+Your dashboard will show these records. Here's what each one does:
 
-**If you already have an SPF record:**
+**SPF Record**
 
-Merge them - don't create duplicate SPF records:
+- **Purpose:** Authorizes Penna (via Amazon SES) to send emails from your domain
+- **Copy from dashboard:** The exact SPF value including Amazon SES configuration
+- **Note:** If you already have an SPF record, your dashboard will show how to merge them
 
-```
-Existing: v=spf1 include:_spf.google.com ~all
-Updated: v=spf1 include:_spf.google.com include:_spf.penna.dev ~all
-```
+**DKIM Record**
 
-### DKIM Record
+- **Purpose:** Digitally signs your emails to prove authenticity
+- **Copy from dashboard:** The full DKIM value (it's long and unique to your account)
+- **Note:** The record name will include a specific selector
 
-**What it does:** Digitally signs your emails to prove authenticity
+**DMARC Record**
 
-**Record details:**
-
-```
-Type: TXT
-Name: penna._domainkey.yourdomain.com
-Value: [provided by Penna dashboard]
-```
-
-Copy the full DKIM value from your Penna dashboard - it's long and unique to your account.
-
-### DMARC Record
-
-**What it does:** Tells receiving servers what to do if SPF/DKIM fail
-
-**Record details:**
-
-```
-Type: TXT
-Name: _dmarc.yourdomain.com
-Value: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com; pct=100
-```
-
-**DMARC policy options:**
-
-- `p=none` - Monitor only (start here for 2-4 weeks)
-- `p=quarantine` - Send to spam if checks fail (recommended)
-- `p=reject` - Block entirely if checks fail (strictest)
+- **Purpose:** Tells email servers what to do if SPF/DKIM checks fail
+- **Copy from dashboard:** Your DMARC policy configuration
+- **Note:** Start with monitoring mode (`p=none`), then move to `p=quarantine` after 2-4 weeks
 
 **Recommended approach:**
 

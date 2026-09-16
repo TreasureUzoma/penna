@@ -36,9 +36,17 @@ Adds a new subscriber to your newsletter.
 
 ```json
 {
-  "email": "user@example.com"
+  "email": "user@example.com",
+  "name": "John Doe"
 }
 ```
+
+**Fields:**
+
+| Field   | Type   | Required | Description                                         |
+| ------- | ------ | -------- | --------------------------------------------------- |
+| `email` | string | Yes      | Subscriber's email address                          |
+| `name`  | string | No       | Subscriber's full name (useful for personalization) |
 
 ## Code Examples
 
@@ -51,6 +59,7 @@ import { useState } from "react";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [status, setStatus] = useState("idle");
 
   const subscribe = async (e) => {
@@ -66,7 +75,7 @@ export function NewsletterForm() {
             "Content-Type": "application/json",
             "x-penna-public-key": "penn_abc1234567890", // Replace with your public key
           },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, name }),
         },
       );
 
@@ -74,13 +83,21 @@ export function NewsletterForm() {
 
       setStatus("success");
       setEmail("");
+      setName("");
     } catch (err) {
       setStatus("error");
     }
   };
 
   return (
-    <form onSubmit={subscribe} className="flex gap-2">
+    <form onSubmit={subscribe} className="flex flex-col gap-2">
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Your name (optional)"
+        className="border p-2 rounded"
+      />
       <input
         type="email"
         value={email}
@@ -109,6 +126,7 @@ export function NewsletterForm() {
 
 ```html title="index.html"
 <form id="newsletter-form">
+  <input type="text" id="name" placeholder="Your name (optional)" />
   <input type="email" id="email" placeholder="your@email.com" required />
   <button type="submit">Join Newsletter</button>
 </form>
@@ -119,6 +137,7 @@ export function NewsletterForm() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("email").value;
+    const name = document.getElementById("name").value;
 
     try {
       const response = await fetch(
@@ -129,7 +148,7 @@ export function NewsletterForm() {
             "Content-Type": "application/json",
             "x-penna-public-key": "penn_abc1234567890",
           },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, name }),
         },
       );
 
@@ -151,7 +170,7 @@ export function NewsletterForm() {
 curl -X POST https://api.penna.dev/api/v1/external/newsletters/subscriber/new \
   -H "Content-Type: application/json" \
   -H "x-penna-public-key: penn_abc1234567890" \
-  -d '{"email": "test@example.com"}'
+  -d '{"email": "test@example.com", "name": "John Doe"}'
 ```
 
 ### Python (Requests)
@@ -165,7 +184,8 @@ headers = {
     "x-penna-public-key": "penn_abc1234567890"
 }
 data = {
-    "email": "test@example.com"
+    "email": "test@example.com",
+    "name": "John Doe"
 }
 
 response = requests.post(url, json=data, headers=headers)
@@ -174,4 +194,88 @@ if response.status_code == 200:
     print("Subscribed successfully!")
 else:
     print(f"Failed: {response.text}")
+```
+
+## Response
+
+**Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Subscriber added successfully",
+  "data": {
+    "id": "sub_1234567890",
+    "email": "test@example.com",
+    "name": "John Doe",
+    "subscribedAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+**Error Responses:**
+
+```json
+// Email already exists
+{
+  "success": false,
+  "message": "Subscriber already exists"
+}
+
+// Invalid email format
+{
+  "success": false,
+  "message": "Invalid email address"
+}
+
+// Missing required fields
+{
+  "success": false,
+  "message": "Email is required"
+}
+```
+
+## Use Cases
+
+### Collect Names for Personalization
+
+Including the name field allows you to personalize your newsletters:
+
+```javascript
+// In your signup form
+const formData = {
+  email: userEmail,
+  name: userName, // Optional but recommended
+};
+
+await fetch(API_URL, {
+  method: "POST",
+  headers: { "x-penna-public-key": PUBLIC_KEY },
+  body: JSON.stringify(formData),
+});
+```
+
+Later in your newsletters, you can use the name for personalization:
+
+- "Hi John," instead of "Hi there,"
+- "Welcome John to our community!"
+
+### E-commerce Integration
+
+```javascript
+// After checkout
+await addSubscriber({
+  email: customer.email,
+  name: `${customer.firstName} ${customer.lastName}`,
+});
+```
+
+### Event Registration
+
+```javascript
+// After event signup
+await addSubscriber({
+  email: attendee.email,
+  name: attendee.fullName,
+});
 ```

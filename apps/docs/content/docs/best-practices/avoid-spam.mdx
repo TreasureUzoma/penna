@@ -38,41 +38,42 @@ Custom domains have much better deliverability than generic ones:
 
 SPF (Sender Policy Framework) tells email servers which IPs can send from your domain.
 
-Add this TXT record to your DNS:
+**Get your SPF record from your Penna dashboard:**
 
-```
-v=spf1 include:_spf.penna.dev ~all
-```
+1. Go to **Settings** → **Domain** → **DNS Records**
+2. Copy the SPF value shown (includes Amazon SES)
+3. Add as TXT record to your DNS
 
-**Where:** Your domain DNS settings  
 **Type:** TXT  
 **Name:** @ (or your domain)  
-**Value:** v=spf1 include:\_spf.penna.dev ~all
+**Value:** [Copy from dashboard]
+
+**Note:** If you already have an SPF record, see your dashboard for merge instructions.
 
 ### Step 3: Set Up DKIM
 
 DKIM (DomainKeys Identified Mail) digitally signs your emails to prove authenticity.
 
-Penna automatically generates DKIM keys. You just need to add the record:
+**Get your DKIM record from your Penna dashboard:**
 
 1. Go to **Settings** → **Domain** → **DNS Records**
-2. Copy the DKIM record provided
-3. Add to your DNS as TXT record
+2. Copy the DKIM record (name and value)
+3. Add as TXT record to your DNS
 4. Wait for verification
 
 ### Step 4: Enable DMARC
 
 DMARC tells email servers what to do if SPF/DKIM checks fail.
 
-Add this TXT record:
+**Get your DMARC record from your Penna dashboard:**
 
-```
-v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
-```
+1. Go to **Settings** → **Domain** → **DNS Records**
+2. Copy the DMARC record value
+3. Add as TXT record to your DNS
 
-**Where:** \_dmarc.yourdomain.com  
 **Type:** TXT  
-**Value:** v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
+**Name:** \_dmarc.yourdomain.com  
+**Value:** [Copy from dashboard]
 
 ### Step 5: Set Up rDNS (Reverse DNS)
 
