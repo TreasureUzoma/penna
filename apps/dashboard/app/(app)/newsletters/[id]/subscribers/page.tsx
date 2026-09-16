@@ -189,12 +189,6 @@ export default function NewsletterSubscribersPage() {
           Manage your newsletter subscribers.
         </p>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Subscriber
-            </Button>
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add Subscriber</DialogTitle>
