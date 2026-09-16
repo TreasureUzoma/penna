@@ -38,7 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="w-5 h-5" />
           </Button>
           <Link href="/newsletters">
-            <Logo showText={false} />
+            <Logo />
           </Link>
         </div>
 
