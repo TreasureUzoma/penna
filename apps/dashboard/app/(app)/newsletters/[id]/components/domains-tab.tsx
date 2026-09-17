@@ -48,12 +48,11 @@ import {
   Clock,
   Plus,
 } from "lucide-react";
-import Link from "next/link";
 
 interface DomainsTabProps {
   newsletter: {
     id: string;
-    /** Computed server-side from the newsletter owner's plan — see routes/api/v1/newsletters.ts's `/slug/:slug`. */
+    /** Computed server-side — always true now; custom domains are available on all plans. */
     canUseCustomDomain: boolean;
   };
 }
@@ -119,188 +118,182 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
         </p>
       </div>
 
-      <>
-          <form
-            onSubmit={handleAdd}
-            className="flex flex-col sm:flex-row gap-2"
+      <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2">
+        <Input
+          ref={inputRef}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="news.yoursite.com"
+          disabled={isAdding}
+          className="flex-1"
+        />
+        <Button
+          type="submit"
+          disabled={isAdding || !name.trim()}
+          className="w-full sm:w-auto"
+        >
+          {isAdding ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Plus className="w-4 h-4 mr-2" />
+          )}
+          Add Domain
+        </Button>
+      </form>
+
+      {unassignedDomains.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center text-sm">
+          <span className="text-muted-foreground shrink-0">
+            Or attach one you've already verified:
+          </span>
+          <Select value={attachPick} onValueChange={setAttachPick}>
+            <SelectTrigger className="h-8 w-full sm:w-[220px]">
+              <SelectValue placeholder="Choose a domain" />
+            </SelectTrigger>
+            <SelectContent>
+              {unassignedDomains.map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!attachPick || isAssigning}
+            onClick={handleAttach}
           >
-            <Input
-              ref={inputRef}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="news.yoursite.com"
-              disabled={isAdding}
-              className="flex-1"
-            />
-            <Button
-              type="submit"
-              disabled={isAdding || !name.trim()}
-              className="w-full sm:w-auto"
-            >
-              {isAdding ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4 mr-2" />
-              )}
-              Add Domain
-            </Button>
-          </form>
+            {isAssigning ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              "Attach"
+            )}
+          </Button>
+        </div>
+      )}
 
-          {unassignedDomains.length > 0 && (
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-center text-sm">
-              <span className="text-muted-foreground shrink-0">
-                Or attach one you've already verified:
-              </span>
-              <Select value={attachPick} onValueChange={setAttachPick}>
-                <SelectTrigger className="h-8 w-full sm:w-[220px]">
-                  <SelectValue placeholder="Choose a domain" />
-                </SelectTrigger>
-                <SelectContent>
-                  {unassignedDomains.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={!attachPick || isAssigning}
-                onClick={handleAttach}
-              >
-                {isAssigning ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  "Attach"
-                )}
-              </Button>
-            </div>
-          )}
+      {isLoading && (
+        <div className="flex justify-center p-8">
+          <Loader2 className="w-6 h-6 animate-spin" />
+        </div>
+      )}
 
-          {isLoading && (
-            <div className="flex justify-center p-8">
-              <Loader2 className="w-6 h-6 animate-spin" />
-            </div>
-          )}
+      {!isLoading && (!domains || domains.length === 0) && (
+        <div className="text-center py-12 space-y-2">
+          <Globe className="w-6 h-6 text-muted-foreground mx-auto" />
+          <p className="text-sm text-muted-foreground">
+            No custom domains yet. Add one above.
+          </p>
+        </div>
+      )}
 
-          {!isLoading && (!domains || domains.length === 0) && (
-            <div className="text-center py-12 space-y-2">
-              <Globe className="w-6 h-6 text-muted-foreground mx-auto" />
-              <p className="text-sm text-muted-foreground">
-                No custom domains yet. Add one above.
-              </p>
-            </div>
-          )}
-
-          {!isLoading && domains && domains.length > 0 && (
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
+      {!isLoading && domains && domains.length > 0 && (
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Domain</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {domains.map((domain) => (
+                <Fragment key={domain.id}>
                   <TableRow>
-                    <TableHead>Domain</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {domains.map((domain) => (
-                    <Fragment key={domain.id}>
-                      <TableRow>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                            {domain.name}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
-                              domain.verified
-                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
-                            )}
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        {domain.name}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          domain.verified
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                            : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+                        )}
+                      >
+                        {domain.verified ? (
+                          <CheckCircle2 className="w-3 h-3" />
+                        ) : (
+                          <Clock className="w-3 h-3" />
+                        )}
+                        {domain.verified
+                          ? "Verified"
+                          : "DNS verification pending"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {!domain.verified && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Recheck"
+                            onClick={() => handleVerify(domain.id)}
+                            disabled={isVerifying && pendingId === domain.id}
                           >
-                            {domain.verified ? (
-                              <CheckCircle2 className="w-3 h-3" />
+                            {isVerifying && pendingId === domain.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <Clock className="w-3 h-3" />
+                              <RefreshCw className="w-4 h-4" />
                             )}
-                            {domain.verified ? "Verified" : "DNS verification pending"}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            {!domain.verified && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title="Recheck"
-                                onClick={() => handleVerify(domain.id)}
-                                disabled={
-                                  isVerifying && pendingId === domain.id
-                                }
+                          </Button>
+                        )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled={isDeleting}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove domain</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Remove <strong>{domain.name}</strong>?
+                                Newsletters will go back to sending from the
+                                shared Penna domain.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteDomain(domain.id)}
+                                className="bg-destructive text-white hover:bg-destructive/90"
                               >
-                                {isVerifying && pendingId === domain.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="w-4 h-4" />
-                                )}
-                              </Button>
-                            )}
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  disabled={isDeleting}
-                                >
-                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Remove domain
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Remove <strong>{domain.name}</strong>?
-                                    Newsletters will go back to sending from
-                                    the shared Penna domain.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteDomain(domain.id)}
-                                    className="bg-destructive text-white hover:bg-destructive/90"
-                                  >
-                                    Remove
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                      {!domain.verified && domain.dnsRecords.length > 0 && (
-                        <TableRow className="hover:bg-transparent">
-                          <TableCell colSpan={3} className="bg-muted/30">
-                            <p className="text-xs font-medium text-muted-foreground mb-2">
-                              Add these CNAME records at your DNS provider,
-                              then click Recheck:
-                            </p>
-                            <DnsRecordsTable records={domain.dnsRecords} />
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </Fragment>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-      </>
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {!domain.verified && domain.dnsRecords.length > 0 && (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={3} className="bg-muted/30">
+                        <p className="text-xs font-medium text-muted-foreground mb-2">
+                          Add these CNAME records at your DNS provider, then
+                          click Recheck:
+                        </p>
+                        <DnsRecordsTable records={domain.dnsRecords} />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }
