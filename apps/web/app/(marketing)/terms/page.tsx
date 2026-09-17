@@ -2,7 +2,15 @@ import { meta } from "@workspace/constants/meta";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "terms of service - penna",
+  title: "Terms of Service",
+  description:
+    "Penna's terms of service. Read our terms and conditions for using the newsletter platform.",
+  alternates: {
+    canonical: "/terms",
+  },
+  openGraph: {
+    title: "Terms of Service - Penna",
+  },
 };
 
 const sections = [
@@ -80,8 +88,8 @@ export default function TermsPage() {
         </div>
 
         <p className="text-muted-foreground leading-relaxed">
-          these terms govern your use of {meta.name}. by using the service,
-          you agree to them — read them carefully.
+          these terms govern your use of {meta.name}. by using the service, you
+          agree to them — read them carefully.
         </p>
 
         {sections.map((section) => (

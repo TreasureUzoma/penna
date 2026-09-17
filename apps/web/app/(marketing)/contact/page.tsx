@@ -3,7 +3,17 @@ import { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "contact - penna",
+  title: "Contact",
+  description:
+    "Get in touch with the Penna team. Questions about the product, bug reports, sales inquiries, or general feedback - we read everything.",
+  alternates: {
+    canonical: "/contact",
+  },
+  openGraph: {
+    title: "Contact Penna",
+    description:
+      "Have questions or feedback? Reach out to the Penna team for support, sales, or general inquiries.",
+  },
 };
 
 export default function ContactPage() {
@@ -19,7 +29,9 @@ export default function ContactPage() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-xl md:text-2xl font-semibold">general & support</h3>
+          <h3 className="text-xl md:text-2xl font-semibold">
+            general & support
+          </h3>
           <p className="text-muted-foreground leading-relaxed">
             for anything product-related, bugs, or feedback, email us at{" "}
             <a
@@ -49,8 +61,7 @@ export default function ContactPage() {
         <div className="space-y-4">
           <h3 className="text-xl md:text-2xl font-semibold">github</h3>
           <p className="text-muted-foreground leading-relaxed">
-            found a bug or want to contribute? open an issue or pull request
-            on{" "}
+            found a bug or want to contribute? open an issue or pull request on{" "}
             <a
               href={meta.socials.github}
               target="_blank"

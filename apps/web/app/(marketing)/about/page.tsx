@@ -2,7 +2,17 @@ import { meta } from "@workspace/constants/meta";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "about - penna",
+  title: "About",
+  description:
+    "Penna is a full newsletter platform built for developers. Write in markdown, manage subscribers, track analytics, and send from your own domain. Completely open-source and self-hostable.",
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About Penna",
+    description:
+      "A newsletter platform built for developers. Open-source, API-first, and designed to stay out of your way.",
+  },
 };
 
 export default function AboutPage() {
@@ -16,14 +26,14 @@ export default function AboutPage() {
             {meta.name} is a full newsletter platform built for developers:
             write in markdown, manage subscribers and segments, track real
             analytics, and send from your own verified domain — all from one
-            clean dashboard. automate any of it with a real api when you
-            need to.
+            clean dashboard. automate any of it with a real api when you need
+            to.
           </p>
           <p>
             we built it because most newsletter tools are designed for
             marketers, not engineers. {meta.name} strips out the busywork
-            without stripping out the features: a dashboard that stays out
-            of your way, and infrastructure that scales with you.
+            without stripping out the features: a dashboard that stays out of
+            your way, and infrastructure that scales with you.
           </p>
           <p>
             it's{" "}

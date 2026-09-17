@@ -3,7 +3,7 @@ import { BotIdClient } from "botid/client";
 import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
-import { Metadata } from "next";
+import { defaultMetadata } from "@/lib/metadata";
 
 const fontSans = Geist({
   subsets: ["latin"],
@@ -15,9 +15,7 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 });
 
-export const metadata: Metadata = {
-  title: "penna - open source alternative to buttondown",
-};
+export const metadata = defaultMetadata;
 
 // No Header/Footer here — those are marketing-site chrome and only belong
 // on the marketing pages (see app/(marketing)/layout.tsx). Public newsletter
@@ -29,6 +27,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Penna",
+    description:
+      "The newsletter platform that gets out of your way. Write, send, and grow your newsletter with subscribers, segments, analytics, and your own domain.",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "5",
+      ratingCount: "1",
+    },
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -39,6 +57,10 @@ export default function RootLayout({
               method: "POST",
             },
           ]}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body

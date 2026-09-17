@@ -2,7 +2,15 @@ import { meta } from "@workspace/constants/meta";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "refund policy - penna",
+  title: "Refund Policy",
+  description:
+    "Penna's refund policy. We offer a 30-day money-back guarantee on all paid plans. Learn more about our refund terms.",
+  alternates: {
+    canonical: "/refund",
+  },
+  openGraph: {
+    title: "Refund Policy - Penna",
+  },
 };
 
 const sections = [

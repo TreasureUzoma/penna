@@ -1,0 +1,121 @@
+import { ImageResponse } from "next/og";
+
+export const runtime = "edge";
+export const alt = "Penna - Newsletter platform that gets out of your way";
+export const size = {
+  width: 1200,
+  height: 630,
+};
+export const contentType = "image/png";
+
+export default async function OpenGraphImage() {
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#09090b",
+          backgroundImage:
+            "radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.05) 2%, transparent 0%), radial-gradient(circle at 75px 75px, rgba(255, 255, 255, 0.05) 2%, transparent 0%)",
+          backgroundSize: "100px 100px",
+          padding: "40px 80px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "32px",
+          }}
+        >
+          {/* Logo/Brand */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 48,
+                fontWeight: 700,
+                color: "#ffffff",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              penna
+            </div>
+          </div>
+
+          {/* Main Headline */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: "24px",
+              maxWidth: "900px",
+            }}
+          >
+            <h1
+              style={{
+                fontSize: 72,
+                fontWeight: 700,
+                color: "#ffffff",
+                lineHeight: 1.1,
+                margin: 0,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              the newsletter platform
+              <br />
+              that gets out of your way
+            </h1>
+            <p
+              style={{
+                fontSize: 28,
+                color: "#a1a1aa",
+                lineHeight: 1.4,
+                margin: 0,
+                maxWidth: "800px",
+              }}
+            >
+              write, send, and grow your newsletter with subscribers, segments,
+              analytics, and your own domain
+            </p>
+          </div>
+
+          {/* Bottom tagline */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginTop: "20px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 20,
+                color: "#71717a",
+              }}
+            >
+              Open source • API-first • Self-hostable
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+    {
+      ...size,
+    },
+  );
+}

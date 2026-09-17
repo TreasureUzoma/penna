@@ -2,7 +2,15 @@ import { meta } from "@workspace/constants/meta";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "privacy policy - penna",
+  title: "Privacy Policy",
+  description:
+    "Penna's privacy policy. Learn how we collect, use, and protect your data when you use our newsletter platform.",
+  alternates: {
+    canonical: "/privacy",
+  },
+  openGraph: {
+    title: "Privacy Policy - Penna",
+  },
 };
 
 const sections = [
