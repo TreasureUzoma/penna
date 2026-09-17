@@ -41,6 +41,7 @@ import type { AuthType, AppBindings } from "@/types";
 import { routeStatus } from "@/lib/utils";
 import { withAuth } from "@/middlewares/session";
 import { rateLimiter } from "@/middlewares/rate-limiter";
+import { honeypot } from "@/middlewares/honeypot";
 
 const authRoute = new Hono<AppBindings>();
 
@@ -88,6 +89,7 @@ const handleAuth = async (
 
 authRoute.post(
   "/login",
+  honeypot,
   zValidator("json", loginSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
@@ -116,6 +118,7 @@ authRoute.post(
 authRoute.post(
   "/signup",
   rateLimiter(60 * 60 * 1000, 3),
+  honeypot,
   zValidator("json", createAccountSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),

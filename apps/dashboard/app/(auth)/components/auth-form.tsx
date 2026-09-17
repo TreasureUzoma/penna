@@ -67,6 +67,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
     name?: string;
     email?: string;
     password?: string;
+    website?: string; // honeypot — must stay empty for real users
   };
 
   const {
@@ -112,12 +113,13 @@ export function AuthForm({ mode, className, next }: AuthProps) {
     }
 
     if (mode === "login") {
-      loginMutate({ email: data.email!, password: data.password! });
+      loginMutate({ email: data.email!, password: data.password!, website: data.website ?? "" });
     } else {
       signupMutate({
         name: data.name!,
         email: data.email!,
         password: data.password!,
+        website: data.website ?? "",
       });
     }
   };
@@ -132,6 +134,18 @@ export function AuthForm({ mode, className, next }: AuthProps) {
 
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            {/* Honeypot — visually hidden, real users never fill this */}
+            <div
+              aria-hidden="true"
+              style={{ display: "none" }}
+            >
+              <input
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                {...register("website")}
+              />
+            </div>
             <FieldGroup>
               <Field>
                 <Button

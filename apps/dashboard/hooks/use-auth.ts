@@ -25,7 +25,8 @@ export const useLoginMutation = (next?: string) => {
   const queryClint = useQueryClient();
   const router = useRouter();
   return useMutation({
-    mutationFn: (body: Login) => api.post("/auth/login", body),
+    mutationFn: (body: Login & { website?: string }) =>
+      api.post("/auth/login", body),
     onSuccess: () => {
       queryClint.invalidateQueries({ queryKey: ["session"] });
       toast.success("Logged in successfully");
@@ -41,7 +42,8 @@ export const useSignupMutation = () => {
   const queryClint = useQueryClient();
   const router = useRouter();
   return useMutation({
-    mutationFn: (body: Signup) => api.post("/auth/signup", body),
+    mutationFn: (body: Signup & { website?: string }) =>
+      api.post("/auth/signup", body),
     onSuccess: () => {
       queryClint.invalidateQueries({ queryKey: ["session"] });
       toast.success("Verify your email address");
