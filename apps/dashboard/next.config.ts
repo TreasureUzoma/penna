@@ -3,6 +3,14 @@ import { withBotId } from "botid/next/config";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@workspace/ui"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https" as const,
+        hostname: process.env.R2_PUBLIC_URL || "",
+      },
+    ],
+  },
 
   assetPrefix: "/dashboard-static",
 

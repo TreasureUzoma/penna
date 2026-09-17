@@ -1,10 +1,47 @@
 import { Hono } from "hono";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { envConfig } from "@/config";
+import crypto from "crypto";
 
 const uploadRoute = new Hono();
 
+// Initialize R2 client (S3-compatible)
+let s3Client: S3Client | null = null;
+
+function getS3Client() {
+  if (
+    !s3Client &&
+    envConfig.R2_ACCESS_KEY_ID &&
+    envConfig.R2_SECRET_ACCESS_KEY &&
+    envConfig.R2_ACCOUNT_ID
+  ) {
+    s3Client = new S3Client({
+      region: "auto",
+      endpoint: `https://${envConfig.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: envConfig.R2_ACCESS_KEY_ID,
+        secretAccessKey: envConfig.R2_SECRET_ACCESS_KEY,
+      },
+    });
+  }
+  return s3Client;
+}
+
 uploadRoute.post("/", async (c) => {
   try {
+    // Verify user is authenticated
+    const user = c.get("user");
+    if (!user) {
+      return c.json(
+        {
+          success: false,
+          message: "Authentication required",
+          data: null,
+        },
+        401,
+      );
+    }
+
     const body = await c.req.parseBody();
     const file = body["file"];
 
@@ -15,90 +52,109 @@ uploadRoute.post("/", async (c) => {
           message: "No image file provided",
           data: null,
         },
-        400
+        400,
       );
     }
 
-    const accountId = envConfig.CLOUDFLARE_ACCOUNT_ID;
-    const apiToken = envConfig.CLOUDFLARE_API_TOKEN;
+    // Validate file type
+    if (file instanceof File) {
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        return c.json(
+          {
+            success: false,
+            message:
+              "Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.",
+            data: null,
+          },
+          400,
+        );
+      }
 
-    if (!accountId || !apiToken) {
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxSize) {
+        return c.json(
+          {
+            success: false,
+            message: "File size exceeds 10MB limit",
+            data: null,
+          },
+          400,
+        );
+      }
+    }
+
+    // Check R2 configuration
+    const bucketName = envConfig.R2_BUCKET_NAME;
+    const publicUrl = envConfig.R2_PUBLIC_URL;
+
+    if (!bucketName || !publicUrl) {
       return c.json(
         {
           success: false,
-          message:
-            "Cloudflare Images API credentials (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN) are not configured on server.",
+          message: "R2 storage is not configured. Please contact support.",
           data: null,
         },
-        400
+        500,
       );
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const cfResponse = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiToken}`,
-        },
-        body: formData,
-      }
-    );
-
-    const cfData = (await cfResponse.json()) as {
-      success: boolean;
-      errors?: Array<{ message: string }>;
-      result?: {
-        id: string;
-        filename?: string;
-        variants?: string[];
-      };
-    };
-
-    if (!cfResponse.ok || !cfData.success) {
-      let errorMsg =
-        cfData?.errors?.[0]?.message ||
-        "Failed to upload image to Cloudflare Images";
-      if (errorMsg === "Authentication error") {
-        errorMsg =
-          "Cloudflare API Authentication error: Please verify that your CLOUDFLARE_API_TOKEN has 'Cloudflare Images: Edit' permissions and that CLOUDFLARE_ACCOUNT_ID is correct.";
-      }
-      return c.json({ success: false, message: errorMsg, data: null }, 500);
-    }
-
-    const imageUrl =
-      cfData.result?.variants?.[0] ||
-      (envConfig.CLOUDFLARE_ACCOUNT_HASH && cfData.result?.id
-        ? `https://imagedelivery.net/${envConfig.CLOUDFLARE_ACCOUNT_HASH}/${cfData.result.id}/public`
-        : null);
-
-    if (!imageUrl) {
+    const client = getS3Client();
+    if (!client) {
       return c.json(
         {
           success: false,
-          message: "Cloudflare did not return a valid image URL",
+          message: "R2 storage is not configured. Please contact support.",
           data: null,
         },
-        500
+        500,
       );
     }
+
+    // Generate unique filename
+    const fileExtension = file.name.split(".").pop() || "jpg";
+    const uniqueId = crypto.randomUUID();
+    const timestamp = Date.now();
+    const key = `images/${timestamp}-${uniqueId}.${fileExtension}`;
+
+    // Convert file to buffer
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Upload to R2
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type,
+      CacheControl: "public, max-age=31536000, immutable",
+    });
+
+    await client.send(command);
+
+    // Build public URL
+    const imageUrl = `${publicUrl.replace(/\/$/, "")}/${key}`;
 
     return c.json({
       success: true,
-      data: { url: imageUrl, id: cfData.result?.id },
+      data: { url: imageUrl, key },
       message: "Image uploaded successfully",
     });
   } catch (err: any) {
+    console.error("Upload error:", err);
     return c.json(
       {
         success: false,
         message: err?.message || "Failed to process image upload",
         data: null,
       },
-      500
+      500,
     );
   }
 });

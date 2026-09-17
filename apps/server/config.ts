@@ -55,10 +55,12 @@ const envSchema = z
     // sending. Keep this high enough for Groq model startup / cold latency but
     // low enough that user-facing sends do not stall for minutes.
     GROQ_MODERATION_TIMEOUT_MS: z.coerce.number().default(30_000),
-    // Cloudflare Images credentials for direct image upload
-    CLOUDFLARE_ACCOUNT_ID: z.string().optional(),
-    CLOUDFLARE_API_TOKEN: z.string().optional(),
-    CLOUDFLARE_ACCOUNT_HASH: z.string().optional(),
+    // Cloudflare R2 for image uploads in newsletter posts
+    R2_ACCOUNT_ID: z.string().optional(),
+    R2_ACCESS_KEY_ID: z.string().optional(),
+    R2_SECRET_ACCESS_KEY: z.string().optional(),
+    R2_BUCKET_NAME: z.string().optional(),
+    R2_PUBLIC_URL: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     // Production mail must always suppress permanent bounces and complaints.

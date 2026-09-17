@@ -9,6 +9,15 @@ const API_URL = process.env.API_URL || "http://localhost:3005";
 const nextConfig = {
   transpilePackages: ["@workspace/ui"],
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: process.env.R2_PUBLIC_URL,
+      },
+    ],
+  },
+
   async rewrites() {
     const dashboardRoutes = [
       "login",

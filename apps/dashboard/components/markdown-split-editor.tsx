@@ -38,6 +38,9 @@ export function MarkdownSplitEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadingFileName, setUploadingFileName] = useState<string | null>(
+    null,
+  );
 
   // Simple Markdown Parser (Regex based)
   const parseMarkdown = (text: string) => {
