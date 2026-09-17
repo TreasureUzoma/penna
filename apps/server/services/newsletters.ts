@@ -98,8 +98,7 @@ export const isNewsletterOwnerOnPaidPlan = async (
 /** See `isNewsletterOwnerOnPaidPlan` — same gate, kept as a named alias at each call site for readability. */
 export const canRemoveBranding = isNewsletterOwnerOnPaidPlan;
 
-/** See `isNewsletterOwnerOnPaidPlan` — same gate, kept as a named alias at each call site for readability. */
-export const canUseCustomDomain = isNewsletterOwnerOnPaidPlan;
+export const canUseCustomDomain = true;
 
 /** Whether the newsletter owner may use email tracking (opens & clicks). */
 export const hasVerifiedSendingDomain = async (

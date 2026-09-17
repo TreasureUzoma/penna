@@ -60,7 +60,7 @@ const parseDkim = (raw: string | null): DkimData | null => {
 /** Builds the CNAME records a customer adds to prove domain ownership via Easy DKIM. */
 const dkimCnameRecords = (
   domainName: string,
-  dkim: DkimData | null
+  dkim: DkimData | null,
 ): DnsCnameRecord[] =>
   (dkim?.tokens ?? []).map((token) => ({
     name: `${token}._domainkey.${domainName}`,
@@ -88,7 +88,7 @@ export type DomainView = ReturnType<typeof toDomainView>;
  */
 export const listUserDomains = async (
   userId: string,
-  newsletterId?: string
+  newsletterId?: string,
 ): Promise<ServiceResponse> => {
   try {
     const rows = await db
@@ -99,17 +99,20 @@ export const listUserDomains = async (
         teamMembers,
         and(
           eq(teamMembers.teamId, newsletters.teamId),
-          eq(teamMembers.userId, userId)
-        )
+          eq(teamMembers.userId, userId),
+        ),
       )
       .where(
         and(
           or(
             eq(teamMembers.userId, userId),
-            and(isNull(domains.newsletterId), eq(domains.createdByUserId, userId))
+            and(
+              isNull(domains.newsletterId),
+              eq(domains.createdByUserId, userId),
+            ),
           ),
-          newsletterId ? eq(domains.newsletterId, newsletterId) : undefined
-        )
+          newsletterId ? eq(domains.newsletterId, newsletterId) : undefined,
+        ),
       )
       .orderBy(desc(domains.createdAt));
 
@@ -119,7 +122,11 @@ export const listUserDomains = async (
       data: rows.map((row) => ({
         ...toDomainView(row.domain),
         newsletter: row.newsletter
-          ? { id: row.newsletter.id, slug: row.newsletter.slug, name: row.newsletter.name }
+          ? {
+              id: row.newsletter.id,
+              slug: row.newsletter.slug,
+              name: row.newsletter.name,
+            }
           : null,
       })),
     };
@@ -147,7 +154,7 @@ export const listUserDomains = async (
 export const addDomain = async (
   userId: string,
   name: string,
-  newsletterId?: string
+  newsletterId?: string,
 ): Promise<ServiceResponse> => {
   try {
     if (newsletterId) {
@@ -157,25 +164,6 @@ export const addDomain = async (
         return {
           success: false,
           message: "You don't have enough permissions on that newsletter.",
-          data: null,
-        };
-      }
-
-      const allowed = await canUseCustomDomain(newsletterId);
-      if (!allowed) {
-        return {
-          success: false,
-          message:
-            "Custom domains are a Pro feature. Upgrade the newsletter owner's plan to enable it.",
-          data: null,
-        };
-      }
-    } else {
-      const allowed = await isUserOnPaidPlan(userId);
-      if (!allowed) {
-        return {
-          success: false,
-          message: "Custom domains are a Pro feature. Upgrade your plan to enable it.",
           data: null,
         };
       }
@@ -196,7 +184,7 @@ export const addDomain = async (
     let identity;
     try {
       identity = await sesv2.send(
-        new CreateEmailIdentityCommand({ EmailIdentity: name })
+        new CreateEmailIdentityCommand({ EmailIdentity: name }),
       );
     } catch (err) {
       return {
@@ -211,7 +199,8 @@ export const addDomain = async (
 
     const dkim: DkimData = {
       tokens: identity.DkimAttributes?.Tokens ?? [],
-      hostedZone: identity.DkimAttributes?.SigningHostedZone ?? "dkim.amazonses.com",
+      hostedZone:
+        identity.DkimAttributes?.SigningHostedZone ?? "dkim.amazonses.com",
     };
 
     const [row] = await db
@@ -228,10 +217,9 @@ export const addDomain = async (
 
     return {
       success: true,
-      message:
-        newsletterId
-          ? "Domain attached to this newsletter, but DNS verification is still required. Add the records below, then click Recheck."
-          : "Domain added. Add the DNS records below, then click Recheck once they've propagated.",
+      message: newsletterId
+        ? "Domain attached to this newsletter, but DNS verification is still required. Add the records below, then click Recheck."
+        : "Domain added. Add the DNS records below, then click Recheck once they've propagated.",
       data: toDomainView(row!),
     };
   } catch (err) {
@@ -252,7 +240,7 @@ export const addDomain = async (
  */
 const authorizeDomainAccess = async (
   userId: string,
-  domainId: string
+  domainId: string,
 ): Promise<
   | { ok: true; domain: typeof domains.$inferSelect }
   | { ok: false; message: string }
@@ -276,17 +264,18 @@ const authorizeDomainAccess = async (
 /** Re-checks a domain's DKIM/verification status against SES and persists any change. */
 export const refreshDomainVerification = async (
   userId: string,
-  domainId: string
+  domainId: string,
 ): Promise<ServiceResponse> => {
   try {
     const authz = await authorizeDomainAccess(userId, domainId);
-    if (!authz.ok) return { success: false, message: authz.message, data: null };
+    if (!authz.ok)
+      return { success: false, message: authz.message, data: null };
     const { domain: row } = authz;
 
     let identity;
     try {
       identity = await sesv2.send(
-        new GetEmailIdentityCommand({ EmailIdentity: row.name })
+        new GetEmailIdentityCommand({ EmailIdentity: row.name }),
       );
     } catch (err) {
       return {
@@ -337,23 +326,24 @@ export const refreshDomainVerification = async (
 
 export const removeDomain = async (
   userId: string,
-  domainId: string
+  domainId: string,
 ): Promise<ServiceResponse> => {
   try {
     const authz = await authorizeDomainAccess(userId, domainId);
-    if (!authz.ok) return { success: false, message: authz.message, data: null };
+    if (!authz.ok)
+      return { success: false, message: authz.message, data: null };
     const { domain: row } = authz;
 
     try {
       await sesv2.send(
-        new DeleteEmailIdentityCommand({ EmailIdentity: row.name })
+        new DeleteEmailIdentityCommand({ EmailIdentity: row.name }),
       );
     } catch (err) {
       // Best-effort — if SES already dropped it (or never finished
       // creating it) we still want the DB row gone.
       console.warn(
         `Failed to delete SES identity for domain ${row.name}:`,
-        err instanceof Error ? err.message : err
+        err instanceof Error ? err.message : err,
       );
     }
 
@@ -379,10 +369,13 @@ export const removeDomain = async (
 export const assignDomainToNewsletter = async (
   userId: string,
   domainId: string,
-  newsletterId: string
+  newsletterId: string,
 ): Promise<ServiceResponse> => {
   try {
-    const [row] = await db.select().from(domains).where(eq(domains.id, domainId));
+    const [row] = await db
+      .select()
+      .from(domains)
+      .where(eq(domains.id, domainId));
     if (!row) {
       return { success: false, message: "Domain not found", data: null };
     }
@@ -399,7 +392,8 @@ export const assignDomainToNewsletter = async (
     if (!row.verified) {
       return {
         success: false,
-        message: "Verify this domain's DNS records before assigning it to a newsletter.",
+        message:
+          "Verify this domain's DNS records before assigning it to a newsletter.",
         data: null,
       };
     }
@@ -418,16 +412,6 @@ export const assignDomainToNewsletter = async (
       return {
         success: false,
         message: "You don't have enough permissions on that newsletter.",
-        data: null,
-      };
-    }
-
-    const allowed = await canUseCustomDomain(newsletterId);
-    if (!allowed) {
-      return {
-        success: false,
-        message:
-          "Custom domains are a Pro feature. Upgrade the newsletter owner's plan to enable it.",
         data: null,
       };
     }
@@ -460,7 +444,7 @@ export const assignDomainToNewsletter = async (
  * which callers treat as "use the default domain".
  */
 export const getVerifiedSendingDomain = async (
-  newsletterId: string
+  newsletterId: string,
 ): Promise<string | null> => {
   const [row] = await db
     .select({ name: domains.name })
@@ -469,8 +453,8 @@ export const getVerifiedSendingDomain = async (
       and(
         eq(domains.newsletterId, newsletterId),
         eq(domains.verified, true),
-        eq(domains.type, "email")
-      )
+        eq(domains.type, "email"),
+      ),
     );
 
   return row?.name ?? null;
