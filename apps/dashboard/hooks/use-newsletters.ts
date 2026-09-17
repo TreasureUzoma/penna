@@ -5,6 +5,7 @@ import type { ServiceResponse } from "@workspace/types";
 import type { UpdateNewsletter } from "@workspace/validations";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { showErrorToast } from "../lib/error-toast";
 
 type PaginatedResponse<T> = {
   data: T[];
@@ -23,7 +24,7 @@ export function useNewsletters() {
     queryKey: ["newsletters"],
     queryFn: async () => {
       const res = await api.get<{ data: PaginatedResponse<Newsletter> }>(
-        "/newsletters"
+        "/newsletters",
       );
       return res.data.data.data;
     },
@@ -34,7 +35,9 @@ export function useNewsletter(slug: string) {
   return useQuery({
     queryKey: ["newsletter", slug],
     queryFn: async () => {
-      const res = await api.get<{ newsletter: any }>(`/newsletters/slug/${slug}`);
+      const res = await api.get<{ newsletter: any }>(
+        `/newsletters/slug/${slug}`,
+      );
       return res.data.newsletter;
     },
     enabled: !!slug,
@@ -59,8 +62,8 @@ export function useUpdateNewsletter(newsletterId: string) {
       queryClient.invalidateQueries({ queryKey: ["newsletter"] });
       toast.success("Newsletter updated successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update newsletter");
+    onError: (error) => {
+      showErrorToast(error, "Failed to update newsletter");
     },
   });
 }
@@ -80,10 +83,8 @@ export function useTransferNewsletterToTeam(newsletterId: string) {
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
       toast.success("Newsletter moved to the new team");
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to move newsletter to that team"
-      );
+    onError: (error) => {
+      showErrorToast(error, "Failed to move newsletter to that team");
     },
   });
 }
@@ -102,8 +103,8 @@ export function useDeleteNewsletter() {
       toast.success("Newsletter deleted successfully");
       router.push("/newsletters");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to delete newsletter");
+    onError: (error) => {
+      showErrorToast(error, "Failed to delete newsletter");
     },
   });
 }
@@ -148,7 +149,7 @@ export function useNewsletterAnalytics(id: string, days: number = 30) {
     queryKey: ["newsletter-analytics", id, days],
     queryFn: async () => {
       const res = await api.get<ServiceResponse<NewsletterAnalytics>>(
-        `/newsletters/${id}/analytics?days=${days}`
+        `/newsletters/${id}/analytics?days=${days}`,
       );
       return res.data.data;
     },

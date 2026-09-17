@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import { toast } from "sonner";
 import type { ApiKeyScope } from "@workspace/validations";
+import { showErrorToast } from "@/lib/error-toast";
 
 export interface ApiKey {
   id: string;
@@ -16,7 +17,7 @@ export function useNewsletterApiKeys(newsletterId: string) {
     queryKey: ["newsletter-api-keys", newsletterId],
     queryFn: async () => {
       const res = await api.get<{ data: ApiKey[] }>(
-        `/newsletters/api/${newsletterId}`
+        `/newsletters/api/${newsletterId}`,
       );
       return res.data.data;
     },
@@ -31,7 +32,7 @@ export function useCreateNewsletterApiKey(newsletterId: string) {
     mutationFn: async (scopes: ApiKeyScope[]) => {
       const res = await api.post<{ data: ApiKey & { secretKey: string } }>(
         `/newsletters/api/${newsletterId}`,
-        { scopes }
+        { scopes },
       );
       return res.data.data;
     },
@@ -61,8 +62,8 @@ export function useDeleteNewsletterApiKey(newsletterId: string) {
       });
       toast.success("API key deleted successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to delete API key");
+    onError: (error) => {
+      showErrorToast(error, "Failed to delete API key");
     },
   });
 }

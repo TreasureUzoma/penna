@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import { toast } from "sonner";
 import type { Plan, PlanSlug } from "@workspace/constants/plans";
+import { showErrorToast } from "../lib/error-toast";
 
 export interface TeamSubscription {
   id: string;
@@ -32,7 +33,9 @@ export function useTeamSubscription(teamId: string) {
   return useQuery({
     queryKey: ["team-subscription", teamId],
     queryFn: async () => {
-      const res = await api.get<{ data: TeamBillingInfo }>(`/teams/${teamId}/subscription`);
+      const res = await api.get<{ data: TeamBillingInfo }>(
+        `/teams/${teamId}/subscription`,
+      );
       return res.data.data;
     },
     enabled: !!teamId,
@@ -49,10 +52,14 @@ export function useCreateTeamCheckout(teamId: string) {
   return useMutation({
     mutationFn: async (values: CreateTeamCheckoutOptions) => {
       const res = await api.post(`/teams/${teamId}/checkout`, values);
-      return res.data as { success: boolean; message: string; data: { transactionId: string; url: string } | null };
+      return res.data as {
+        success: boolean;
+        message: string;
+        data: { transactionId: string; url: string } | null;
+      };
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to start checkout");
+    onError: (error) => {
+      showErrorToast(error, "Failed to start checkout");
     },
   });
 }
@@ -66,11 +73,13 @@ export function useCancelTeamSubscription(teamId: string) {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["team-subscription", teamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["team-subscription", teamId],
+      });
       toast.success("Subscription canceled");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to cancel subscription");
+    onError: (error) => {
+      showErrorToast(error, "Failed to cancel subscription");
     },
   });
 }

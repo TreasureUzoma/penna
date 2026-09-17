@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import { toast } from "sonner";
 import type { ServiceResponse } from "@workspace/types";
+import { showErrorToast } from "@/lib/error-toast";
 
 export interface Email {
   id: string;
@@ -67,8 +68,8 @@ export function useCreateEmail(newsletterId: string) {
       // enough outcomes that each caller shows its own accurate message.
       queryClient.invalidateQueries({ queryKey: ["emails", newsletterId] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create post");
+    onError: (error) => {
+      showErrorToast(error, "Failed to create post");
     },
   });
 }
@@ -127,8 +128,8 @@ export function useDeleteEmail(newsletterId: string) {
       queryClient.invalidateQueries({ queryKey: ["emails", newsletterId] });
       toast.success("Post deleted successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to delete post");
+    onError: (error) => {
+      showErrorToast(error, "Failed to delete post");
     },
   });
 }

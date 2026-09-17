@@ -106,6 +106,9 @@ export const RESERVED_SLUGS = [
   "smtp",
   "ftp",
   "ssh",
+  "assets",
+  "files",
+  "images",
 ] as const;
 
 export const RESERVED_SLUGS_SET = new Set(

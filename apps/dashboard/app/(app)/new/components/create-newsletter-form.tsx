@@ -30,9 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import {
-  FormDescription,
-} from "@workspace/ui/components/form";
+import { FormDescription } from "@workspace/ui/components/form";
+import { showErrorToast } from "@/lib/error-toast";
 
 export function CreateNewsletterForm() {
   const router = useRouter();
@@ -40,7 +39,7 @@ export function CreateNewsletterForm() {
   // Only owner/admin can create a newsletter under a team (mirrors the
   // server-side getTeamOrFail(["owner","admin"]) check on POST /new).
   const availableTeams = (teams ?? []).filter(
-    (t) => t.role === "owner" || t.role === "admin"
+    (t) => t.role === "owner" || t.role === "admin",
   );
 
   const form = useForm<NewNewsletter>({
@@ -72,8 +71,8 @@ export function CreateNewsletterForm() {
       router.push("/newsletters");
       router.refresh();
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create newsletter");
+    onError: (error) => {
+      showErrorToast(error, "Failed to create newsletter");
     },
   });
 
@@ -84,9 +83,9 @@ export function CreateNewsletterForm() {
   if (!isLoadingTeams && availableTeams.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        You don't have permission to create newsletters in any team. Ask a
-        team owner or admin to invite you with a role that can, or create
-        your own team first.
+        You don't have permission to create newsletters in any team. Ask a team
+        owner or admin to invite you with a role that can, or create your own
+        team first.
       </p>
     );
   }
@@ -116,8 +115,8 @@ export function CreateNewsletterForm() {
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Which team this newsletter belongs to — its members will
-                  have access to it.
+                  Which team this newsletter belongs to — its members will have
+                  access to it.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -196,7 +195,7 @@ export function CreateNewsletterForm() {
                     "cursor-pointer border rounded-lg p-4 flex flex-col gap-2 transition-all hover:border-primary/50",
                     field.value === true
                       ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : "bg-card"
+                      : "bg-card",
                   )}
                   onClick={() => field.onChange(true)}
                 >
@@ -214,7 +213,7 @@ export function CreateNewsletterForm() {
                     "cursor-pointer border rounded-lg p-4 flex flex-col gap-2 transition-all hover:border-primary/50",
                     field.value === false
                       ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : "bg-card"
+                      : "bg-card",
                   )}
                   onClick={() => field.onChange(false)}
                 >

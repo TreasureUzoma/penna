@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import { toast } from "sonner";
 import { ChangePasswordData } from "@workspace/validations";
+import { showErrorToast } from "../lib/error-toast";
 
 export function useChangePassword() {
   return useMutation({
@@ -14,8 +15,8 @@ export function useChangePassword() {
     onSuccess: () => {
       toast.success("Password changed successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to change password");
+    onError: (error) => {
+      showErrorToast(error, "Failed to change password");
     },
   });
 }
@@ -42,8 +43,8 @@ export function useRevokeSession() {
       queryClient.invalidateQueries({ queryKey: ["active-sessions"] });
       toast.success("Session revoked successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to revoke session");
+    onError: (error) => {
+      showErrorToast(error, "Failed to revoke session");
     },
   });
 }
@@ -61,10 +62,8 @@ export function useRevokeOtherSessions() {
       queryClient.invalidateQueries({ queryKey: ["active-sessions"] });
       toast.success("Signed out of all other sessions");
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to sign out other sessions"
-      );
+    onError: (error) => {
+      showErrorToast(error, "Failed to sign out other sessions");
     },
   });
 }

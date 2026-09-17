@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import { toast } from "sonner";
+import { showErrorToast } from "../lib/error-toast";
 
 export interface Subscriber {
   id: string;
@@ -18,7 +19,7 @@ export function useSubscribers(newsletterId: string, page = 1, limit = 10) {
     queryFn: async () => {
       const res = await api.get<{ data: PaginatedResponse<Subscriber> }>(
         `/newsletters/${newsletterId}/subscribers`,
-        { params: { page, limit } }
+        { params: { page, limit } },
       );
       return res.data.data;
     },
@@ -38,16 +39,18 @@ export function useCreateSubscriber(newsletterId: string) {
     mutationFn: async (data: CreateSubscriberData) => {
       const res = await api.post<{ data: Subscriber }>(
         `/newsletters/${newsletterId}/subscribers`,
-        data
+        data,
       );
       return res.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscribers", newsletterId] });
+      queryClient.invalidateQueries({
+        queryKey: ["subscribers", newsletterId],
+      });
       toast.success("Subscriber added successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to add subscriber");
+    onError: (error) => {
+      showErrorToast(error, "Failed to add subscriber");
     },
   });
 }
@@ -66,22 +69,22 @@ export function useImportSubscribers(newsletterId: string) {
     mutationFn: async (csvContent: string) => {
       const res = await api.post<{ data: ImportSubscribersResult }>(
         `/newsletters/${newsletterId}/subscribers/import`,
-        { csvContent }
+        { csvContent },
       );
       return res.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["subscribers", newsletterId] });
+      queryClient.invalidateQueries({
+        queryKey: ["subscribers", newsletterId],
+      });
       const skipped = (data?.skippedDuplicates ?? 0) + (data?.invalidRows ?? 0);
       toast.success(
         `Imported ${data?.imported ?? 0} subscriber${data?.imported === 1 ? "" : "s"}` +
-          (skipped > 0 ? ` (${skipped} skipped)` : "")
+          (skipped > 0 ? ` (${skipped} skipped)` : ""),
       );
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to import subscribers"
-      );
+    onError: (error) => {
+      showErrorToast(error, "Failed to import subscribers");
     },
   });
 }
@@ -92,18 +95,18 @@ export function useDeleteSubscriber(newsletterId: string) {
   return useMutation({
     mutationFn: async (subscriberId: string) => {
       const res = await api.delete(
-        `/newsletters/${newsletterId}/subscribers/${subscriberId}`
+        `/newsletters/${newsletterId}/subscribers/${subscriberId}`,
       );
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscribers", newsletterId] });
+      queryClient.invalidateQueries({
+        queryKey: ["subscribers", newsletterId],
+      });
       toast.success("Subscriber removed successfully");
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to remove subscriber"
-      );
+    onError: (error) => {
+      showErrorToast(error, "Failed to remove subscriber");
     },
   });
 }

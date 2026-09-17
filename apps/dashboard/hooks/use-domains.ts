@@ -1,3 +1,4 @@
+import { showErrorToast } from "@/lib/error-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import { toast } from "sonner";
@@ -49,7 +50,7 @@ export function useAddDomain() {
     }) => {
       const res = await api.post<{ data: DomainRecord; message: string }>(
         "/domains",
-        { name, newsletterId }
+        { name, newsletterId },
       );
       return res.data;
     },
@@ -57,8 +58,10 @@ export function useAddDomain() {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
       toast.success(data.message || "Domain added");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to add domain");
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add domain",
+      );
     },
   });
 }
@@ -69,20 +72,18 @@ export function useVerifyDomain() {
   return useMutation({
     mutationFn: async (domainId: string) => {
       const res = await api.post<{ data: DomainRecord; message: string }>(
-        `/domains/${domainId}/verify`
+        `/domains/${domainId}/verify`,
       );
       return res.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
       toast[data.data?.verified ? "success" : "info"](
-        data.message || "Checked domain status"
+        data.message || "Checked domain status",
       );
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to check domain status"
-      );
+    onError: (error) => {
+      showErrorToast(error, "Failed to check domain status");
     },
   });
 }
@@ -101,7 +102,7 @@ export function useAssignDomain() {
     }) => {
       const res = await api.post<{ data: DomainRecord; message: string }>(
         `/domains/${domainId}/assign`,
-        { newsletterId }
+        { newsletterId },
       );
       return res.data;
     },
@@ -109,8 +110,10 @@ export function useAssignDomain() {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
       toast.success(data.message || "Domain assigned");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to assign domain");
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to assign domain",
+      );
     },
   });
 }
@@ -127,8 +130,10 @@ export function useDeleteDomain() {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
       toast.success("Domain removed");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to remove domain");
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to remove domain",
+      );
     },
   });
 }

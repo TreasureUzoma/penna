@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import { toast } from "sonner";
+import { showErrorToast } from "../lib/error-toast";
 
 export interface Segment {
   id: string;
@@ -16,7 +17,9 @@ export function useSegments(newsletterId: string) {
   return useQuery({
     queryKey: ["segments", newsletterId],
     queryFn: async () => {
-      const res = await api.get<{ data: Segment[] }>(`/segments/${newsletterId}`);
+      const res = await api.get<{ data: Segment[] }>(
+        `/segments/${newsletterId}`,
+      );
       return res.data.data;
     },
     enabled: !!newsletterId,
@@ -35,7 +38,7 @@ export function useCreateSegment(newsletterId: string) {
     mutationFn: async (data: CreateSegmentData) => {
       const res = await api.post<{ data: Segment }>(
         `/segments/${newsletterId}`,
-        data
+        data,
       );
       return res.data.data;
     },
@@ -43,8 +46,8 @@ export function useCreateSegment(newsletterId: string) {
       queryClient.invalidateQueries({ queryKey: ["segments", newsletterId] });
       toast.success("Segment created successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create segment");
+    onError: (error) => {
+      showErrorToast(error, "Failed to create segment");
     },
   });
 }
@@ -61,8 +64,8 @@ export function useDeleteSegment(newsletterId: string) {
       queryClient.invalidateQueries({ queryKey: ["segments", newsletterId] });
       toast.success("Segment deleted successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to delete segment");
+    onError: (error) => {
+      showErrorToast(error, "Failed to delete segment");
     },
   });
 }
@@ -77,7 +80,7 @@ export function useSegmentSubscribers(newsletterId: string, segmentId: string) {
     queryKey: ["segments", newsletterId, segmentId, "subscribers"],
     queryFn: async () => {
       const res = await api.get<{ data: SegmentSubscriber[] }>(
-        `/segments/${newsletterId}/${segmentId}/subscribers`
+        `/segments/${newsletterId}/${segmentId}/subscribers`,
       );
       return res.data.data;
     },
@@ -97,7 +100,7 @@ export function useAddSubscriberToSegment(newsletterId: string) {
       subscriberId: string;
     }) => {
       const res = await api.post(
-        `/segments/${newsletterId}/${segmentId}/subscribers/${subscriberId}`
+        `/segments/${newsletterId}/${segmentId}/subscribers/${subscriberId}`,
       );
       return res.data;
     },
@@ -108,8 +111,8 @@ export function useAddSubscriberToSegment(newsletterId: string) {
       });
       toast.success("Subscriber added to segment");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to add subscriber to segment");
+    onError: (error) => {
+      showErrorToast(error, "Failed to add subscriber to segment");
     },
   });
 }
@@ -126,7 +129,7 @@ export function useRemoveSubscriberFromSegment(newsletterId: string) {
       subscriberId: string;
     }) => {
       const res = await api.delete(
-        `/segments/${newsletterId}/${segmentId}/subscribers/${subscriberId}`
+        `/segments/${newsletterId}/${segmentId}/subscribers/${subscriberId}`,
       );
       return res.data;
     },
@@ -137,10 +140,8 @@ export function useRemoveSubscriberFromSegment(newsletterId: string) {
       });
       toast.success("Subscriber removed from segment");
     },
-    onError: (error: any) => {
-      toast.error(
-        error.message || "Failed to remove subscriber from segment"
-      );
+    onError: (error) => {
+      showErrorToast(error, "Failed to remove subscriber from segment");
     },
   });
 }

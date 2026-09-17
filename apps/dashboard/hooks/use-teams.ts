@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import { toast } from "sonner";
 import type { TeamRoles } from "@workspace/types";
+import { showErrorToast } from "../lib/error-toast";
 
 export interface Team {
   id: string;
@@ -60,8 +61,8 @@ export function useCreateTeam() {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       toast.success("Team created successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create team");
+    onError: (error) => {
+      showErrorToast(error, "Failed to create team");
     },
   });
 }
@@ -79,8 +80,8 @@ export function useUpdateTeam(teamId: string) {
       queryClient.invalidateQueries({ queryKey: ["team", teamId] });
       toast.success("Team updated successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update team");
+    onError: (error) => {
+      showErrorToast(error, "Failed to update team");
     },
   });
 }
@@ -97,8 +98,8 @@ export function useDeleteTeam() {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       toast.success("Team deleted successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to delete team");
+    onError: (error) => {
+      showErrorToast(error, "Failed to delete team");
     },
   });
 }
@@ -107,7 +108,9 @@ export function useTeamMembers(teamId: string) {
   return useQuery({
     queryKey: ["team-members", teamId],
     queryFn: async () => {
-      const res = await api.get<{ data: TeamMember[] }>(`/teams/${teamId}/members`);
+      const res = await api.get<{ data: TeamMember[] }>(
+        `/teams/${teamId}/members`,
+      );
       return res.data.data;
     },
     enabled: !!teamId,
@@ -118,16 +121,24 @@ export function useUpdateTeamMemberRole(teamId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: TeamRoles }) => {
-      const res = await api.patch(`/teams/${teamId}/members/${userId}`, { role });
+    mutationFn: async ({
+      userId,
+      role,
+    }: {
+      userId: string;
+      role: TeamRoles;
+    }) => {
+      const res = await api.patch(`/teams/${teamId}/members/${userId}`, {
+        role,
+      });
       return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["team-members", teamId] });
       toast.success("Member role updated");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update role");
+    onError: (error) => {
+      showErrorToast(error, "Failed to update role");
     },
   });
 }
@@ -144,8 +155,8 @@ export function useRemoveTeamMember(teamId: string) {
       queryClient.invalidateQueries({ queryKey: ["team-members", teamId] });
       toast.success("Member removed");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to remove member");
+    onError: (error) => {
+      showErrorToast(error, "Failed to remove member");
     },
   });
 }
@@ -165,8 +176,8 @@ export function useTransferTeamOwnership(teamId: string) {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       toast.success("Team ownership transferred");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to transfer ownership");
+    onError: (error) => {
+      showErrorToast(error, "Failed to transfer ownership");
     },
   });
 }
@@ -183,8 +194,8 @@ export function useInviteToTeam(teamId: string) {
       queryClient.invalidateQueries({ queryKey: ["team-members", teamId] });
       toast.success("Invitation sent");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to send invitation");
+    onError: (error) => {
+      showErrorToast(error, "Failed to send invitation");
     },
   });
 }
@@ -201,8 +212,8 @@ export function useRevokeTeamInvite(teamId: string) {
       queryClient.invalidateQueries({ queryKey: ["team-members", teamId] });
       toast.success("Invitation revoked");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to revoke invitation");
+    onError: (error) => {
+      showErrorToast(error, "Failed to revoke invitation");
     },
   });
 }
@@ -212,7 +223,9 @@ export function useMyTeamInvites() {
   return useQuery({
     queryKey: ["my-team-invites"],
     queryFn: async () => {
-      const res = await api.get<{ data: { data: TeamInvite[] } }>("/teams/invites");
+      const res = await api.get<{ data: { data: TeamInvite[] } }>(
+        "/teams/invites",
+      );
       return res.data.data.data;
     },
   });
@@ -231,8 +244,8 @@ export function useAcceptTeamInvite() {
       queryClient.invalidateQueries({ queryKey: ["my-team-invites"] });
       toast.success("Invitation accepted");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to accept invitation");
+    onError: (error) => {
+      showErrorToast(error, "Failed to accept invitation");
     },
   });
 }
