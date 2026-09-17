@@ -42,6 +42,7 @@ import { routeStatus } from "@/lib/utils";
 import { withAuth } from "@/middlewares/session";
 import { rateLimiter } from "@/middlewares/rate-limiter";
 import { honeypot } from "@/middlewares/honeypot";
+import { getClientIp } from "@/utils/ip";
 
 const authRoute = new Hono<AppBindings>();
 
@@ -52,6 +53,7 @@ const handleAuth = async (
     email: string;
     name?: string;
     subscriptionType?: string | null;
+    signupIp?: string | null;
   }>,
 ) => {
   if (!serviceData.success || !serviceData.data?.id) {
@@ -106,6 +108,7 @@ authRoute.post(
           email: serviceData.data.email,
           name: serviceData.data.name,
           subscriptionType: serviceData.data.subscriptionType ?? undefined,
+          signupIp: serviceData.data.signupIp ?? undefined,
         },
       };
       return handleAuth(c, mappedData);
@@ -117,14 +120,15 @@ authRoute.post(
 
 authRoute.post(
   "/signup",
-  rateLimiter(60 * 60 * 1000, 3),
+  rateLimiter(60 * 60 * 1000, 23),
   honeypot,
   zValidator("json", createAccountSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
   async (c) => {
     const body = c.req.valid("json");
-    const serviceData = await signup(body);
+    const signupIp = getClientIp(c);
+    const serviceData = await signup(body, signupIp);
 
     if (serviceData.success && serviceData.data) {
       const mappedData = {
@@ -135,6 +139,7 @@ authRoute.post(
           email: serviceData.data.email,
           name: serviceData.data.name,
           subscriptionType: serviceData.data.subscriptionType ?? undefined,
+          signupIp: serviceData.data.signupIp ?? undefined,
         },
       };
       return handleAuth(c, mappedData);
@@ -155,7 +160,8 @@ authRoute.get("/google/callback", async (c) => {
     return c.redirect("/login?error=missing_code", 302);
   }
 
-  const serviceData = await createOauthUser("google", code);
+  const signupIp = getClientIp(c);
+  const serviceData = await createOauthUser("google", code, signupIp);
 
   if (serviceData.success && serviceData.data?.id) {
     const { id, email, name } = serviceData.data;
@@ -192,7 +198,8 @@ authRoute.get("/github/callback", async (c) => {
     return c.redirect("/login?error=missing_code", 302);
   }
 
-  const serviceData = await createOauthUser("github", code);
+  const signupIp = getClientIp(c);
+  const serviceData = await createOauthUser("github", code, signupIp);
 
   if (serviceData.success && serviceData.data?.id) {
     const { id, email, name } = serviceData.data;

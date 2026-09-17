@@ -28,7 +28,7 @@ export const getProfileDataById = async (id: string) => {
 
 export const updateUserProfile = async (
   userId: string,
-  body: UpdateProfile
+  body: UpdateProfile,
 ): Promise<ServiceResponse> => {
   try {
     const fieldsToUpdate: Partial<typeof users.$inferInsert> = {};
@@ -105,7 +105,7 @@ export const updateUserProfile = async (
  */
 export const deleteAccount = async (
   userId: string,
-  email: string
+  email: string,
 ): Promise<ServiceResponse> => {
   try {
     const [user] = await db
@@ -153,8 +153,7 @@ export const deleteAccount = async (
     return {
       data: null,
       success: false,
-      message:
-        err instanceof Error ? err.message : "Failed to delete account.",
+      message: err instanceof Error ? err.message : "Failed to delete account.",
     };
   }
 };

@@ -128,7 +128,11 @@ const getGithubUserInfo = async (code: string) => {
   };
 };
 
-export const createOauthUser = async (method: OauthType, code?: string) => {
+export const createOauthUser = async (
+  method: OauthType,
+  code?: string,
+  signupIp?: string | null,
+) => {
   if (!code) {
     return {
       message: `Missing ${method} authorization code`,
@@ -159,6 +163,7 @@ export const createOauthUser = async (method: OauthType, code?: string) => {
         name: userInfo.name || "Unknown",
         authMethod: "google",
         avatarUrl: userInfo.picture || null,
+        signupIp,
       });
     } catch (error) {
       console.error("Google token exchange failed:", error);
@@ -186,6 +191,7 @@ export const createOauthUser = async (method: OauthType, code?: string) => {
       name: userInfo.name,
       authMethod: "github",
       avatarUrl: userInfo.avatarUrl || null,
+      signupIp,
     });
   }
 
@@ -202,6 +208,7 @@ const upsertUser = async (user: {
   name: string;
   avatarUrl: string | null;
   authMethod: "google" | "github";
+  signupIp?: string | null;
 }) => {
   const existing = await db
     .select()
@@ -229,6 +236,7 @@ const upsertUser = async (user: {
         avatarUrl: user.avatarUrl,
         authMethod: user.authMethod,
         emailVerifiedAt: new Date(),
+        signupIp: user.signupIp || null,
       })
       .returning({ id: users.id });
 
@@ -288,7 +296,7 @@ export const login = async (payload: Login) => {
   };
 };
 
-export const signup = async (payload: Signup) => {
+export const signup = async (payload: Signup, signupIp?: string | null) => {
   if (signupsBlocked()) {
     return {
       success: false,
@@ -321,6 +329,7 @@ export const signup = async (payload: Signup) => {
       name,
       email,
       password: hashedPassword,
+      signupIp: signupIp || null,
     })
     .returning();
 

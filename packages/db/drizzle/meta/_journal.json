@@ -5,71 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1765055224134,
-      "tag": "0000_careless_naoko",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1786335829406,
-      "tag": "0001_add_segments",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1786646742156,
-      "tag": "0002_yellow_moondragon",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1786733633872,
-      "tag": "0003_unknown_aqueduct",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1788694131215,
-      "tag": "0004_add_domain_ownership",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1788780531215,
-      "tag": "0005_rename_projects_to_newsletters",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1788736246770,
-      "tag": "0006_grey_shocker",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1788792524582,
-      "tag": "0007_mysterious_namora",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1788801714536,
-      "tag": "0008_chunky_liz_osborn",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1788883811152,
-      "tag": "0009_add_email_moderation_block_fields",
+      "when": 1789666634719,
+      "tag": "0000_mature_shinobi_shaw",
       "breakpoints": true
     }
   ]

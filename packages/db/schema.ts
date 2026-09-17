@@ -120,6 +120,7 @@ export const users = pgTable("users", {
   password: text("password"),
   emailVerifiedAt: timestamp("email_verified_at"),
   avatarUrl: text("avatar_url"),
+  signupIp: text("signup_ip"),
   createdAt: timestamp("created_at").defaultNow().notNull().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull().notNull(),
   authMethod: userAuthMethodEnum("auth_method").default("email"),
