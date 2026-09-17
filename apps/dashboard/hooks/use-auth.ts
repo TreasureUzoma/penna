@@ -119,3 +119,22 @@ export const useUpdateProfile = () => {
     },
   });
 };
+
+export const useDeleteAccount = () => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (email: string) =>
+      api.delete("/profile", { data: { email } }),
+    onSuccess: () => {
+      queryClient.clear();
+      toast.success("Account deleted. Goodbye 👋");
+      router.push("/login");
+    },
+    onError: (err: any) => {
+      toast.error(
+        err.response?.data?.message || "Failed to delete account. Please try again."
+      );
+    },
+  });
+};

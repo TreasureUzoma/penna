@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { users } from "@workspace/db/schema";
+import { users, refreshTokens } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import type { UpdateProfile } from "@workspace/validations";
 import type { ServiceResponse } from "@workspace/types";
@@ -91,6 +91,70 @@ export const updateUserProfile = async (
       data: null,
       success: false,
       message: errorMessage,
+    };
+  }
+};
+
+/**
+ * Wipes all PII from the user row and revokes every session so the account
+ * is effectively dead, while keeping the row itself (and therefore payment
+ * records, which cascade-delete if the row is removed) intact.
+ *
+ * The email is replaced with a stable placeholder derived from the user's id
+ * so the unique-email constraint remains satisfied.
+ */
+export const deleteAccount = async (
+  userId: string,
+  email: string
+): Promise<ServiceResponse> => {
+  try {
+    const [user] = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user) {
+      return { data: null, success: false, message: "User not found." };
+    }
+
+    // Confirm the supplied email matches — acts as a second factor.
+    if (user.email !== email) {
+      return {
+        data: null,
+        success: false,
+        message: "Email address does not match your account.",
+      };
+    }
+
+    // Anonymise the user row rather than deleting it so that payment records
+    // (which reference users.id with onDelete: cascade) are preserved.
+    await db
+      .update(users)
+      .set({
+        name: "Deleted User",
+        email: `deleted+${userId}@penna.invalid`,
+        password: null,
+        avatarUrl: null,
+        providerId: null,
+        emailVerifiedAt: null,
+        status: "suspended",
+      })
+      .where(eq(users.id, userId));
+
+    // Revoke all sessions.
+    await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+
+    return {
+      data: null,
+      success: true,
+      message: "Account deleted successfully.",
+    };
+  } catch (err) {
+    return {
+      data: null,
+      success: false,
+      message:
+        err instanceof Error ? err.message : "Failed to delete account.",
     };
   }
 };
