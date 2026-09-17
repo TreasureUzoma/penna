@@ -353,7 +353,6 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
             </Tooltip>{" "}
             Email Tracking
             <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              <Sparkles className="w-3 h-3" />
               Pro
             </span>
           </CardTitle>
@@ -436,7 +435,6 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
           <CardTitle className="flex items-center gap-2">
             Branding
             <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              <Sparkles className="w-3 h-3" />
               Pro
             </span>
           </CardTitle>
