@@ -73,8 +73,8 @@ export const createNewsletter = async (
 /**
  * Whether a newsletter's owning team is on any paid plan. Gates the coarse
  * features that only distinguish "free" from "everything else" — see
- * `packages/constants/plans.ts`, where "remove branding" and "custom
- * domain" both appear starting at the professional tier.
+ * `packages/constants/plans.ts`, where "remove branding" appears starting
+ * at the professional tier. Custom domains are available on all plans.
  *
  * Phase 1 has no team-level subscription yet (that's Phase 2 — see the
  * plan doc), so this is still keyed off an individual user's plan: the
@@ -98,7 +98,14 @@ export const isNewsletterOwnerOnPaidPlan = async (
 /** See `isNewsletterOwnerOnPaidPlan` — same gate, kept as a named alias at each call site for readability. */
 export const canRemoveBranding = isNewsletterOwnerOnPaidPlan;
 
-export const canUseCustomDomain = true;
+/**
+ * Custom domains are available on every plan — always returns `true`.
+ * Kept as an async function so call sites in routes/api/v1/newsletters.ts
+ * don't need to change shape.
+ */
+export const canUseCustomDomain = async (
+  _newsletterId: string,
+): Promise<boolean> => true;
 
 /** Whether the newsletter owner may use email tracking (opens & clicks). */
 export const hasVerifiedSendingDomain = async (

@@ -78,7 +78,7 @@ interface SettingsTabProps {
     } | null;
     /** Computed server-side from the newsletter owner's plan — see routes/api/v1/newsletters.ts's `/slug/:slug`. */
     canRemoveBranding: boolean;
-    /** Same gate as `canRemoveBranding` — governs the custom-domains tab, not this newsletter's own URL (see the Public URL field below, unconditional for every plan). */
+    /** Always true — custom domains are available on all plans. */
     canUseCustomDomain: boolean;
     /** Whether the newsletter owner may enable email tracking */
     canUseEmailTracking: boolean;
@@ -408,7 +408,7 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Requires a Pro plan and a verified custom email domain. Add
+                  Requires a Pro plan and a verified custom sending domain. Add
                   and verify a domain in the{" "}
                   <Link
                     href={`/newsletters/${newsletter.slug}/domains`}

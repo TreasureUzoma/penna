@@ -43,6 +43,7 @@ export const plans: Plan[] = [
       "basic analytics",
       "email support",
       "up to 3 team members",
+      "custom domain",
     ],
   },
   {

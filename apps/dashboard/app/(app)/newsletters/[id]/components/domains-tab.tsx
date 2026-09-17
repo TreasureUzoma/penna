@@ -42,9 +42,7 @@ import {
 import {
   Globe,
   Loader2,
-  Lock,
   RefreshCw,
-  Sparkles,
   Trash2,
   CheckCircle2,
   Clock,
@@ -88,7 +86,7 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!newsletter.canUseCustomDomain || !name.trim()) return;
+    if (!name.trim()) return;
     addDomain(
       { name: name.trim(), newsletterId: newsletter.id },
       { onSuccess: () => setName("") }
@@ -113,10 +111,6 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
       <div>
         <h2 className="font-semibold flex items-center gap-2">
           Custom Sending Domain
-          <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-            <Sparkles className="w-3 h-3" />
-            Pro
-          </span>
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
           Send newsletters from your own domain (e.g.{" "}
@@ -125,25 +119,7 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
         </p>
       </div>
 
-      {!newsletter.canUseCustomDomain && (
-        <div className="border rounded-lg p-4 flex items-start gap-3 bg-muted/30">
-          <Lock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            Custom domains require a Pro (or higher) plan on this newsletter's
-            owner account.{" "}
-            <Link
-              href="/settings/billing"
-              className="text-primary underline underline-offset-4 hover:opacity-80"
-            >
-              Upgrade to unlock
-            </Link>
-            .
-          </p>
-        </div>
-      )}
-
-      {newsletter.canUseCustomDomain && (
-        <>
+      <>
           <form
             onSubmit={handleAdd}
             className="flex flex-col sm:flex-row gap-2"
@@ -324,9 +300,7 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
                 </TableBody>
               </Table>
             </div>
-          )}
-        </>
-      )}
+      </>
     </div>
   );
 }
