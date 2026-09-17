@@ -10,12 +10,14 @@ const nextConfig = {
   transpilePackages: ["@workspace/ui"],
 
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: process.env.R2_PUBLIC_URL,
-      },
-    ],
+    remotePatterns: process.env.R2_PUBLIC_URL
+      ? [
+          {
+            protocol: "https",
+            hostname: new URL(process.env.R2_PUBLIC_URL).hostname,
+          },
+        ]
+      : [],
   },
 
   async rewrites() {
