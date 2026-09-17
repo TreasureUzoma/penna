@@ -42,8 +42,8 @@ export default async function OpenGraphImage() {
           <img
             src="https://penna.dev/images/logo.png"
             alt="Penna Logo"
-            width={50}
-            height={50}
+            width={40}
+            height={40}
           />
           <div
             style={{
