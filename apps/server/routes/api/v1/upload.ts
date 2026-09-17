@@ -59,9 +59,13 @@ uploadRoute.post("/", async (c) => {
     };
 
     if (!cfResponse.ok || !cfData.success) {
-      const errorMsg =
+      let errorMsg =
         cfData?.errors?.[0]?.message ||
         "Failed to upload image to Cloudflare Images";
+      if (errorMsg === "Authentication error") {
+        errorMsg =
+          "Cloudflare API Authentication error: Please verify that your CLOUDFLARE_API_TOKEN has 'Cloudflare Images: Edit' permissions and that CLOUDFLARE_ACCOUNT_ID is correct.";
+      }
       return c.json({ success: false, message: errorMsg, data: null }, 500);
     }
 

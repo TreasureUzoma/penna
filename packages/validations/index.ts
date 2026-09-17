@@ -1,65 +1,8 @@
 import { z } from "zod";
+import { RESERVED_SLUGS_SET } from "./reserved-slugs";
 
-// Also doubles as the newsletter-slug reserved list — both live in the
-// same URL namespace now that a newsletter's public page is just
-// penna.dev/{slug} (no per-user prefix; see the note on `newsletters.slug`
-// in packages/db/schema.ts).
-export const RESERVED_SLUGS = [
-  "about",
-  "account",
-  "activity",
-  "admin",
-  "api",
-  "app",
-  "auth",
-  "billing",
-  "billings",
-  "blog",
-  "contact",
-  "dashboard",
-  "developer",
-  "developers",
-  "docs",
-  "domains",
-  "email",
-  "emails",
-  "external",
-  "forgot-password",
-  "help",
-  "legal",
-  "penna",
-  "login",
-  "logout",
-  "new",
-  "newsletter",
-  "newsletters",
-  "onboarding",
-  "payments",
-  "post",
-  "posts",
-  "pricing",
-  "privacy",
-  "profile",
-  "register",
-  "reset-password",
-  "root",
-  "route",
-  "safety",
-  "security",
-  "settings",
-  "signup",
-  "status",
-  "support",
-  "terms",
-  "user",
-  "users",
-  "verify-email",
-  "www",
-];
-
-const RESERVED_SET = new Set(
-  RESERVED_SLUGS.map((name) => name.toLowerCase().trim()),
-);
+// Re-export for backward compatibility
+export { RESERVED_SLUGS, RESERVED_SLUGS_SET } from "./reserved-slugs";
 
 export const loginSchema = z.object({
   email: z.string().trim().email(),
@@ -146,7 +89,7 @@ export const createNewsletterSchema = z.object({
         "Slug must only contain lowercase letters, numbers, and hyphens (-).",
     })
     .refine(
-      (value) => !RESERVED_SET.has(value),
+      (value) => !RESERVED_SLUGS_SET.has(value),
       (value) => ({
         message: `The slug '${value}' is reserved and cannot be used.`,
       }),
@@ -191,7 +134,7 @@ export const updateNewsletterSchema = z.object({
         "Slug must only contain lowercase letters, numbers, and hyphens (-).",
     })
     .refine(
-      (value) => !RESERVED_SET.has(value),
+      (value) => !RESERVED_SLUGS_SET.has(value),
       (value) => ({
         message: `The slug '${value}' is reserved and cannot be used.`,
       }),
@@ -254,7 +197,7 @@ export const createTeamSchema = z.object({
         "Slug must only contain lowercase letters, numbers, and hyphens (-).",
     })
     .refine(
-      (value) => !RESERVED_SET.has(value),
+      (value) => !RESERVED_SLUGS_SET.has(value),
       (value) => ({
         message: `The slug '${value}' is reserved and cannot be used.`,
       }),
