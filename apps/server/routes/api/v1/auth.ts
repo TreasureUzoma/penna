@@ -40,6 +40,7 @@ import { validationErrorResponse } from "@/utils/validation-error-response";
 import type { AuthType, AppBindings } from "@/types";
 import { routeStatus } from "@/lib/utils";
 import { withAuth } from "@/middlewares/session";
+import { rateLimiter } from "@/middlewares/rate-limiter";
 
 const authRoute = new Hono<AppBindings>();
 
@@ -50,7 +51,7 @@ const handleAuth = async (
     email: string;
     name?: string;
     subscriptionType?: string | null;
-  }>
+  }>,
 ) => {
   if (!serviceData.success || !serviceData.data?.id) {
     return c.json(
@@ -58,7 +59,7 @@ const handleAuth = async (
         success: false,
         message: serviceData.message || "Authentication failed",
       },
-      401
+      401,
     );
   }
 
@@ -69,7 +70,7 @@ const handleAuth = async (
     id,
     email,
     name || "-",
-    serviceData.data.subscriptionType ?? undefined
+    serviceData.data.subscriptionType ?? undefined,
   );
 
   await storeRefreshToken(id, refreshToken, refreshExpDate, userAgent);
@@ -81,7 +82,7 @@ const handleAuth = async (
       data: serviceData.data,
       success: true,
     },
-    201
+    201,
   );
 };
 
@@ -109,11 +110,12 @@ authRoute.post(
     }
 
     return handleAuth(c, serviceData);
-  }
+  },
 );
 
 authRoute.post(
   "/signup",
+  rateLimiter(60 * 60 * 1000, 3),
   zValidator("json", createAccountSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
@@ -136,7 +138,7 @@ authRoute.post(
     }
 
     return handleAuth(c, serviceData);
-  }
+  },
 );
 
 authRoute.get("/google/url", (c) => {
@@ -160,7 +162,7 @@ authRoute.get("/google/callback", async (c) => {
       id,
       email,
       name || "-",
-      undefined
+      undefined,
     );
 
     await storeRefreshToken(id, refreshToken, refreshExpDate, userAgent);
@@ -196,7 +198,7 @@ authRoute.get("/github/callback", async (c) => {
     const { accessToken, refreshToken, refreshExpDate } = await generateTokens(
       id,
       email,
-      name || "-"
+      name || "-",
     );
 
     await storeRefreshToken(id, refreshToken, refreshExpDate, userAgent);
@@ -216,7 +218,7 @@ authRoute.post("/logout", async (c) => {
   const refreshToken = await getSignedCookie(
     c,
     envConfig.JWT_REFRESH_SECRET,
-    "pennaRefreshToken"
+    "pennaRefreshToken",
   );
 
   if (refreshToken) {
@@ -224,7 +226,7 @@ authRoute.post("/logout", async (c) => {
       const decoded = (await verify(
         refreshToken,
         envConfig.JWT_REFRESH_SECRET!,
-        "HS256"
+        "HS256",
       )) as { id: string };
       if (decoded.id) await deleteAuthRefreshToken(decoded.id);
     } catch {
@@ -245,7 +247,7 @@ authRoute.post(
     const body = c.req.valid("json");
     const serviceData = await forgotPassword(body.email);
     return c.json(serviceData, 200);
-  }
+  },
 );
 
 authRoute.post(
@@ -264,7 +266,7 @@ authRoute.post(
     }
 
     return c.json(serviceData, 200);
-  }
+  },
 );
 
 authRoute.post(
@@ -283,7 +285,7 @@ authRoute.post(
     }
 
     return c.json(serviceData, 200);
-  }
+  },
 );
 
 authRoute.use("*", withAuth);
@@ -300,7 +302,7 @@ authRoute.post(
     const serviceData = await changePassword(user.id, body);
 
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 authRoute.get("/sessions", async (c) => {
@@ -327,7 +329,7 @@ authRoute.post("/sessions/revoke-others", async (c) => {
   const refreshToken = await getSignedCookie(
     c,
     envConfig.JWT_REFRESH_SECRET,
-    "pennaRefreshToken"
+    "pennaRefreshToken",
   );
   if (!refreshToken) {
     return c.json({ success: false, message: "No active session found" }, 401);
