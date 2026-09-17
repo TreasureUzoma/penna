@@ -5,9 +5,12 @@ import { RESERVED_SLUGS_SET } from "./reserved-slugs";
 export { RESERVED_SLUGS, RESERVED_SLUGS_SET } from "./reserved-slugs";
 
 export const loginSchema = z.object({
-  email: z.string().trim().email(),
+  email: z
+    .string({ required_error: "Email is required" })
+    .trim()
+    .email("Enter a valid email address"),
   password: z
-    .string()
+    .string({ required_error: "Password is required" })
     .trim()
     .min(7, "Password must be at least 7 characters")
     .max(50, "Password must be less than 50 characters"),
@@ -16,27 +19,31 @@ export const loginSchema = z.object({
 export type Login = z.infer<typeof loginSchema>;
 
 export const createAccountSchema = z.object({
-  email: z.string().email(),
+  email: z
+    .string({ required_error: "Email is required" })
+    .email("Enter a valid email address"),
   password: z
-    .string()
+    .string({ required_error: "Password is required" })
     .trim()
     .min(7, "Password must be at least 7 characters")
     .max(50, "Password must be less than 50 characters"),
   name: z
-    .string()
-    .min(2, "Fullname must be at least 2 characters")
-    .max(30, "Fullname is too long"),
+    .string({ required_error: "Full name is required" })
+    .min(2, "Full name must be at least 2 characters")
+    .max(30, "Full name must be 30 characters or less"),
 });
 
 export type Signup = z.infer<typeof createAccountSchema>;
 
 export const verifyResetPasswordSchema = z.object({
   password: z
-    .string()
+    .string({ required_error: "Password is required" })
     .trim()
     .min(7, "Password must be at least 7 characters")
     .max(50, "Password must be less than 50 characters"),
-  token: z.string().uuid("Invalid Token"),
+  token: z
+    .string({ required_error: "Token is required" })
+    .uuid("Invalid or expired token"),
 });
 
 export type VerifyResetPassword = z.infer<typeof verifyResetPasswordSchema>;
@@ -44,19 +51,19 @@ export type VerifyResetPassword = z.infer<typeof verifyResetPasswordSchema>;
 export const changePasswordSchema = z
   .object({
     currentPassword: z
-      .string()
+      .string({ required_error: "Current password is required" })
       .trim()
       .min(7, "Password must be at least 7 characters")
       .max(50, "Password must be less than 50 characters"),
 
     newPassword: z
-      .string()
+      .string({ required_error: "New password is required" })
       .trim()
       .min(7, "Password must be at least 7 characters")
       .max(50, "Password must be less than 50 characters"),
 
     confirmPassword: z
-      .string()
+      .string({ required_error: "Please confirm your password" })
       .trim()
       .min(7, "Password must be at least 7 characters")
       .max(50, "Password must be less than 50 characters"),
@@ -69,17 +76,26 @@ export const changePasswordSchema = z
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
 export const verifyEmailSchema = z.object({
-  email: z.string().email(),
-  token: z.string().uuid("Invalid Token"),
+  email: z
+    .string({ required_error: "Email is required" })
+    .email("Enter a valid email address"),
+  token: z
+    .string({ required_error: "Token is required" })
+    .uuid("Invalid or expired token"),
 });
 
 export type VerifyEmail = z.infer<typeof verifyEmailSchema>;
 
 export const createNewsletterSchema = z.object({
-  teamId: z.string().uuid("Invalid team ID"),
-  name: z.string().min(1).max(35),
+  teamId: z
+    .string({ required_error: "Team is required" })
+    .uuid("Invalid team ID"),
+  name: z
+    .string({ required_error: "Newsletter name is required" })
+    .min(1, "Newsletter name is required")
+    .max(35, "Newsletter name must be 35 characters or less"),
   slug: z
-    .string()
+    .string({ required_error: "Slug is required" })
     .min(3, { message: "Slug must be at least 3 characters long." })
     .max(30, { message: "Slug must be 30 characters or less." })
     .trim()
@@ -94,8 +110,11 @@ export const createNewsletterSchema = z.object({
         message: `The slug '${value}' is reserved and cannot be used.`,
       }),
     ),
-  description: z.string().max(255).optional(),
-  isPublic: z.boolean(),
+  description: z
+    .string()
+    .max(255, "Description must be 255 characters or less")
+    .optional(),
+  isPublic: z.boolean({ required_error: "Visibility setting is required" }),
 });
 
 export type NewNewsletter = z.infer<typeof createNewsletterSchema>;
@@ -113,16 +132,26 @@ export const API_KEY_SCOPES = [
 
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 
-export const apiKeyScopeSchema = z.enum(API_KEY_SCOPES);
+export const apiKeyScopeSchema = z.enum(API_KEY_SCOPES, {
+  errorMap: () => ({ message: "Invalid scope selected" }),
+});
 
 export const createApiKeySchema = z.object({
-  scopes: z.array(apiKeyScopeSchema).min(1, "Select at least one scope"),
+  scopes: z
+    .array(apiKeyScopeSchema, {
+      required_error: "At least one scope is required",
+    })
+    .min(1, "Select at least one scope"),
 });
 
 export type CreateApiKey = z.infer<typeof createApiKeySchema>;
 
 export const updateNewsletterSchema = z.object({
-  name: z.string().min(1).max(35).optional(),
+  name: z
+    .string()
+    .min(1, "Newsletter name is required")
+    .max(35, "Newsletter name must be 35 characters or less")
+    .optional(),
   slug: z
     .string()
     .min(3, { message: "Slug must be at least 3 characters long." })
@@ -140,13 +169,16 @@ export const updateNewsletterSchema = z.object({
       }),
     )
     .optional(),
-  description: z.string().max(255).optional(),
+  description: z
+    .string()
+    .max(255, "Description must be 255 characters or less")
+    .optional(),
   isPublic: z.boolean().optional(),
   removeBranding: z.boolean().optional(),
   emailTracking: z.boolean().optional(),
   // Empty string clears it back to the initials fallback — see
   // updateNewsletter in apps/server/services/newsletters.ts.
-  avatarUrl: z.string().url().optional().or(z.literal("")),
+  avatarUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
 });
 
 export type UpdateNewsletter = z.infer<typeof updateNewsletterSchema>;
@@ -177,7 +209,10 @@ export const isValidEmail = z.object({
 });
 
 export const isValidToken = z.object({
-  token: z.string().min(60).max(900),
+  token: z
+    .string({ required_error: "Token is required" })
+    .min(60, "Invalid token format")
+    .max(900, "Invalid token format"),
 });
 
 // Team schemas — replace the old per-newsletter member/invite schemas
@@ -185,9 +220,12 @@ export const isValidToken = z.object({
 // comment above `teams` in packages/db/schema.ts).
 
 export const createTeamSchema = z.object({
-  name: z.string().min(1).max(35),
+  name: z
+    .string({ required_error: "Team name is required" })
+    .min(1, "Team name is required")
+    .max(35, "Team name must be 35 characters or less"),
   slug: z
-    .string()
+    .string({ required_error: "Slug is required" })
     .min(3, { message: "Slug must be at least 3 characters long." })
     .max(30, { message: "Slug must be 30 characters or less." })
     .trim()
@@ -207,7 +245,11 @@ export const createTeamSchema = z.object({
 export type NewTeam = z.infer<typeof createTeamSchema>;
 
 export const updateTeamSchema = z.object({
-  name: z.string().min(1).max(35).optional(),
+  name: z
+    .string()
+    .min(1, "Team name is required")
+    .max(35, "Team name must be 35 characters or less")
+    .optional(),
   slug: createTeamSchema.shape.slug.optional(),
 });
 
@@ -219,9 +261,13 @@ const teamRoleValues = ["owner", "admin", "editor", "viewer"] as const;
 // old newsletter invite schemas duplicated this (newNewsletterInviteSchema
 // vs inviteUserToNewsletterSchema, identical minus `role`) for no reason.
 export const inviteToTeamSchema = z.object({
-  teamId: z.string().uuid("Invalid team ID"),
-  email: z.string().email("Invalid email format"),
-  role: z.enum(teamRoleValues),
+  teamId: z
+    .string({ required_error: "Team is required" })
+    .uuid("Invalid team ID"),
+  email: z
+    .string({ required_error: "Email is required" })
+    .email("Enter a valid email address"),
+  role: z.enum(teamRoleValues, { required_error: "Role is required" }),
 });
 
 export type InviteToTeam = z.infer<typeof inviteToTeamSchema>;
@@ -231,15 +277,21 @@ export type InviteToTeam = z.infer<typeof inviteToTeamSchema>;
 // from the request body instead of the session; this derives the accepting
 // user from `c.get("user")` server-side instead, same as everything else.
 export const acceptTeamInviteSchema = z.object({
-  token: z.string().min(1),
+  token: z
+    .string({ required_error: "Invite token is required" })
+    .min(1, "Invite token is required"),
 });
 
 export type AcceptTeamInvite = z.infer<typeof acceptTeamInviteSchema>;
 
 export const updateTeamMemberRoleSchema = z.object({
-  teamId: z.string().uuid("Invalid team ID"),
-  targetUserId: z.string().uuid(),
-  role: z.enum(teamRoleValues),
+  teamId: z
+    .string({ required_error: "Team is required" })
+    .uuid("Invalid team ID"),
+  targetUserId: z
+    .string({ required_error: "User is required" })
+    .uuid("Invalid user ID"),
+  role: z.enum(teamRoleValues, { required_error: "Role is required" }),
 });
 
 export type UpdateTeamMemberRole = z.infer<typeof updateTeamMemberRoleSchema>;
@@ -253,16 +305,26 @@ export type TransferTeamOwnership = z.infer<typeof transferTeamOwnershipSchema>;
 // `teamId` comes from the route param, not the body — same shape the old
 // (now retired) /subscriptions/checkout body had, minus the userId concept.
 export const teamCheckoutSchema = z.object({
-  planSlug: z.enum(["hobby", "professional", "business", "enterprise"]),
-  successUrl: z.string().url(),
-  cancelUrl: z.string().url(),
+  planSlug: z.enum(["hobby", "professional", "business", "enterprise"], {
+    errorMap: () => ({ message: "Invalid plan selected" }),
+  }),
+  successUrl: z
+    .string({ required_error: "Success URL is required" })
+    .url("Enter a valid URL"),
+  cancelUrl: z
+    .string({ required_error: "Cancel URL is required" })
+    .url("Enter a valid URL"),
 });
 
 export type TeamCheckout = z.infer<typeof teamCheckoutSchema>;
 
 export const unsubscribeFromNewsletterSchema = z.object({
-  newsletterId: z.string().min(1),
-  email: z.string().email(),
+  newsletterId: z
+    .string({ required_error: "Newsletter is required" })
+    .min(1, "Newsletter is required"),
+  email: z
+    .string({ required_error: "Email is required" })
+    .email("Enter a valid email address"),
 });
 
 export type UnsubscribeRequest = z.infer<
@@ -277,7 +339,7 @@ export const createNewsletterSubscriberSchema = z.object({
     .optional()
     .or(z.literal("")),
   email: z
-    .string()
+    .string({ required_error: "Email is required" })
     .transform((val) => {
       const parts = val.trim().split("@");
       if (parts.length !== 2) return val;
@@ -288,15 +350,24 @@ export const createNewsletterSubscriberSchema = z.object({
       const cleanLocal = local.split("+")[0];
       return `${cleanLocal || local}@${domain}`;
     })
-    .pipe(z.string().email("Enter a valid email")),
-  newsletterId: z.string().min(1),
+    .pipe(z.string().email("Enter a valid email address")),
+  newsletterId: z
+    .string({ required_error: "Newsletter is required" })
+    .min(1, "Newsletter is required"),
 });
 
 export type CreateSubscriber = z.infer<typeof createNewsletterSubscriberSchema>;
 
 export const createSegmentSchema = z.object({
-  name: z.string().min(1, "Name is required").max(50),
-  description: z.string().max(200).optional().or(z.literal("")),
+  name: z
+    .string({ required_error: "Segment name is required" })
+    .min(1, "Segment name is required")
+    .max(50, "Segment name must be 50 characters or less"),
+  description: z
+    .string()
+    .max(200, "Description must be 200 characters or less")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type CreateSegment = z.infer<typeof createSegmentSchema>;
@@ -323,20 +394,41 @@ export const updateProfileSchema = z
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 
 export const insertPostSchema = z.object({
-  subject: z.string().min(4).max(30),
-  body: z.string().min(2).max(6000),
-  status: z.enum(["published", "draft"]),
-  newsletterId: z.string().min(1),
+  subject: z
+    .string({ required_error: "Subject is required" })
+    .min(4, "Subject must be at least 4 characters")
+    .max(30, "Subject must be 30 characters or less"),
+  body: z
+    .string({ required_error: "Body is required" })
+    .min(2, "Body must be at least 2 characters")
+    .max(6000, "Body must be 6000 characters or less"),
+  status: z.enum(["published", "draft"], {
+    errorMap: () => ({
+      message: "Status must be either 'published' or 'draft'",
+    }),
+  }),
+  newsletterId: z
+    .string({ required_error: "Newsletter is required" })
+    .min(1, "Newsletter is required"),
   sentAt: z.coerce.date().optional(),
 });
 
 export type InsertPost = z.infer<typeof insertPostSchema>;
 
 export const dashboardOverviewSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(10),
+  page: z.coerce
+    .number({ invalid_type_error: "Page must be a number" })
+    .min(1, "Page must be at least 1")
+    .default(1),
+  limit: z.coerce
+    .number({ invalid_type_error: "Limit must be a number" })
+    .min(1, "Limit must be at least 1")
+    .max(100, "Limit cannot exceed 100")
+    .default(10),
   sort: z
-    .enum(["name", "activity", "newest", "oldest", "revenue", "subscribers"])
+    .enum(["name", "activity", "newest", "oldest", "revenue", "subscribers"], {
+      errorMap: () => ({ message: "Invalid sort option" }),
+    })
     .optional(),
   search: z.string().optional(),
 });
@@ -348,17 +440,17 @@ export const addDomainSchema = z.object({
   // "Blog.John.dev" and "blog.john.dev " both land on the same row (the
   // `domains.name` column has a unique index).
   name: z
-    .string()
+    .string({ required_error: "Domain is required" })
     .trim()
     .toLowerCase()
     .min(3, { message: "Enter a domain, e.g. news.yoursite.com" })
-    .max(255)
+    .max(255, { message: "Domain must be 255 characters or less" })
     .regex(/^(?!:\/\/)([a-z0-9-]+\.)+[a-z]{2,}$/, {
       message: "Enter a valid domain, e.g. news.yoursite.com",
     }),
   // Optional — omit to verify the domain first and assign it to a
   // newsletter later (see the account-wide Domains page + `assignDomainSchema` below).
-  newsletterId: z.string().uuid().optional(),
+  newsletterId: z.string().uuid("Invalid newsletter ID").optional(),
 });
 
 export type AddDomain = z.infer<typeof addDomainSchema>;
