@@ -56,6 +56,18 @@ export default function RootLayout({
               path: "/api/v1/public/newsletters/*/subscribe",
               method: "POST",
             },
+            {
+              path: "/login",
+              method: "GET",
+            },
+            {
+              path: "/signup",
+              method: "GET",
+            },
+            {
+              path: "/forgot-password",
+              method: "GET",
+            },
           ]}
         />
         <script
