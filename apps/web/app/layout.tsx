@@ -9,6 +9,7 @@ import { defaultMetadata } from "@/lib/metadata";
 const fontSans = localFont({
   src: "../public/fonts/Switzer-Variable.woff2",
   variable: "--font-sans",
+  weight: "100 900",
   display: "swap",
 });
 

@@ -17,6 +17,7 @@ export const viewport: Viewport = {
 export const switzer = localFont({
   src: "../public/fonts/Switzer-Variable.woff2",
   variable: "--font-switzer",
+  weight: "100 900",
   display: "swap",
 });
 
