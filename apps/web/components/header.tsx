@@ -20,7 +20,7 @@ const navLinks = [
 
 export const Header = () => {
   return (
-    <nav className="p-4 md:p-5.5 flex items-center justify-center fixed w-full">
+    <nav className="p-4 md:p-5.5 flex items-center justify-center fixed top-0 z-50 w-full bg-background/70 backdrop-blur-md">
       <div className="flex items-center justify-between w-full max-w-4xl">
         <div>
           <Link href="/">
@@ -47,7 +47,7 @@ export const Header = () => {
               >
                 {link.title}
               </Link>
-            )
+            ),
           )}
         </div>
       </div>

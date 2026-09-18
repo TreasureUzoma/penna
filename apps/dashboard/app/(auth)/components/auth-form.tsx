@@ -47,7 +47,8 @@ export interface AuthProps {
 }
 
 export function AuthForm({ mode, className, next }: AuthProps) {
-  const { mutate: loginMutate, isPending: loginPending } = useLoginMutation(next);
+  const { mutate: loginMutate, isPending: loginPending } =
+    useLoginMutation(next);
   const { mutate: signupMutate, isPending: signupPending } =
     useSignupMutation();
   const { mutate: ouathMutate, isPending: oauthPending } =
@@ -113,7 +114,11 @@ export function AuthForm({ mode, className, next }: AuthProps) {
     }
 
     if (mode === "login") {
-      loginMutate({ email: data.email!, password: data.password!, website: data.website ?? "" });
+      loginMutate({
+        email: data.email!,
+        password: data.password!,
+        website: data.website ?? "",
+      });
     } else {
       signupMutate({
         name: data.name!,
@@ -135,10 +140,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             {/* Honeypot — visually hidden, real users never fill this */}
-            <div
-              aria-hidden="true"
-              style={{ display: "none" }}
-            >
+            <div aria-hidden="true" style={{ display: "none" }}>
               <input
                 type="text"
                 tabIndex={-1}
