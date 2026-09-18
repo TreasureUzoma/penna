@@ -12,7 +12,7 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url("https://idolo.dev/fonts/Switzer-Variable.woff2") format("woff2");
+  src: url("../assets/fonts/Switzer-Variable.woff2") format("woff2");
 }
 
 :root {
@@ -87,6 +87,8 @@
 }
 
 @theme inline {
+  --font-sans: var(--font-sans), var(--font-switzer), "Switzer", sans-serif;
+  --font-mono: var(--font-mono), var(--font-geist-mono), monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

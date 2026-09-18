@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "download-fonts": "node scripts/download-fonts.mjs",
     "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {

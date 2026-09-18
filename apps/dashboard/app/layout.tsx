@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import { Geist_Mono } from "next/font/google";
 import "@workspace/ui/globals.css";
 import "./globals.css";
@@ -13,10 +14,11 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export const switzer = {
+export const switzer = localFont({
+  src: "../public/fonts/Switzer-Variable.woff2",
   variable: "--font-switzer",
-  className: "font-switzer",
-};
+  display: "swap",
+});
 
 export const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -47,7 +49,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${switzer.variable} ${geistMono.variable} bg-background font-[Switzer] antialiased`}
+        className={`${switzer.variable} ${geistMono.variable} bg-background font-sans antialiased`}
       >
         <Providers>
           <QueryProvider>

@@ -159,7 +159,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
                     ouathMutate("github");
                   }}
                 >
-                  <GithubLogo />
+                  <GithubLogo className="fill-neutral-900 dark:fill-white" />
                   {loadingProvider === "github" ? (
                     <Spinner />
                   ) : (

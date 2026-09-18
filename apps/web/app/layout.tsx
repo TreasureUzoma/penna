@@ -1,13 +1,15 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
+import { Geist_Mono } from "next/font/google";
 import { BotIdClient } from "botid/client";
 import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
 import { defaultMetadata } from "@/lib/metadata";
 
-const fontSans = Geist({
-  subsets: ["latin"],
+const fontSans = localFont({
+  src: "../public/fonts/Switzer-Variable.woff2",
   variable: "--font-sans",
+  display: "swap",
 });
 
 const fontMono = Geist_Mono({
