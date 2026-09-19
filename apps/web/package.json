@@ -12,9 +12,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/react": "^4.0.110",
+    "@streamdown/code": "^1.1.1",
     "@workspace/constants": "workspace:*",
     "@workspace/ui": "workspace:*",
     "@workspace/validations": "workspace:*",
+    "ai": "^7.0.66",
     "botid": "^1.5.11",
     "fumadocs-ui": "16.4.2",
     "lucide-react": "^0.475.0",
@@ -24,6 +27,7 @@
     "react-dom": "^19.2.3",
     "shiki": "^4.3.1",
     "sonner": "^2.0.7",
+    "streamdown": "^2.6.0",
     "supametrics": "^1.0.1"
   },
   "devDependencies": {

@@ -21,6 +21,7 @@ import emailsRoute from "./routes/api/v1/emails";
 import segmentRoutes from "./routes/api/v1/segments";
 import domainsRoute from "./routes/api/v1/domains";
 import publicNewslettersRoute from "./routes/api/v1/public/newsletters";
+import faqAiRoute from "./routes/api/v1/public/faq-ai";
 import trackingRoute from "./routes/api/v1/tracking";
 import uploadRoute from "./routes/api/v1/upload";
 import { start } from "workflow/api";
@@ -84,6 +85,9 @@ v1.route(
   "/public/newsletters",
   publicNewslettersRoute.use(rateLimiter(60 * 1000, 60)),
 );
+
+// FAQ AI endpoint — public, rate limited
+v1.route("/public/faq", faqAiRoute.use(rateLimiter(60 * 60 * 1000, 4)));
 
 // Email clients load these without a user session. The opaque recipient
 // token is the only identifier accepted by these endpoints.

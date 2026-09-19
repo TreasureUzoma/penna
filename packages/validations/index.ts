@@ -460,3 +460,7 @@ export const assignDomainSchema = z.object({
 });
 
 export type AssignDomain = z.infer<typeof assignDomainSchema>;
+
+export const faqMessagesSchema = z.object({
+  messages: z.array(z.any()).min(1),
+});

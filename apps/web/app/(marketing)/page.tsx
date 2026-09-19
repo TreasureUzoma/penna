@@ -4,6 +4,7 @@ import { CodeExample } from "@/components/code-example";
 import { Comparison } from "@/components/comparison";
 import { Pricings } from "@/components/pricings";
 import { Metadata } from "next";
+import Faq from "@/components/faq";
 
 export const metadata: Metadata = {
   title: "Penna - Newsletter platform that gets out of your way",
@@ -22,6 +23,7 @@ export default function HomePage() {
       <CodeExample />
       <Comparison />
       <Pricings />
+      <Faq />
     </div>
   );
 }

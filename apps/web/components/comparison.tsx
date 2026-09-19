@@ -46,7 +46,6 @@ export const Comparison = () => {
       buttondown: false,
       mailchimp: false,
     },
-    { name: "webhooks", penna: true, buttondown: false, mailchimp: true },
   ];
 
   const FeatureIcon = ({ value }: { value: boolean }) =>
