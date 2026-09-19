@@ -163,16 +163,17 @@ export default function EditPostPage(): React.JSX.Element {
     new Date(email.sentAt).getTime() <= Date.now();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] -m-4 sm:-m-8 px-4 sm:px-8 py-4 gap-4">
+    <div className="flex flex-col h-full min-h-[calc(100vh-5rem)] md:h-[calc(100vh-4rem)] -m-4 sm:-m-8 px-4 sm:px-8 py-4 gap-4 overflow-y-auto md:overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
             {isAlreadySent ? "View Post" : "Edit Post"}
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={() => router.push(`/newsletters/${newsletterId}/posts`)}
           >
             {isAlreadySent ? "Back" : "Cancel"}
@@ -181,27 +182,28 @@ export default function EditPostPage(): React.JSX.Element {
             <>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleSave}
                 disabled={isUpdating}
               >
                 {pendingAction === "save" && (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                 )}
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
+                <Save className="w-3.5 h-3.5 mr-1.5" />
+                Save
               </Button>
               <Popover open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" disabled={isUpdating}>
-                    <CalendarIcon className="w-4 h-4 mr-2" />
-                    Schedule for later
+                  <Button variant="outline" size="sm" disabled={isUpdating}>
+                    <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
+                    Schedule
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80" align="end">
+                <PopoverContent className="w-80 max-w-[calc(100vw-2rem)]" align="end">
                   <div className="grid gap-4">
                     <div className="space-y-2">
                       <h4 className="font-medium leading-none">Schedule Post</h4>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         Pick a future date and time — the post sends
                         automatically then. To send right away, use{" "}
                         <span className="font-medium text-foreground">
@@ -216,14 +218,15 @@ export default function EditPostPage(): React.JSX.Element {
                         min={minScheduleValue}
                         value={scheduledDate}
                         onChange={(e) => setScheduledDate(e.target.value)}
-                        className="text-base md:text-sm"
+                        className="text-sm"
                       />
                       <Button
+                        size="sm"
                         onClick={handleSchedule}
                         disabled={isUpdating || !scheduledDate}
                       >
                         {pendingAction === "schedule" && (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                         )}
                         Confirm Schedule
                       </Button>
@@ -231,12 +234,12 @@ export default function EditPostPage(): React.JSX.Element {
                   </div>
                 </PopoverContent>
               </Popover>
-              <Button onClick={handlePublishNow} disabled={isUpdating}>
+              <Button size="sm" onClick={handlePublishNow} disabled={isUpdating}>
                 {pendingAction === "publish" && (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                 )}
-                <Send className="w-4 h-4 mr-2" />
-                Publish Now
+                <Send className="w-3.5 h-3.5 mr-1.5" />
+                Publish
               </Button>
             </>
           )}
@@ -257,16 +260,16 @@ export default function EditPostPage(): React.JSX.Element {
         </Alert>
       )}
 
-      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-0 shadow-none bg-transparent">
+      <Card className="flex-1 flex flex-col min-h-[450px] md:min-h-0 overflow-hidden border-0 shadow-none bg-transparent">
         <CardContent className="p-0 h-full flex flex-col gap-3">
           <div className="shrink-0 bg-background border rounded-lg p-3 space-y-0.5">
-            <label className="text-sm font-medium">Subject Line</label>
+            <label className="text-xs sm:text-sm font-medium">Subject Line</label>
             <Input
               placeholder="Enter an engaging subject line..."
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               disabled={isAlreadySent}
-              className="text-lg font-medium border-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50 h-auto disabled:opacity-100"
+              className="text-base sm:text-lg font-medium border-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50 h-auto disabled:opacity-100 p-0"
             />
           </div>
 

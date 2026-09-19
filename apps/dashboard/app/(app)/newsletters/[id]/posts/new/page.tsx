@@ -12,7 +12,6 @@ import { Loader2, Save, Send, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Checkbox } from "@workspace/ui/components/checkbox";
-import { Label } from "@workspace/ui/components/label";
 import { Badge } from "@workspace/ui/components/badge";
 import {
   Popover,
@@ -158,35 +157,36 @@ export default function NewPostPage(): React.JSX.Element {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] -m-4 sm:-m-8 px-4 sm:px-8 py-4 gap-4">
+    <div className="flex flex-col h-full min-h-[calc(100vh-5rem)] md:h-[calc(100vh-4rem)] -m-4 sm:-m-8 px-4 sm:px-8 py-4 gap-4 overflow-y-auto md:overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Create Post</h2>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Create Post</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={() => router.push(`/newsletters/${newsletterId}/posts`)}
           >
             Cancel
           </Button>
           <Popover open={isRecipientsOpen} onOpenChange={setIsRecipientsOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" disabled={isCreating}>
-                <Users className="w-4 h-4 mr-2" />
+              <Button variant="outline" size="sm" disabled={isCreating}>
+                <Users className="w-3.5 h-3.5 mr-1.5" />
                 Recipients{" "}
-                <Badge variant="secondary" className="ml-2">
+                <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">
                   {getRecipientCount()}
                 </Badge>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80" align="end">
+            <PopoverContent className="w-80 max-w-[calc(100vw-2rem)]" align="end">
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">
                     Select Recipients
                   </h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Choose which segments to send to, or leave all unchecked to
                     send to all subscribers.
                   </p>
@@ -207,10 +207,10 @@ export default function NewPostPage(): React.JSX.Element {
                         />
                         <label
                           htmlFor={`segment-${segment.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                          className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
                         >
                           {segment.name}
-                          <span className="text-muted-foreground ml-2">
+                          <span className="text-muted-foreground ml-1.5">
                             ({segment.subscriberCount})
                           </span>
                         </label>
@@ -218,7 +218,7 @@ export default function NewPostPage(): React.JSX.Element {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     No segments available. All subscribers will receive this
                     post.
                   </p>
@@ -228,27 +228,28 @@ export default function NewPostPage(): React.JSX.Element {
           </Popover>
           <Button
             variant="outline"
+            size="sm"
             onClick={handleSaveDraft}
             disabled={isCreating}
           >
             {pendingAction === "draft" && (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             )}
-            <Save className="w-4 h-4 mr-2" />
-            Save as Draft
+            <Save className="w-3.5 h-3.5 mr-1.5" />
+            Save Draft
           </Button>
           <Popover open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" disabled={isCreating}>
-                <CalendarIcon className="w-4 h-4 mr-2" />
-                Schedule for later
+              <Button variant="outline" size="sm" disabled={isCreating}>
+                <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
+                Schedule
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80" align="end">
+            <PopoverContent className="w-80 max-w-[calc(100vw-2rem)]" align="end">
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">Schedule Post</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Pick a future date and time — the post sends automatically
                     then. To send right away, use{" "}
                     <span className="font-medium text-foreground">
@@ -263,14 +264,15 @@ export default function NewPostPage(): React.JSX.Element {
                     min={minScheduleValue}
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
-                    className="text-base md:text-sm"
+                    className="text-sm"
                   />
                   <Button
+                    size="sm"
                     onClick={handleSchedule}
                     disabled={isCreating || !scheduledDate}
                   >
                     {pendingAction === "schedule" && (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                     )}
                     Confirm Schedule
                   </Button>
@@ -278,25 +280,25 @@ export default function NewPostPage(): React.JSX.Element {
               </div>
             </PopoverContent>
           </Popover>
-          <Button onClick={handlePublishNow} disabled={isCreating}>
+          <Button size="sm" onClick={handlePublishNow} disabled={isCreating}>
             {pendingAction === "publish" && (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             )}
-            <Send className="w-4 h-4 mr-2" />
-            Publish Now
+            <Send className="w-3.5 h-3.5 mr-1.5" />
+            Publish
           </Button>
         </div>
       </div>
 
-      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-0 shadow-none bg-transparent">
+      <Card className="flex-1 flex flex-col min-h-[450px] md:min-h-0 overflow-hidden border-0 shadow-none bg-transparent">
         <CardContent className="p-0 h-full flex flex-col gap-3">
           <div className="shrink-0 bg-background border rounded-lg p-3 space-y-0.5">
-            <label className="text-sm font-medium">Subject Line</label>
+            <label className="text-xs sm:text-sm font-medium">Subject Line</label>
             <Input
               placeholder="Enter an engaging subject line..."
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="text-lg font-medium border-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50 h-auto"
+              className="text-base sm:text-lg font-medium border-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50 h-auto p-0"
             />
           </div>
 

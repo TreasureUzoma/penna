@@ -36,19 +36,19 @@ export function MarkdownSplitEditor({
   readOnly = false,
 }: MarkdownSplitEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [uploadingFileName, setUploadingFileName] = useState<string | null>(
-    null,
+  const [activeTab, setActiveTab] = useState<"write" | "preview">(
+    readOnly ? "preview" : "write",
   );
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Simple Markdown Parser (Regex based)
   const parseMarkdown = (text: string) => {
+    if (!text) return "";
     let html = text
       // Code blocks
       .replace(
         /```([\s\S]*?)```/g,
-        '<pre class="bg-muted p-4 rounded-md my-4 overflow-x-auto"><code>$1</code></pre>',
+        '<pre class="bg-muted p-4 rounded-md my-4 overflow-x-auto text-sm font-mono"><code>$1</code></pre>',
       )
       // Inline code
       .replace(
@@ -66,14 +66,17 @@ export function MarkdownSplitEditor({
         '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-4 hover:opacity-80">$1</a>',
       )
       // Headers
-      .replace(/^# (.*$)/gm, '<h1 class="text-3xl font-bold mt-6 mb-4">$1</h1>')
+      .replace(
+        /^# (.*$)/gm,
+        '<h1 class="text-2xl md:text-3xl font-bold mt-6 mb-4">$1</h1>',
+      )
       .replace(
         /^## (.*$)/gm,
-        '<h2 class="text-2xl font-semibold mt-5 mb-3">$1</h2>',
+        '<h2 class="text-xl md:text-2xl font-semibold mt-5 mb-3">$1</h2>',
       )
       .replace(
         /^### (.*$)/gm,
-        '<h3 class="text-xl font-medium mt-4 mb-2">$1</h3>',
+        '<h3 class="text-lg md:text-xl font-medium mt-4 mb-2">$1</h3>',
       )
       // Bold
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -108,7 +111,6 @@ export function MarkdownSplitEditor({
 
     onChange(newText);
 
-    // Restore selection/cursor
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + before.length, end + before.length);
@@ -164,143 +166,156 @@ export function MarkdownSplitEditor({
   return (
     <div
       className={cn(
-        "flex flex-col border rounded-md overflow-hidden bg-background h-full min-h-0",
+        "flex flex-col border rounded-md overflow-hidden bg-background h-full min-h-[350px] md:min-h-0",
         className,
       )}
     >
-      {/* Toolbar */}
-      {!readOnly && (
-        <div className="flex items-center justify-between gap-1 p-2 border-b bg-muted/30 overflow-x-auto shrink-0">
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => insertText("# ")}
-              title="Heading 1"
-            >
-              <Heading1 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => insertText("## ")}
-              title="Heading 2"
-            >
-              <Heading2 className="h-4 w-4" />
-            </Button>
-            <div className="w-px h-4 bg-border mx-1" />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => insertText("**", "**")}
-              title="Bold"
-            >
-              <Bold className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => insertText("*", "*")}
-              title="Italic"
-            >
-              <Italic className="h-4 w-4" />
-            </Button>
-            <div className="w-px h-4 bg-border mx-1" />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => insertText("- ")}
-              title="List"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => insertText("> ")}
-              title="Quote"
-            >
-              <Quote className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => insertText("```\n", "\n```")}
-              title="Code Block"
-            >
-              <Code className="h-4 w-4" />
-            </Button>
-            <div className="w-px h-4 bg-border mx-1" />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => insertText("[", "](url)")}
-              title="Link"
-            >
-              <LinkIcon className="h-4 w-4" />
-            </Button>
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                disabled={isUploadingImage}
-                title="Upload image to Cloudflare"
-              >
-                {isUploadingImage ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                ) : (
-                  <ImageIcon className="h-4 w-4" />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                  onChange={handleImageUpload}
-                  disabled={isUploadingImage}
-                />
-              </Button>
-            </div>
-          </div>
+      {/* Mobile Tab Toggle Bar (Always visible on mobile) */}
+      <div className="flex md:hidden items-center justify-between p-2 border-b bg-muted/40 shrink-0">
+        <div className="flex items-center gap-1 bg-muted/80 p-1 rounded-lg border w-full">
+          <button
+            type="button"
+            onClick={() => setActiveTab("write")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all",
+              activeTab === "write"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <PenSquare className="h-3.5 w-3.5" />
+            Write
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("preview")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all",
+              activeTab === "preview"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Eye className="h-3.5 w-3.5" />
+            Preview
+          </button>
+        </div>
+      </div>
 
-          {/* Mobile Tab Toggle Switch (Write / Preview) */}
-          <div className="flex md:hidden items-center ml-2 border rounded-md overflow-hidden p-0.5 bg-muted shrink-0">
-            <button
-              type="button"
-              onClick={() => setActiveTab("write")}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-sm transition-colors",
-                activeTab === "write"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
+      {/* Formatting Toolbar */}
+      {!readOnly && (
+        <div
+          className={cn(
+            "items-center gap-1 p-2 border-b bg-muted/20 overflow-x-auto shrink-0 touch-pan-x",
+            activeTab === "write" ? "flex" : "hidden md:flex",
+          )}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("# ")}
+            title="Heading 1"
+            className="h-8 w-8 shrink-0"
+          >
+            <Heading1 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("## ")}
+            title="Heading 2"
+            className="h-8 w-8 shrink-0"
+          >
+            <Heading2 className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1 shrink-0" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("**", "**")}
+            title="Bold"
+            className="h-8 w-8 shrink-0"
+          >
+            <Bold className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("*", "*")}
+            title="Italic"
+            className="h-8 w-8 shrink-0"
+          >
+            <Italic className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1 shrink-0" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("- ")}
+            title="List"
+            className="h-8 w-8 shrink-0"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("> ")}
+            title="Quote"
+            className="h-8 w-8 shrink-0"
+          >
+            <Quote className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("```\n", "\n```")}
+            title="Code Block"
+            className="h-8 w-8 shrink-0"
+          >
+            <Code className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1 shrink-0" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => insertText("[", "](url)")}
+            title="Link"
+            className="h-8 w-8 shrink-0"
+          >
+            <LinkIcon className="h-4 w-4" />
+          </Button>
+          <div className="relative shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-8 w-8"
+              disabled={isUploadingImage}
+              title="Upload image"
             >
-              <PenSquare className="h-3 w-3" />
-              Write
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("preview")}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-sm transition-colors",
-                activeTab === "preview"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground",
+              {isUploadingImage ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <ImageIcon className="h-4 w-4" />
               )}
-            >
-              <Eye className="h-3 w-3" />
-              Preview
-            </button>
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                onChange={handleImageUpload}
+                disabled={isUploadingImage}
+              />
+            </Button>
           </div>
         </div>
       )}
 
-      {/* Editor Area — Side-by-side split on desktop; Tabbed view on mobile */}
-      <div className="flex flex-col md:flex-row flex-1 min-h-0">
-        {/* Input */}
+      {/* Editor & Preview Split Container */}
+      <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden relative">
+        {/* Write View */}
         <div
           className={cn(
-            "w-full md:w-1/2 flex-1 md:h-full border-b md:border-b-0 md:border-r flex flex-col shrink-0 md:shrink",
+            "w-full md:w-1/2 h-full border-b md:border-b-0 md:border-r flex flex-col min-h-0 overflow-hidden",
             activeTab === "write" ? "flex" : "hidden md:flex",
           )}
         >
@@ -309,15 +324,15 @@ export function MarkdownSplitEditor({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={readOnly}
-            className="flex-1 w-full h-full resize-none border-0 rounded-none focus-visible:ring-0 p-4 font-mono text-base md:text-sm leading-relaxed disabled:opacity-100 disabled:cursor-not-allowed"
+            className="flex-1 w-full h-full resize-none border-0 rounded-none focus-visible:ring-0 p-3 md:p-4 font-mono text-sm leading-relaxed disabled:opacity-100 disabled:cursor-not-allowed [field-sizing:fixed] overflow-y-auto"
             placeholder="Type your markdown here..."
           />
         </div>
 
-        {/* Preview */}
+        {/* Preview View */}
         <div
           className={cn(
-            "w-full md:w-1/2 flex-1 md:h-full overflow-y-auto p-4 md:p-6 prose dark:prose-invert max-w-none",
+            "w-full md:w-1/2 h-full overflow-y-auto p-4 md:p-6 prose dark:prose-invert max-w-none min-h-0",
             activeTab === "preview" ? "block" : "hidden md:block",
           )}
         >
