@@ -51,7 +51,7 @@ export function FaqAi() {
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="flex">
+      <form onSubmit={handleSubmit} className="flex items-center">
         <Input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}

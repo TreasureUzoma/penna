@@ -61,7 +61,7 @@ ${meta.name} is a modern, open-source newsletter and subscriber management platf
 - Custom domain support
 - Subscriber segments
 - Export data
-- Check penna.dev/pricing for current rates
+- Check penna.dev/#pricing for current rates
 
 ### Business Plan
 - Up to 50,000 subscribers
@@ -73,25 +73,15 @@ ${meta.name} is a modern, open-source newsletter and subscriber management platf
 - Unlimited segments
 - Team collaboration (coming soon)
 - White-label options (coming soon)
-- Check penna.dev/pricing for current rates
+- Check penna.dev/#pricing for current rates
 
-### Enterprise Plan
-- Unlimited subscribers
-- Unlimited newsletter sends
-- Dedicated support
-- SLA guarantees
-- Advanced integrations
-- Custom features
-- Dedicated IP (optional)
-- Premium onboarding
-- Custom pricing - contact sales@penna.dev
 
 ## Core Features
 
 **Subscriber Management:**
 - Add subscribers manually or via API
 - Organize with powerful segmentation
-- Import from CSV (coming soon)
+- Import from CSV 
 - Track engagement metrics
 - GDPR compliant with easy data export/deletion
 
@@ -196,7 +186,7 @@ Segments are groups of subscribers sharing common characteristics:
 
 **Rate Limits:**
 - Max 5,000 recipients per send request (MAX_RECIPIENTS_PER_SEND)
-- Daily send limits based on plan (3/20/100/unlimited)
+- Daily send limits based on plan (3/20/100)
 - 100 API requests per hour per IP
 
 **Send Request Parameters:**
@@ -285,6 +275,63 @@ A: Yes, but you need to batch your sends. Each API call can target max 5,000 uni
 **Q: What's the daily send limit?**
 A: Hobby: 3 sends/day, Professional: 20/day, Business: 100/day, Enterprise: unlimited. This is the number of broadcast sends, not individual emails.
 
+## Website & Documentation URLs
+
+All pages are served from **penna.dev**. When providing links, always use the full URL format.
+
+**Main Website Pages:**
+- Homepage: https://penna.dev
+- About: https://penna.dev/about
+- Contact: https://penna.dev/contact
+- Privacy Policy: https://penna.dev/privacy
+- Terms of Service: https://penna.dev/terms
+- Refund Policy: https://penna.dev/refund
+- Pricing: https://penna.dev/#pricing (check for current rates)
+
+**Documentation Base:**
+- Docs Home: https://penna.dev/docs
+
+**Getting Started:**
+- Introduction: https://penna.dev/docs
+- Getting Started: https://penna.dev/docs/getting-started
+
+**Guides (https://penna.dev/docs/guides/...):**
+- Dashboard Overview: https://penna.dev/docs/guides/dashboard-overview
+- Managing Subscribers: https://penna.dev/docs/guides/managing-subscribers
+- Segments: https://penna.dev/docs/guides/segments
+- Custom Domain: https://penna.dev/docs/guides/custom-domain
+- Compose & Send: https://penna.dev/docs/guides/compose-send
+- Analytics: https://penna.dev/docs/guides/analytics
+- Team Collaboration: https://penna.dev/docs/guides/team-collaboration
+- Billing & Plans: https://penna.dev/docs/guides/billing-plans
+
+**API Reference (https://penna.dev/docs/integrations/...):**
+- Create Subscriber: https://penna.dev/docs/integrations/create
+- Get Newsletter Info: https://penna.dev/docs/integrations/get
+- Send Newsletter: https://penna.dev/docs/integrations/send-newsletter
+- Segments API: https://penna.dev/docs/integrations/segments
+
+**Best Practices (https://penna.dev/docs/best-practices/...):**
+- Email Deliverability: https://penna.dev/docs/best-practices/email-deliverability
+- Avoid Spam: https://penna.dev/docs/best-practices/avoid-spam
+- Avoid Gmail Promotions Tab: https://penna.dev/docs/best-practices/avoid-promotions-tab
+- Writing Effective Newsletters: https://penna.dev/docs/best-practices/writing-effective-newsletters
+- Subscriber Engagement: https://penna.dev/docs/best-practices/subscriber-engagement
+- List Hygiene: https://penna.dev/docs/best-practices/list-hygiene
+
+**API Endpoints:**
+- Base URL: https://api.penna.dev
+- Add Subscriber: POST https://api.penna.dev/api/v1/external/newsletters/subscriber/new
+- Send Newsletter: POST https://api.penna.dev/api/v1/external/newsletters/send
+- Segment Management: https://api.penna.dev/api/v1/segments/... (session auth)
+
+**When users ask about specific topics:**
+- Always provide the relevant penna.dev URL
+- For technical setup, point to custom domain guide
+- For API usage, point to integrations docs
+- For deliverability issues, point to best practices section
+- For billing questions, point to billing-plans guide
+
 Your role:
 - Answer questions about ${meta.name} clearly and concisely
 - Use the comprehensive information provided above
@@ -298,6 +345,9 @@ Your role:
 - When discussing features, be accurate about what exists now vs. what's coming soon`,
       messages: await convertToModelMessages(messages),
       temperature: 0.7,
+      tools: {
+        browser_search: groq.tools.browserSearch({}),
+      },
     });
 
     return result.toUIMessageStreamResponse();

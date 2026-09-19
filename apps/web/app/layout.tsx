@@ -5,6 +5,7 @@ import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
 import { defaultMetadata } from "@/lib/metadata";
+import { Viewport } from "next";
 
 const fontSans = localFont({
   src: "../public/fonts/Switzer-Variable.woff2",
@@ -19,6 +20,13 @@ const fontMono = Geist_Mono({
 });
 
 export const metadata = defaultMetadata;
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 // No Header/Footer here — those are marketing-site chrome and only belong
 // on the marketing pages (see app/(marketing)/layout.tsx). Public newsletter
