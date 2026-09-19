@@ -84,8 +84,8 @@ export default function NewsletterSegmentsPage() {
   const handleDialogChange = (open: boolean) => {
     setIsDialogOpen(open);
     if (!open && searchParams.get("action") === "new") {
-      // Remove the action param when closing the modal
-      router.push(`/newsletters/${newsletterId}/segments`);
+      // Remove the action param when closing the modal using replace to avoid adding to history
+      router.replace(`/newsletters/${newsletterId}/segments`);
     }
   };
 
