@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useModalStore } from "@/stores/use-modal-store";
 import {
   useSubscribers,
   useCreateSubscriber,
@@ -85,9 +86,10 @@ import { SubscriberAvatar } from "@/components/subscriber-avatar";
 
 export default function NewsletterSubscribersPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const newsletterId = params.id as string;
+  const { isOpen, type, openModal, closeModal } = useModalStore();
+  const isSubscriberModalOpen = isOpen && type === "new-subscriber";
+
   const [page, setPage] = useState(1);
   const { data, isLoading } = useSubscribers(newsletterId, page);
   const { mutate: createSubscriber, isPending: isCreating } =
@@ -99,24 +101,9 @@ export default function NewsletterSubscribersPage() {
   const { data: segments } = useSegments(newsletterId);
   const { mutate: addSubscriberToSegment } =
     useAddSubscriberToSegment(newsletterId);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [csvFileName, setCsvFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (searchParams.get("action") === "new") {
-      setIsDialogOpen(true);
-    }
-  }, [searchParams]);
-
-  const handleDialogChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (!open && searchParams.get("action") === "new") {
-      // Remove the action param when closing the modal using replace to avoid adding to history
-      router.replace(`/newsletters/${newsletterId}/subscribers`);
-    }
-  };
 
   const subscribers = data?.data || [];
   const meta = data?.meta;
@@ -147,7 +134,7 @@ export default function NewsletterSubscribersPage() {
               });
             });
           }
-          handleDialogChange(false);
+          closeModal();
           setSelectedSegments([]);
           form.reset();
         },
@@ -173,7 +160,7 @@ export default function NewsletterSubscribersPage() {
       const csvContent = reader.result as string;
       importSubscribers(csvContent, {
         onSuccess: () => {
-          handleDialogChange(false);
+          closeModal();
           setCsvFileName(null);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
@@ -196,7 +183,12 @@ export default function NewsletterSubscribersPage() {
         <p className="text-muted-foreground">
           Manage your newsletter subscribers.
         </p>
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+        <Dialog
+          open={isSubscriberModalOpen}
+          onOpenChange={(open) =>
+            open ? openModal("new-subscriber") : closeModal()
+          }
+        >
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Add Subscribers</DialogTitle>
@@ -520,7 +512,7 @@ another@example.com,Jane Smith`}
               </p>
               <Button
                 variant="outline"
-                onClick={() => handleDialogChange(true)}
+                onClick={() => openModal("new-subscriber")}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add your first subscriber

@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useModalStore } from "@/stores/use-modal-store";
 import {
   useDomains,
   useAddDomain,
@@ -58,8 +58,9 @@ interface DomainsTabProps {
 }
 
 export function DomainsTab({ newsletter }: DomainsTabProps) {
-  const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { isOpen, type } = useModalStore();
+
   const { data: domains, isLoading } = useDomains(newsletter.id);
   // Unfiltered, just to find domains the user has already verified under
   // their account but hasn't assigned anywhere yet — offered below as
@@ -77,18 +78,19 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
   const [attachPick, setAttachPick] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
 
+  // Focus input when "New Domain" button is clicked
   useEffect(() => {
-    if (searchParams.get("action") === "new") {
+    if (isOpen && type === "new-domain") {
       inputRef.current?.focus();
     }
-  }, [searchParams]);
+  }, [isOpen, type]);
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
     addDomain(
       { name: name.trim(), newsletterId: newsletter.id },
-      { onSuccess: () => setName("") }
+      { onSuccess: () => setName("") },
     );
   }
 
@@ -96,7 +98,7 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
     if (!attachPick) return;
     assignDomain(
       { domainId: attachPick, newsletterId: newsletter.id },
-      { onSuccess: () => setAttachPick("") }
+      { onSuccess: () => setAttachPick("") },
     );
   }
 
@@ -113,8 +115,8 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
           Send newsletters from your own domain (e.g.{" "}
-          <span className="font-mono">news.yoursite.com</span>) instead of
-          the shared Penna domain.
+          <span className="font-mono">news.yoursite.com</span>) instead of the
+          shared Penna domain.
         </p>
       </div>
 
@@ -214,7 +216,7 @@ export function DomainsTab({ newsletter }: DomainsTabProps) {
                           "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
                           domain.verified
                             ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                            : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+                            : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
                         )}
                       >
                         {domain.verified ? (

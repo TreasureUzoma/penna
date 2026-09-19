@@ -5,7 +5,7 @@ import { usePathname, useParams } from "next/navigation";
 import { NewsletterSwitcher } from "@/components/newsletter-switcher";
 import { Button } from "@workspace/ui/components/button";
 import { Plus } from "lucide-react";
-import Link from "next/link";
+import { useModalStore } from "@/stores/use-modal-store";
 
 const SECTION_TITLES: Record<string, string> = {
   "": "Overview",
@@ -19,25 +19,14 @@ const SECTION_TITLES: Record<string, string> = {
 
 const ACTION_BUTTON_CONFIG: Record<
   string,
-  { label: string; getHref: (slug: string) => string }
-> = {
-  subscribers: {
-    label: "New Subscriber",
-    getHref: (slug) => `/newsletters/${slug}/subscribers?action=new`,
-  },
-  segments: {
-    label: "New Segment",
-    getHref: (slug) => `/newsletters/${slug}/segments?action=new`,
-  },
-  domains: {
-    label: "New Domain",
-    getHref: (slug) => `/newsletters/${slug}/domains?action=new`,
-  },
-};
+  { label: string; action: () => void }
+> = {};
+
+// Will be populated in the component with access to openModal
 
 const DEFAULT_ACTION = {
   label: "New Post",
-  getHref: (slug: string) => `/newsletters/${slug}/posts/new`,
+  action: (slug: string) => `/newsletters/${slug}/posts/new`,
 };
 
 export default function NewsletterLayout({
@@ -48,6 +37,7 @@ export default function NewsletterLayout({
   const pathname = usePathname();
   const params = useParams();
   const slug = params.id as string;
+  const { openModal } = useModalStore();
 
   const rest = pathname
     .replace(`/newsletters/${slug}`, "")
@@ -60,7 +50,35 @@ export default function NewsletterLayout({
   // above them would just be redundant chrome eating into their height.
   const isFullBleedEditor = rest[0] === "posts" && rest.length > 1;
   const title = SECTION_TITLES[rest[0] ?? ""] ?? "";
-  const action = ACTION_BUTTON_CONFIG[rest[0] ?? ""] ?? DEFAULT_ACTION;
+  const section = rest[0] ?? "";
+
+  // Determine action button based on section
+  const getActionButton = () => {
+    switch (section) {
+      case "subscribers":
+        return {
+          label: "New Subscriber",
+          onClick: () => openModal("new-subscriber"),
+        };
+      case "segments":
+        return {
+          label: "New Segment",
+          onClick: () => openModal("new-segment"),
+        };
+      case "domains":
+        return {
+          label: "New Domain",
+          onClick: () => openModal("new-domain"),
+        };
+      default:
+        return {
+          label: "New Post",
+          href: `/newsletters/${slug}/posts/new`,
+        };
+    }
+  };
+
+  const actionButton = getActionButton();
 
   // Scroll to top when navigating between pages in this newsletter group
   useEffect(() => {
@@ -87,12 +105,23 @@ export default function NewsletterLayout({
           <h1 className="md:text-md font-semibold tracking-tight text-center truncate">
             {title}
           </h1>
-          <Button asChild size="sm" className="justify-self-end">
-            <Link href={action.getHref(slug)}>
+          {"href" in actionButton ? (
+            <Button asChild size="sm" className="justify-self-end">
+              <a href={actionButton.href}>
+                <Plus className="w-4 h-4" />
+                {actionButton.label}
+              </a>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              className="justify-self-end"
+              onClick={actionButton.onClick}
+            >
               <Plus className="w-4 h-4" />
-              {action.label}
-            </Link>
-          </Button>
+              {actionButton.label}
+            </Button>
+          )}
         </div>
       )}
       <div className="flex-1 p-8">{children}</div>

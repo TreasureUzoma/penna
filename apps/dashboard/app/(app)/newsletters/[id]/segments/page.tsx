@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useModalStore } from "@/stores/use-modal-store";
 import {
   useSegments,
   useCreateSegment,
@@ -65,29 +66,15 @@ import { createSegmentSchema, CreateSegment } from "@workspace/validations";
 
 export default function NewsletterSegmentsPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const newsletterId = params.id as string;
+  const { isOpen, type, openModal, closeModal } = useModalStore();
+  const isSegmentModalOpen = isOpen && type === "new-segment";
+
   const { data: segments, isLoading } = useSegments(newsletterId);
   const { mutate: createSegment, isPending: isCreating } =
     useCreateSegment(newsletterId);
   const { mutate: deleteSegment } = useDeleteSegment(newsletterId);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [managingSegment, setManagingSegment] = useState<Segment | null>(null);
-
-  useEffect(() => {
-    if (searchParams.get("action") === "new") {
-      setIsDialogOpen(true);
-    }
-  }, [searchParams]);
-
-  const handleDialogChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (!open && searchParams.get("action") === "new") {
-      // Remove the action param when closing the modal using replace to avoid adding to history
-      router.replace(`/newsletters/${newsletterId}/segments`);
-    }
-  };
 
   const form = useForm<CreateSegment>({
     resolver: zodResolver(createSegmentSchema),
@@ -99,7 +86,7 @@ export default function NewsletterSegmentsPage() {
       { name: values.name, description: values.description || undefined },
       {
         onSuccess: () => {
-          handleDialogChange(false);
+          closeModal();
           form.reset();
         },
       },
@@ -120,7 +107,12 @@ export default function NewsletterSegmentsPage() {
         <p className="text-muted-foreground">
           Group subscribers together to target them with specific emails.
         </p>
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+        <Dialog
+          open={isSegmentModalOpen}
+          onOpenChange={(open) =>
+            open ? openModal("new-segment") : closeModal()
+          }
+        >
           <DialogContent className="sm:max-w-[450px]">
             <DialogHeader>
               <DialogTitle>Create Segment</DialogTitle>
