@@ -23,7 +23,7 @@ x-penna-public-key: penn_your_public_key_here
 
 ### Add New Subscriber
 
-Adds a new subscriber to your newsletter.
+Adds a new subscriber to your newsletter. **Subscribers are created with a "pending" status and must verify their email address through a double opt-in process before they can receive newsletters.**
 
 **Endpoint:** `POST /api/v1/external/newsletters/subscriber/new`
 
@@ -200,15 +200,20 @@ else:
 
 **Success (200):**
 
+Subscribers are created with a "pending" status and must verify their email address before becoming active.
+
 ```json
 {
   "success": true,
-  "message": "Subscriber added successfully",
+  "message": "Verification email sent. Check your inbox to confirm.",
   "data": {
-    "id": "sub_1234567890",
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "newsletterId": "660e8400-e29b-41d4-a716-446655440001",
     "email": "test@example.com",
     "name": "John Doe",
-    "subscribedAt": "2024-01-15T10:30:00Z"
+    "status": "pending",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z"
   }
 }
 ```
@@ -216,22 +221,36 @@ else:
 **Error Responses:**
 
 ```json
-// Email already exists
+// Subscriber already verified and subscribed
 {
   "success": false,
-  "message": "Subscriber already exists"
+  "message": "Subscriber with this email already exists in the newsletter",
+  "data": null
 }
 
-// Invalid email format
+// Subscriber exists but verification pending - resends verification email
+{
+  "success": true,
+  "message": "Verification email sent again. Check your inbox to confirm.",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "pending",
+    "..."
+  }
+}
+
+// Subscriber limit reached
 {
   "success": false,
-  "message": "Invalid email address"
+  "message": "Subscriber limit reached. Please upgrade your plan.",
+  "data": null
 }
 
 // Missing required fields
 {
   "success": false,
-  "message": "Email is required"
+  "message": "Email is required",
+  "data": null
 }
 ```
 
