@@ -59,7 +59,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="mx-2 max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Welcome to Penna! 🎉</DialogTitle>
           <DialogDescription className="text-base">
