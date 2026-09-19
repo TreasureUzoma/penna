@@ -51,8 +51,15 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     },
   ];
 
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && typeof window !== "undefined") {
+      localStorage.setItem("penna_onboarding_dismissed", "true");
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Welcome to Penna! 🎉</DialogTitle>
@@ -114,7 +121,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
         </div>
 
         <div className="flex justify-end mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             I'll do this later
           </Button>
         </div>

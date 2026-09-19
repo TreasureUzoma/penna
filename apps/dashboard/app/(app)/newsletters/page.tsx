@@ -47,7 +47,12 @@ export default function NewslettersPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    if (!sessionLoading && newslettersData?.newsletters?.data?.length === 0) {
+    if (
+      !sessionLoading &&
+      newslettersData?.newsletters?.data?.length === 0 &&
+      typeof window !== "undefined" &&
+      !localStorage.getItem("penna_onboarding_dismissed")
+    ) {
       setShowOnboarding(true);
     }
   }, [sessionLoading, newslettersData]);
