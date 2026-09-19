@@ -22,7 +22,7 @@ const getSubscriberFirstName = (name?: string | null) => {
   return trimmed.split(/\s+/)[0];
 };
 
-const sendVerificationLink = async (
+export const sendVerificationLink = async (
   newsletterId: string,
   email: string,
   name?: string | null,

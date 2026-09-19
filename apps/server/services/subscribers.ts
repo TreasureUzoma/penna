@@ -10,47 +10,7 @@ import {
   syncSubscriberLimitWarnings,
   SubscriberLimitError,
 } from "./limits";
-import { sendSubscriberVerificationEmail } from "./mail/internal";
-import { envConfig } from "@/config";
-import { sign } from "hono/jwt";
-
-const getSubscriberFirstName = (name?: string | null) => {
-  const trimmed = name?.trim();
-  if (!trimmed) return "there";
-  return trimmed.split(/\s+/)[0];
-};
-
-const sendVerificationLink = async (
-  newsletterId: string,
-  email: string,
-  name?: string | null,
-) => {
-  const [newsletter] = await db
-    .select({ name: newsletters.name })
-    .from(newsletters)
-    .where(eq(newsletters.id, newsletterId));
-
-  const token = await sign(
-    {
-      newsletterId,
-      email,
-      type: "subscriber-confirmation",
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-    },
-    envConfig.UNSUBSCRIBE_SECRET || "",
-  );
-
-  const confirmUrl = `${envConfig.API_URL}/api/v1/public/newsletters/verify/${encodeURIComponent(
-    token,
-  )}`;
-
-  await sendSubscriberVerificationEmail({
-    email,
-    firstName: getSubscriberFirstName(name),
-    newsletterName: newsletter?.name || "this newsletter",
-    verifyUrl: confirmUrl,
-  });
-};
+import { sendVerificationLink } from "./subscriptions";
 
 export const getSubscribers = async (
   newsletterId: string,

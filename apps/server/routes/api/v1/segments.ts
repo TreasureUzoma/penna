@@ -197,8 +197,19 @@ segmentRoutes.get(
       if (!result.success) return validationErrorResponse(c, result.error);
     },
   ),
+  zValidator(
+    "query",
+    z.object({
+      page: z.coerce.number().int().positive().default(1),
+      limit: z.coerce.number().int().positive().max(100).default(20),
+    }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
+    },
+  ),
   async (c) => {
     const { newsletterId, segmentId } = c.req.valid("param");
+    const { page, limit } = c.req.valid("query");
     const newsletterOrRes = await getNewsletterOrFail(c, newsletterId, [
       "owner",
       "admin",
@@ -208,7 +219,12 @@ segmentRoutes.get(
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
-    const serviceData = await getSegmentSubscribers(segmentId, newsletter.id);
+    const serviceData = await getSegmentSubscribers(
+      segmentId,
+      newsletter.id,
+      page,
+      limit,
+    );
     return c.json(serviceData, routeStatus(serviceData));
   },
 );

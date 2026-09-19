@@ -24,6 +24,14 @@ export type ServiceResponse<T = any> = {
   message: string;
   success: boolean;
   data?: T | null;
+  meta?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+    totalPages?: number;
+    hasNextPage?: boolean;
+    hasPrevPage?: boolean;
+  };
 };
 
 export interface PaginationParams {

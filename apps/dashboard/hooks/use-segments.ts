@@ -75,14 +75,29 @@ export interface SegmentSubscriber {
   email: string;
 }
 
-export function useSegmentSubscribers(newsletterId: string, segmentId: string) {
+export function useSegmentSubscribers(
+  newsletterId: string,
+  segmentId: string,
+  page: number = 1,
+  limit: number = 20,
+) {
   return useQuery({
-    queryKey: ["segments", newsletterId, segmentId, "subscribers"],
+    queryKey: ["segments", newsletterId, segmentId, "subscribers", page, limit],
     queryFn: async () => {
-      const res = await api.get<{ data: SegmentSubscriber[] }>(
-        `/segments/${newsletterId}/${segmentId}/subscribers`,
-      );
-      return res.data.data;
+      const res = await api.get<{
+        data: SegmentSubscriber[];
+        meta: {
+          page: number;
+          limit: number;
+          total: number;
+          totalPages: number;
+          hasNextPage: boolean;
+          hasPrevPage: boolean;
+        };
+      }>(`/segments/${newsletterId}/${segmentId}/subscribers`, {
+        params: { page, limit },
+      });
+      return res.data;
     },
     enabled: !!newsletterId && !!segmentId,
   });

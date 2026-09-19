@@ -166,6 +166,8 @@ export const createSegment = async (
 export const getSegmentSubscribers = async (
   segmentId: string,
   newsletterId: string,
+  page: number = 1,
+  limit: number = 20,
 ): Promise<ServiceResponse> => {
   try {
     // First verify the segment belongs to the newsletter
@@ -187,7 +189,17 @@ export const getSegmentSubscribers = async (
       };
     }
 
-    // Get all subscribers in this segment
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const countResult = await db
+      .select({ count: count() })
+      .from(segmentSubscribers)
+      .where(eq(segmentSubscribers.segmentId, segmentId));
+
+    const totalCount = countResult[0]?.count ?? 0;
+
+    // Get paginated subscribers in this segment
     const subscriberList = await db
       .select({ email: subscribers.email, id: subscribers.id })
       .from(segmentSubscribers)
@@ -195,12 +207,24 @@ export const getSegmentSubscribers = async (
         subscribers,
         eq(segmentSubscribers.subscriberId, subscribers.id),
       )
-      .where(eq(segmentSubscribers.segmentId, segmentId));
+      .where(eq(segmentSubscribers.segmentId, segmentId))
+      .limit(limit)
+      .offset(offset);
+
+    const totalPages = Math.ceil(totalCount / limit);
 
     return {
       success: true,
       message: "Fetched segment subscribers successfully",
       data: subscriberList,
+      meta: {
+        page,
+        limit,
+        total: totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     };
   } catch (err) {
     return {
@@ -211,6 +235,51 @@ export const getSegmentSubscribers = async (
           : "Failed to fetch segment subscribers",
       data: null,
     };
+  }
+};
+
+/**
+ * Get all subscriber emails in a segment (unpaginated) - for sending newsletters
+ */
+export const getAllSegmentSubscriberEmails = async (
+  segmentId: string,
+  newsletterId: string,
+): Promise<string[]> => {
+  try {
+    // First verify the segment belongs to the newsletter
+    const [segment] = await db
+      .select()
+      .from(segments)
+      .where(
+        and(
+          eq(segments.id, segmentId),
+          eq(segments.newsletterId, newsletterId),
+        ),
+      );
+
+    if (!segment) {
+      return [];
+    }
+
+    // Get all subscribers in this segment (no pagination)
+    const subscriberList = await db
+      .select({ email: subscribers.email })
+      .from(segmentSubscribers)
+      .innerJoin(
+        subscribers,
+        eq(segmentSubscribers.subscriberId, subscribers.id),
+      )
+      .where(
+        and(
+          eq(segmentSubscribers.segmentId, segmentId),
+          eq(subscribers.status, "subscribed"),
+        ),
+      );
+
+    return subscriberList.map((s) => s.email);
+  } catch (err) {
+    console.error("getAllSegmentSubscriberEmails error:", err);
+    return [];
   }
 };
 

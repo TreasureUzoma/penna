@@ -157,18 +157,15 @@ externalNewslettersRoute.post(
       const candidateEmails: Set<string> = new Set(recipientEmails || []);
 
       if (segmentIds && segmentIds.length > 0) {
-        const { getSegmentSubscribers } = await import("@/services/segments");
+        const { getAllSegmentSubscriberEmails } =
+          await import("@/services/segments");
 
         for (const segmentId of segmentIds) {
-          const result = await getSegmentSubscribers(
+          const emails = await getAllSegmentSubscriberEmails(
             segmentId,
             newsletterData.id,
           );
-          if (result.success && Array.isArray(result.data)) {
-            result.data.forEach((subscriber: { email: string }) =>
-              candidateEmails.add(subscriber.email),
-            );
-          }
+          emails.forEach((email) => candidateEmails.add(email));
         }
       }
 

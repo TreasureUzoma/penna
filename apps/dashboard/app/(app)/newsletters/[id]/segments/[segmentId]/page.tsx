@@ -66,13 +66,14 @@ export default function SegmentDetailPage() {
   const newsletterId = params.id as string;
   const segmentId = params.segmentId as string;
 
+  const [page, setPage] = useState(1);
+  const [availablePage, setAvailablePage] = useState(1);
+
   const { data: segments, isLoading: isLoadingSegments } =
     useSegments(newsletterId);
-  const { data: members, isLoading: isLoadingMembers } = useSegmentSubscribers(
-    newsletterId,
-    segmentId,
-  );
-  const { data: subscribersData } = useSubscribers(newsletterId, 1, 1000);
+  const { data: membersData, isLoading: isLoadingMembers } =
+    useSegmentSubscribers(newsletterId, segmentId, page);
+  const { data: subscribersData } = useSubscribers(newsletterId, availablePage);
   const { mutate: addSubscriber, isPending: isAdding } =
     useAddSubscriberToSegment(newsletterId);
   const { mutate: removeSubscriber } =
@@ -84,8 +85,10 @@ export default function SegmentDetailPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const segment = segments?.find((s) => s.id === segmentId);
+  const members = membersData?.data || [];
+  const membersMeta = membersData?.meta;
 
-  const memberIds = new Set((members || []).map((m) => m.id));
+  const memberIds = new Set(members.map((m) => m.id));
   const availableSubscribers = (subscribersData?.data || []).filter(
     (s) => !memberIds.has(s.id),
   );
@@ -234,6 +237,34 @@ export default function SegmentDetailPage() {
                     </p>
                   )}
                 </div>
+                {subscribersData?.meta && (
+                  <div className="flex items-center justify-between border-t pt-3 flex-shrink-0">
+                    <div className="text-sm text-muted-foreground">
+                      Page {subscribersData.meta.page} of{" "}
+                      {subscribersData.meta.totalPages}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setAvailablePage((p) => Math.max(1, p - 1))
+                        }
+                        disabled={!subscribersData.meta.hasPrevPage}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAvailablePage((p) => p + 1)}
+                        disabled={!subscribersData.meta.hasNextPage}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </DialogContent>
           </Dialog>
@@ -295,7 +326,7 @@ export default function SegmentDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Total Subscribers</p>
-              <p className="text-2xl font-bold">{members?.length ?? 0}</p>
+              <p className="text-2xl font-bold">{membersMeta?.total ?? 0}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Created</p>
@@ -327,63 +358,92 @@ export default function SegmentDetailPage() {
               <Loader2 className="w-8 h-8 animate-spin" />
             </div>
           ) : members && members.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Added</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <SubscriberAvatar name={null} email={member.email} />
-                        {member.email}
-                      </div>
-                    </TableCell>
-                    <TableCell>{new Date().toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Remove from Segment
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to remove {member.email}{" "}
-                              from this segment? They will remain subscribed to
-                              your newsletter.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() =>
-                                removeSubscriber({
-                                  segmentId,
-                                  subscriberId: member.id,
-                                })
-                              }
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Remove
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
+            <div className="space-y-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Added</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {members.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <SubscriberAvatar name={null} email={member.email} />
+                          {member.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>{new Date().toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Remove from Segment
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to remove {member.email}{" "}
+                                from this segment? They will remain subscribed
+                                to your newsletter.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() =>
+                                  removeSubscriber({
+                                    segmentId,
+                                    subscriberId: member.id,
+                                  })
+                                }
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination Controls for Members */}
+              {membersMeta && membersMeta.totalPages > 1 && (
+                <div className="flex items-center justify-end space-x-2 py-4">
+                  <div className="text-sm text-muted-foreground flex-1">
+                    Page {membersMeta.page} of {membersMeta.totalPages}
+                  </div>
+                  <div className="space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={!membersMeta.hasPrevPage}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => p + 1)}
+                      disabled={!membersMeta.hasNextPage}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Users className="w-12 h-12 text-muted-foreground mb-4" />

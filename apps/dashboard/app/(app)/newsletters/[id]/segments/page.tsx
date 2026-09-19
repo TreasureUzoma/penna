@@ -250,7 +250,10 @@ export default function NewsletterSegmentsPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <p className="text-muted-foreground mb-4">No segments found.</p>
-              <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
+              <Button
+                variant="outline"
+                onClick={() => openModal("new-segment")}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Create your first segment
               </Button>
