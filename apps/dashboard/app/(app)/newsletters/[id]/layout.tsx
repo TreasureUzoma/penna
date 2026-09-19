@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { usePathname, useParams } from "next/navigation";
-import { useNewsletter } from "@/hooks/use-newsletters";
 import { NewsletterSwitcher } from "@/components/newsletter-switcher";
 import { Button } from "@workspace/ui/components/button";
 import { Plus } from "lucide-react";
@@ -49,7 +48,6 @@ export default function NewsletterLayout({
   const pathname = usePathname();
   const params = useParams();
   const slug = params.id as string;
-  const { data: newsletter } = useNewsletter(slug);
 
   const rest = pathname
     .replace(`/newsletters/${slug}`, "")

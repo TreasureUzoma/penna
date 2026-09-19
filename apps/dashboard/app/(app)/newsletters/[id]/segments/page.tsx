@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import {
   useSegments,
   useCreateSegment,
@@ -66,6 +66,7 @@ import { createSegmentSchema, CreateSegment } from "@workspace/validations";
 export default function NewsletterSegmentsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const newsletterId = params.id as string;
   const { data: segments, isLoading } = useSegments(newsletterId);
   const { mutate: createSegment, isPending: isCreating } =
@@ -80,6 +81,14 @@ export default function NewsletterSegmentsPage() {
     }
   }, [searchParams]);
 
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open && searchParams.get("action") === "new") {
+      // Remove the action param when closing the modal
+      router.push(`/newsletters/${newsletterId}/segments`);
+    }
+  };
+
   const form = useForm<CreateSegment>({
     resolver: zodResolver(createSegmentSchema),
     defaultValues: { name: "", description: "" },
@@ -90,7 +99,7 @@ export default function NewsletterSegmentsPage() {
       { name: values.name, description: values.description || undefined },
       {
         onSuccess: () => {
-          setIsDialogOpen(false);
+          handleDialogChange(false);
           form.reset();
         },
       },
@@ -111,7 +120,7 @@ export default function NewsletterSegmentsPage() {
         <p className="text-muted-foreground">
           Group subscribers together to target them with specific emails.
         </p>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
           <DialogContent className="sm:max-w-[450px]">
             <DialogHeader>
               <DialogTitle>Create Segment</DialogTitle>
