@@ -190,7 +190,7 @@ export const syncSubscriberLimitWarnings = async (
         planName: usage.plan.name,
         subscriberCount: usage.count,
         subscriberCap: usage.cap,
-        upgradeUrl: `${envConfig.DASHBOARD_SITE}/settings/billing`,
+        upgradeUrl: `${envConfig.WEB_URL}/settings/billing`,
         status: shouldSend,
       });
     }

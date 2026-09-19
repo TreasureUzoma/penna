@@ -9,7 +9,7 @@ export const sendWelcomeEmail = async (name: string, email: string) => {
   const html = `
     <p>hi ${name},</p>
     <p>welcome to ${meta.name} — glad to have you.</p>
-    <p><a href="${envConfig.DASHBOARD_SITE}/dashboard">head to your dashboard</a> to create your first newsletter.</p>
+    <p><a href="${envConfig.WEB_URL}/dashboard">head to your dashboard</a> to create your first newsletter.</p>
     <p>— ${meta.name}</p>
   `;
 
@@ -67,7 +67,7 @@ export const sendForgottenPasswordEmail = async (
   expiresAt: Date,
   token: string,
 ) => {
-  const resetUrl = `${envConfig.DASHBOARD_SITE}/reset-password?token=${token}`;
+  const resetUrl = `${envConfig.WEB_URL}/reset-password?token=${token}`;
   const expiresInMinutes = Math.round(
     (expiresAt.getTime() - Date.now()) / (60 * 1000),
   );
@@ -101,7 +101,7 @@ export const sendNewsletterInviteEmail = async (
   // No accept-invite page exists in the dashboard yet — this links to the
   // dashboard root and relies on the invitee signing in to see/accept it
   // via `POST /newsletters/roles/accept`. Update this once that UI ships.
-  const dashboardUrl = `${envConfig.DASHBOARD_SITE}/dashboard`;
+  const dashboardUrl = `${envConfig.WEB_URL}/dashboard`;
 
   const html = `
     <p>hi,</p>
@@ -135,7 +135,7 @@ export const sendTeamInviteEmail = async (
   role: TeamRoles,
   token: string,
 ) => {
-  const acceptUrl = `${envConfig.DASHBOARD_SITE}/accept-invite?token=${encodeURIComponent(token)}`;
+  const acceptUrl = `${envConfig.WEB_URL}/accept-invite?token=${encodeURIComponent(token)}`;
 
   const html = `
     <p>hi,</p>

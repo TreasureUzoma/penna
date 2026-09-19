@@ -28,11 +28,14 @@ export interface ListUnsubscribeInfo {
  */
 export const buildListUnsubscribeHeaders = async (
   newsletterId: string,
-  email: string
+  email: string,
 ): Promise<ListUnsubscribeInfo> => {
-  const token = await sign({ newsletterId, email }, envConfig.UNSUBSCRIBE_SECRET);
+  const token = await sign(
+    { newsletterId, email },
+    envConfig.UNSUBSCRIBE_SECRET,
+  );
   const oneClickUrl = `${envConfig.API_URL}/api/v1/unsubscribe/one-click/${token}`;
-  const unsubscribeUrl = `${envConfig.DASHBOARD_SITE}/unsubscribe/confirm?token=${encodeURIComponent(token)}`;
+  const unsubscribeUrl = `${envConfig.WEB_URL}/unsubscribe/confirm?token=${encodeURIComponent(token)}`;
 
   return {
     unsubscribeUrl,

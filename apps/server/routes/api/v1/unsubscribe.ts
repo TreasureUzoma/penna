@@ -27,7 +27,7 @@ const verifyAndUnsubscribe = async (c: Context, token: string) => {
   const validToken = await verify(
     token,
     envConfig.UNSUBSCRIBE_SECRET || "",
-    "HS256"
+    "HS256",
   );
 
   if (!validToken) {
@@ -37,7 +37,7 @@ const verifyAndUnsubscribe = async (c: Context, token: string) => {
         message: "Invalid or tampered token",
         success: false,
       },
-      401
+      401,
     );
   }
 
@@ -73,17 +73,17 @@ unsubscribeRoutes.post(
         email: body.email,
         exp: Math.floor(Date.now() / 1000) + 15 * 60, // 15m from now
       },
-      envConfig.UNSUBSCRIBE_SECRET!
+      envConfig.UNSUBSCRIBE_SECRET!,
     );
 
     // This opens a public dashboard page that requires an explicit button
     // press. Do not point the email directly at a mutating API endpoint.
-    const confirmUrl = `${envConfig.DASHBOARD_SITE}/unsubscribe/confirm?token=${encodeURIComponent(token)}`;
+    const confirmUrl = `${envConfig.WEB_URL}/unsubscribe/confirm?token=${encodeURIComponent(token)}`;
 
     await sendUnsubscribeCofirmationEmail(
       body.email,
       existence.data.newsletterName,
-      confirmUrl
+      confirmUrl,
     );
 
     return c.json({
@@ -91,7 +91,7 @@ unsubscribeRoutes.post(
       message: "Confirmation email sent",
       data: body.email,
     });
-  }
+  },
 );
 
 // confirm unsubscribe
@@ -103,7 +103,7 @@ unsubscribeRoutes.get(
   async (c) => {
     const { token } = c.req.valid("param");
     return verifyAndUnsubscribe(c, token);
-  }
+  },
 );
 
 // The dashboard confirmation page uses POST so a visit to the page itself
@@ -116,7 +116,7 @@ unsubscribeRoutes.post(
   async (c) => {
     const { token } = c.req.valid("param");
     return verifyAndUnsubscribe(c, token);
-  }
+  },
 );
 
 // One-click unsubscribe (RFC 8058) — the link/header embedded directly in
@@ -131,7 +131,7 @@ const oneClickParamValidator = zValidator(
   isValidToken,
   (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
-  }
+  },
 );
 
 unsubscribeRoutes.get("/one-click/:token", oneClickParamValidator, (c) => {

@@ -31,6 +31,7 @@ const envSchema = z
     SES_NOTIFICATIONS_TOPIC_ARN: z.string().optional(),
     // Used to build links (e.g. "upgrade your plan") in system emails.
     DASHBOARD_SITE: z.string().default("http://localhost:3001"),
+    WEB_URL: z.string().default("http://localhost:3000"),
     // This server's own public base URL — distinct from APP_URL (the web
     // frontend) and DASHBOARD_SITE. Needed to build links that must resolve
     // back to this API itself, e.g. the one-click unsubscribe URL embedded
