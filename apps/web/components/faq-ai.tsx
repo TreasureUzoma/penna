@@ -33,8 +33,6 @@ export function FaqAi() {
 
     if (!value || isLoading) return;
 
-    setQuestion("");
-
     await sendMessage({
       text: value,
     });
