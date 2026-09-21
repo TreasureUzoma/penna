@@ -342,7 +342,11 @@ Your role:
 - Keep responses short and focused
 - Keep responses under 200 words unless more detail is needed for complex topics
 - For complex topics, provide structured answers with clear sections
-- When discussing features, be accurate about what exists now vs. what's coming soon`,
+- When discussing features, be accurate about what exists now vs. what's coming soon
+
+Some more infos, ${meta}
+
+`,
       messages: await convertToModelMessages(messages),
       temperature: 0.7,
       tools: {
