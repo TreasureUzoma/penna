@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { rateLimiter } from "./middlewares/rate-limiter";
-import { blockBadUserAgents } from "./middlewares/bot-blocker";
 import { withAuth } from "./middlewares/session";
 import authRoute from "./routes/api/v1/auth";
 import type { Context } from "hono";
@@ -30,7 +29,6 @@ import { myTestWorkflow } from "./tests/workflow";
 const app = new Hono();
 
 app.use(logger());
-app.use("*", blockBadUserAgents);
 
 app.notFound((c) => {
   return c.json({ message: "Not Found" }, 404);
