@@ -71,6 +71,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
     email?: string;
     password?: string;
     website?: string; // honeypot — must stay empty for real users
+    token?: string;
   };
 
   const {
@@ -120,7 +121,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         email: data.email!,
         password: data.password!,
         website: data.website ?? "",
-        turnstileToken: token!,
+        turnstileToken: data.token!,
       });
     } else {
       signupMutate({
@@ -128,7 +129,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         email: data.email!,
         password: data.password!,
         website: data.website ?? "",
-        turnstileToken: token!,
+        turnstileToken: data.token!,
       });
     }
   };
