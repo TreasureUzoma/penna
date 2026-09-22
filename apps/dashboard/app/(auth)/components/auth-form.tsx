@@ -33,7 +33,6 @@ import { Spinner } from "@workspace/ui/components/spinner";
 import { descriptions, titles } from "../utils/data";
 import { Eye, EyeOff } from "lucide-react";
 import { TurnstileWidget } from "@/components/turnstile-widget";
-import { toast } from "sonner";
 
 // Only login/signup share this shape (OAuth section, name/email/password,
 // the "don't have an account" switch). Every other mode (forgot-password,
@@ -157,7 +156,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         <CardContent>
           <form
             onSubmit={handleSubmit(onSubmit, (errors) => {
-              alert(errors);
+              console.log("Form errors:", errors);
             })}
             noValidate
           >
