@@ -71,7 +71,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
     email?: string;
     password?: string;
     website?: string; // honeypot — must stay empty for real users
-    token?: string;
+    turnstileToken?: string;
   };
 
   const {
@@ -79,6 +79,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
     handleSubmit,
     setError,
     clearErrors,
+    setValue,
     formState: { errors },
   } = useForm<BaseFormValues>({
     mode: "onBlur",
@@ -119,7 +120,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
     }
 
     if (!token) {
-      setError("token", {
+      setError("turnstileToken", {
         type: "manual",
         message: "Please complete the security check.",
       });
@@ -132,7 +133,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         email: data.email!,
         password: data.password!,
         website: data.website ?? "",
-        turnstileToken: token,
+        turnstileToken: data.turnstileToken!,
       });
     } else {
       signupMutate({
@@ -140,7 +141,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         email: data.email!,
         password: data.password!,
         website: data.website ?? "",
-        turnstileToken: token,
+        turnstileToken: data.turnstileToken!,
       });
     }
   };
@@ -284,9 +285,16 @@ export function AuthForm({ mode, className, next }: AuthProps) {
 
               {(isLogin || isSignup) && (
                 <div>
-                  <TurnstileWidget onVerify={setToken} />
-                  {errors.token && (
-                    <ErrorParagraph>{errors.token.message}</ErrorParagraph>
+                  <TurnstileWidget
+                    onVerify={(token) => {
+                      setToken(token);
+                      setValue("turnstileToken", token);
+                    }}
+                  />
+                  {errors.turnstileToken && (
+                    <ErrorParagraph>
+                      {errors.turnstileToken.message}
+                    </ErrorParagraph>
                   )}
                 </div>
               )}
