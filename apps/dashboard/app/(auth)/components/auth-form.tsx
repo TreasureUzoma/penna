@@ -157,7 +157,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         <CardContent>
           <form
             onSubmit={handleSubmit(onSubmit, (errors) => {
-              toast.error(errors.toString());
+              alert(errors);
             })}
             noValidate
           >
