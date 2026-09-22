@@ -62,6 +62,8 @@ const envSchema = z
     R2_SECRET_ACCESS_KEY: z.string().optional(),
     R2_BUCKET_NAME: z.string().optional(),
     R2_PUBLIC_URL: z.string().optional(),
+
+    TURNSTILE_SECRET_KEY: z.string(),
   })
   .superRefine((env, ctx) => {
     // Production mail must always suppress permanent bounces and complaints.

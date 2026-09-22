@@ -20,11 +20,11 @@ import { sendForgottenPasswordEmail, sendWelcomeEmail } from "./mail/internal";
 import { type ChangePasswordData } from "@workspace/validations";
 import { createTeam } from "./teams";
 import crypto from "crypto";
+import { validateTurnstile } from "@/lib/cloudfare-turnstile";
 
 const GOOGLE_REDIRECT_URI = `${envConfig.APP_URL}/api/v1/auth/google/callback`;
 const GITHUB_REDIRECT_URI = `${envConfig.APP_URL}/api/v1/auth/github/callback`;
 
-// Pre-launch lockdown: block new account creation in production while
 // Signups are now OPEN! 🚀 Launched on September 13, 2026.
 // Legacy message kept for type compatibility but signups are no longer blocked.
 export const SIGNUPS_CLOSED_MESSAGE =
@@ -270,7 +270,18 @@ export const deleteAuthRefreshToken = async (id: string) => {
 };
 
 export const login = async (payload: Login) => {
-  const { email, password } = payload;
+  const { email, password, turnstileToken } = payload;
+
+  const verifyReq = await validateTurnstile(turnstileToken);
+
+  if (!verifyReq.success) {
+    return {
+      success: false,
+      message: "Turnstile verification failed",
+      data: null,
+    };
+  }
+
   const rows = await db
     .select()
     .from(users)
@@ -278,13 +289,23 @@ export const login = async (payload: Login) => {
     .limit(1);
 
   const foundUser = rows[0];
+
   if (!foundUser || !foundUser.password) {
-    return { success: false, message: "Invalid email or password", data: null };
+    return {
+      success: false,
+      message: "Invalid email or password",
+      data: null,
+    };
   }
 
   const valid = await bcrypt.compare(password, foundUser.password);
+
   if (!valid) {
-    return { success: false, message: "Invalid email or password", data: null };
+    return {
+      success: false,
+      message: "Invalid email or password",
+      data: null,
+    };
   }
 
   const { password: _, createdAt, updatedAt, ...safeUser } = foundUser;
@@ -305,7 +326,17 @@ export const signup = async (payload: Signup, signupIp?: string | null) => {
     };
   }
 
-  const { email, password, name } = payload;
+  const { email, password, name, turnstileToken } = payload;
+
+  const verifyReq = await validateTurnstile(turnstileToken);
+
+  if (!verifyReq.success) {
+    return {
+      success: false,
+      message: "Turnstile verification failed",
+      data: null,
+    };
+  }
 
   const existingUser = await db
     .select()
@@ -333,7 +364,6 @@ export const signup = async (payload: Signup, signupIp?: string | null) => {
     })
     .returning();
 
-  // Auto-create default team for new user
   await createDefaultTeamForUser(newUser!.id, newUser!.name);
 
   await sendWelcomeEmail(newUser?.name ?? "", newUser!.email);

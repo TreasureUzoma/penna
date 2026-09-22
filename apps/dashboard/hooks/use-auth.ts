@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { OauthType } from "@workspace/types/auth";
 import { UserProfile } from "@workspace/types/res/user";
+import { showErrorToast } from "@/lib/error-toast";
 
 // `next` only ever comes from this app's own URLs (e.g. proxy.ts's
 // `?next=` on a protected-route bounce, or the accept-invite page's
@@ -32,8 +33,8 @@ export const useLoginMutation = (next?: string) => {
       toast.success("Logged in successfully");
       router.push(safeNextPath(next) ?? "/dashboard");
     },
-    onError: (err) => {
-      toast.error(err?.message ?? "Failed to login");
+    onError: (error) => {
+      showErrorToast(error, "Failed to login");
     },
   });
 };
@@ -49,8 +50,8 @@ export const useSignupMutation = () => {
       toast.success("Verify your email address");
       router.push("/verify-email");
     },
-    onError: (err) => {
-      toast.error(err?.message ?? "Failed to create account");
+    onError: (error) => {
+      showErrorToast(error, "Failed to create account");
     },
   });
 };
@@ -64,8 +65,8 @@ export const useOauthSigninMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["session"] });
       router.push(res.data.url);
     },
-    onError: (err) => {
-      toast.error(err?.message ?? "Something went wrong");
+    onError: (error) => {
+      showErrorToast(error, "Something went wrong while signing in");
     },
   });
 };
@@ -75,10 +76,12 @@ export const useForgotPassword = () => {
     mutationFn: async (email: string) =>
       api.post("/auth/forgotten-password", { email }),
     onSuccess: (res) => {
-      toast.success(res.data.message ?? "Password reset link sent — check your email");
+      toast.success(
+        res.data.message ?? "Password reset link sent — check your email",
+      );
     },
-    onError: (err) => {
-      toast.error(err?.message ?? "Failed to send password reset link");
+    onError: (error) => {
+      showErrorToast(error, "Failed to send password reset link");
     },
   });
 };
@@ -92,8 +95,8 @@ export const useResetPassowrd = () => {
       toast.success("Password reset successfully");
       router.push("/login");
     },
-    onError: (err) => {
-      toast.error(err?.message ?? "Failed to reset password.");
+    onError: (error) => {
+      showErrorToast(error, "Failed to reset password");
     },
   });
 };
@@ -116,8 +119,8 @@ export const useUpdateProfile = () => {
       queryClient.invalidateQueries({ queryKey: ["session"] });
       toast.success("Profile updated successfully");
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update profile");
+    onError: (error) => {
+      showErrorToast(error, "Failed to update profile");
     },
   });
 };
@@ -126,17 +129,14 @@ export const useDeleteAccount = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
   return useMutation({
-    mutationFn: (email: string) =>
-      api.delete("/profile", { data: { email } }),
+    mutationFn: (email: string) => api.delete("/profile", { data: { email } }),
     onSuccess: () => {
       queryClient.clear();
       toast.success("Account deleted. Goodbye 👋");
       router.push("/login");
     },
-    onError: (err: any) => {
-      toast.error(
-        err.response?.data?.message || "Failed to delete account. Please try again."
-      );
+    onError: (error) => {
+      showErrorToast(error, "Failed to delete account");
     },
   });
 };

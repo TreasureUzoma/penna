@@ -14,6 +14,10 @@ export const loginSchema = z.object({
     .trim()
     .min(7, "Password must be at least 7 characters")
     .max(50, "Password must be less than 50 characters"),
+  turnstileToken: z
+    .string({ required_error: "Turnstile token is required" })
+    .min(1, "Turnstile token is required")
+    .max(2048, "Invalid Turnstile token"),
 });
 
 export type Login = z.infer<typeof loginSchema>;
@@ -31,6 +35,10 @@ export const createAccountSchema = z.object({
     .string({ required_error: "Full name is required" })
     .min(2, "Full name must be at least 2 characters")
     .max(30, "Full name must be 30 characters or less"),
+  turnstileToken: z
+    .string({ required_error: "Turnstile token is required" })
+    .min(1, "Turnstile token is required")
+    .max(2048, "Invalid Turnstile token"),
 });
 
 export type Signup = z.infer<typeof createAccountSchema>;

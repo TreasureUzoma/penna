@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@workspace/ui/lib/utils";
 import Link from "next/link";
 import {
@@ -32,6 +32,7 @@ import { ErrorParagraph } from "@workspace/ui/components/error-message";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { descriptions, titles } from "../utils/data";
 import { Eye, EyeOff } from "lucide-react";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 
 // Only login/signup share this shape (OAuth section, name/email/password,
 // the "don't have an account" switch). Every other mode (forgot-password,
@@ -47,6 +48,7 @@ export interface AuthProps {
 }
 
 export function AuthForm({ mode, className, next }: AuthProps) {
+  const [token, setToken] = useState<string>();
   const { mutate: loginMutate, isPending: loginPending } =
     useLoginMutation(next);
   const { mutate: signupMutate, isPending: signupPending } =
@@ -118,6 +120,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         email: data.email!,
         password: data.password!,
         website: data.website ?? "",
+        turnstileToken: token!,
       });
     } else {
       signupMutate({
@@ -125,6 +128,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         email: data.email!,
         password: data.password!,
         website: data.website ?? "",
+        turnstileToken: token!,
       });
     }
   };
@@ -260,6 +264,8 @@ export function AuthForm({ mode, className, next }: AuthProps) {
                   <ErrorParagraph>{errors.password.message}</ErrorParagraph>
                 )}
               </Field>
+
+              {(isLogin || isSignup) && <TurnstileWidget onVerify={setToken} />}
 
               <Field>
                 <Button type="submit" className="w-full" disabled={isPending}>
