@@ -266,7 +266,14 @@ export function AuthForm({ mode, className, next }: AuthProps) {
                 )}
               </Field>
 
-              {(isLogin || isSignup) && <TurnstileWidget onVerify={setToken} />}
+              {(isLogin || isSignup) && (
+                <div>
+                  <TurnstileWidget onVerify={setToken} />
+                  {errors.token && (
+                    <ErrorParagraph>{errors.token.message}</ErrorParagraph>
+                  )}
+                </div>
+              )}
 
               <Field>
                 <Button type="submit" className="w-full" disabled={isPending}>
