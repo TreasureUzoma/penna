@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import type {
+  ForgotPassword,
   Login,
   Signup,
   VerifyResetPassword,
@@ -73,8 +74,8 @@ export const useOauthSigninMutation = () => {
 
 export const useForgotPassword = () => {
   return useMutation({
-    mutationFn: async (email: string) =>
-      api.post("/auth/forgotten-password", { email }),
+    mutationFn: async (body: ForgotPassword) =>
+      api.post("/auth/forgotten-password", body),
     onSuccess: (res) => {
       toast.success(
         res.data.message ?? "Password reset link sent — check your email",

@@ -7,6 +7,7 @@ import {
   isValidEmail,
   verifyEmailSchema,
   changePasswordSchema,
+  forgotPasswordSchema,
 } from "@workspace/validations";
 import {
   login,
@@ -250,12 +251,12 @@ authRoute.post("/logout", async (c) => {
 
 authRoute.post(
   "/forgotten-password",
-  zValidator("json", isValidEmail, (result, c) => {
+  zValidator("json", forgotPasswordSchema, (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
   async (c) => {
     const body = c.req.valid("json");
-    const serviceData = await forgotPassword(body.email);
+    const serviceData = await forgotPassword(body);
     return c.json(serviceData, 200);
   },
 );

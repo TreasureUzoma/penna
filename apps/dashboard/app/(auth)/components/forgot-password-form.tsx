@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+
 import Link from "next/link";
+
 import { useForm } from "react-hook-form";
+
 import {
   Card,
   CardHeader,
@@ -10,23 +13,18 @@ import {
   CardDescription,
   CardContent,
 } from "@workspace/ui/components/card";
+
 import { Label } from "@workspace/ui/components/label";
 import { Input } from "@workspace/ui/components/input";
 import { Button } from "@workspace/ui/components/button";
 import { ErrorParagraph } from "@workspace/ui/components/error-message";
 import { Spinner } from "@workspace/ui/components/spinner";
-import { isValidEmail } from "@workspace/validations";
-import { useForgotPassword } from "@/hooks/use-auth";
 
-/**
- * Deliberately standalone rather than another AuthForm mode — the shared
- * component's Field/FieldGroup/@container layering collapsed this specific
- * screen's card down to a sliver-thin column (text wrapping to 1-2 words a
- * line, button label spilling outside the box) for reasons that resisted a
- * few passes of diagnosis. This mode's content is simple enough (one field,
- * one button) that plain markup is both a real fix and easier to reason
- * about than debugging the shared component further.
- */
+import { isValidEmail } from "@workspace/validations";
+
+import { useForgotPassword } from "@/hooks/use-auth";
+import { TurnstileWidget } from "@/components/turnstile-widget";
+
 export function ForgotPasswordForm() {
   const { mutate: forgotMutate, isPending } = useForgotPassword();
   const [submitted, setSubmitted] = useState(false);
@@ -36,27 +34,66 @@ export function ForgotPasswordForm() {
     handleSubmit,
     setError,
     clearErrors,
+    setValue,
     formState: { errors },
-  } = useForm<{ email: string }>({ mode: "onBlur" });
+  } = useForm<{
+    email: string;
+    turnstileToken?: string;
+  }>({
+    mode: "onBlur",
+  });
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const result = isValidEmail.safeParse({ email: e.target.value });
+
     if (!result.success) {
       const issue = result.error.issues.find((i) => i.path[0] === "email");
-      if (issue) setError("email", { type: "manual", message: issue.message });
+
+      if (issue) {
+        setError("email", {
+          type: "manual",
+          message: issue.message,
+        });
+      }
     } else {
       clearErrors("email");
     }
   };
 
-  const onSubmit = (data: { email: string }) => {
+  const onSubmit = (data: { email: string; turnstileToken?: string }) => {
     const result = isValidEmail.safeParse(data);
+
     if (!result.success) {
       const issue = result.error.issues.find((i) => i.path[0] === "email");
-      if (issue) setError("email", { type: "manual", message: issue.message });
+
+      if (issue) {
+        setError("email", {
+          type: "manual",
+          message: issue.message,
+        });
+      }
+
       return;
     }
-    forgotMutate(data.email, { onSuccess: () => setSubmitted(true) });
+
+    if (!data.turnstileToken) {
+      setError("turnstileToken", {
+        type: "manual",
+        message: "Turnstile token is required",
+      });
+
+      return;
+    }
+
+    forgotMutate(
+      {
+        email: data.email,
+        turnstileToken: data.turnstileToken,
+      },
+      {
+        onSuccess: () => setSubmitted(true),
+      },
+    );
   };
 
   return (
@@ -64,6 +101,7 @@ export function ForgotPasswordForm() {
       <Card className="w-full">
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Forgot your password?</CardTitle>
+
           <CardDescription>
             {submitted
               ? "Check your inbox for the reset link."
@@ -84,6 +122,7 @@ export function ForgotPasswordForm() {
             >
               <div className="flex flex-col gap-2">
                 <Label htmlFor="email">Email</Label>
+
                 <Input
                   id="email"
                   type="email"
@@ -92,8 +131,23 @@ export function ForgotPasswordForm() {
                   onBlur={handleBlur}
                   required
                 />
+
                 {errors.email && (
                   <ErrorParagraph>{errors.email.message}</ErrorParagraph>
+                )}
+              </div>
+
+              <div>
+                <TurnstileWidget
+                  onVerify={(token) => {
+                    setValue("turnstileToken", token);
+                  }}
+                />
+
+                {errors.turnstileToken && (
+                  <ErrorParagraph>
+                    {errors.turnstileToken.message}
+                  </ErrorParagraph>
                 )}
               </div>
 

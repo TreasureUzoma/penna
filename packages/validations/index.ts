@@ -22,6 +22,18 @@ export const loginSchema = z.object({
 
 export type Login = z.infer<typeof loginSchema>;
 
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string({ required_error: "Email is required" })
+    .email("Enter a valid email address"),
+  turnstileToken: z
+    .string({ required_error: "Turnstile token is required" })
+    .min(1, "Turnstile token is required")
+    .max(2048, "Invalid Turnstile token"),
+});
+
+export type ForgotPassword = z.infer<typeof forgotPasswordSchema>;
+
 export const createAccountSchema = z.object({
   email: z
     .string({ required_error: "Email is required" })

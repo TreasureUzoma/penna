@@ -8,5 +8,7 @@ export function TurnstileWidget({
   onVerify: (token: string) => void;
 }) {
   const turnstileKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!;
-  return <Turnstile siteKey={turnstileKey} onSuccess={onVerify} />;
+  return (
+    <Turnstile className="w-full" siteKey={turnstileKey} onSuccess={onVerify} />
+  );
 }

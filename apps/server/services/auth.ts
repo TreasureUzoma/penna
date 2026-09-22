@@ -9,6 +9,7 @@ import type {
   VerifyResetPassword,
   OauthType,
   VerifyEmail,
+  ForgotPassword,
 } from "@workspace/types";
 
 import { google } from "googleapis";
@@ -375,7 +376,19 @@ export const signup = async (payload: Signup, signupIp?: string | null) => {
   };
 };
 
-export const forgotPassword = async (email: string) => {
+export const forgotPassword = async (payload: ForgotPassword) => {
+  const { turnstileToken, email } = payload;
+
+  const verifyReq = await validateTurnstile(turnstileToken);
+
+  if (!verifyReq.success) {
+    return {
+      success: false,
+      message: "Turnstile verification failed",
+      data: null,
+    };
+  }
+
   const [existing] = await db
     .select()
     .from(users)
