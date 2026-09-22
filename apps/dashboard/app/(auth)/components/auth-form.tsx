@@ -33,6 +33,7 @@ import { Spinner } from "@workspace/ui/components/spinner";
 import { descriptions, titles } from "../utils/data";
 import { Eye, EyeOff } from "lucide-react";
 import { TurnstileWidget } from "@/components/turnstile-widget";
+import { toast } from "sonner";
 
 // Only login/signup share this shape (OAuth section, name/email/password,
 // the "don't have an account" switch). Every other mode (forgot-password,
@@ -106,6 +107,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
 
   const onSubmit = (data: BaseFormValues) => {
     const result = schema.safeParse(data);
+
     if (!result.success) {
       result.error.issues.forEach((issue) => {
         setError(issue.path[0] as keyof BaseFormValues, {
@@ -113,7 +115,17 @@ export function AuthForm({ mode, className, next }: AuthProps) {
           message: issue.message,
         });
       });
-      return; // stop submission
+
+      return;
+    }
+
+    if (!token) {
+      setError("token", {
+        type: "manual",
+        message: "Please complete the security check.",
+      });
+
+      return;
     }
 
     if (mode === "login") {
@@ -121,7 +133,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         email: data.email!,
         password: data.password!,
         website: data.website ?? "",
-        turnstileToken: data.token!,
+        turnstileToken: token,
       });
     } else {
       signupMutate({
@@ -129,7 +141,7 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         email: data.email!,
         password: data.password!,
         website: data.website ?? "",
-        turnstileToken: data.token!,
+        turnstileToken: token,
       });
     }
   };
@@ -143,7 +155,12 @@ export function AuthForm({ mode, className, next }: AuthProps) {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <form
+            onSubmit={handleSubmit(onSubmit, (errors) => {
+              toast.error(errors.toString());
+            })}
+            noValidate
+          >
             {/* Honeypot — visually hidden, real users never fill this */}
             <div aria-hidden="true" style={{ display: "none" }}>
               <input
