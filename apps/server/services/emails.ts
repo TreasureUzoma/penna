@@ -2,8 +2,9 @@ import { envConfig } from "@/config";
 import { decryptDataSubtle, encryptDataSubtle } from "@/lib/encrypt";
 import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { db } from "@workspace/db";
-import { emails } from "@workspace/db/schema";
+import { emails, newsletters, teamMembers } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
+import type { InsertPost } from "@workspace/validations";
 import { and, desc, eq, lte } from "drizzle-orm";
 import { start } from "workflow/api";
 import { emailCampaignWorkflow } from "./workflows/email-campaign";
@@ -194,6 +195,75 @@ export const deleteEmail = async (
           : "Something went wrong deleting email",
       data: null,
     };
+  }
+};
+
+/**
+ * Records a newsletter sent through the external API as a published post,
+ * so it shows up in the dashboard's post history the same as one sent
+ * through the app. Without this, the external `/send` endpoint only ever
+ * wrote to `newsletterSendLogs` (an audit log, not shown on the Posts
+ * page) — the email genuinely went out, but there was no record of it as
+ * a post.
+ */
+export const recordSentNewsletterPost = async (
+  newsletterId: string,
+  subject: string,
+  content: string
+): Promise<void> => {
+  const encryptedBody = await encryptDataSubtle(
+    content,
+    encryptionKey
+  );
+  await db.insert(emails).values({
+    newsletterId,
+    subject,
+    body: encryptedBody,
+    status: "published",
+  });
+};
+
+/**
+ * All posts (across all newsletters) that belong to the given user — used
+ * by the dashboard's cross-newsletter Posts page.
+ */
+export const getAllNewsletterPosts = async (
+  userId: string
+): Promise<ServiceResponse<InsertPost[]>> => {
+  try {
+    const userPosts = await db
+      .select({
+        serial: emails.serial,
+        id: emails.id,
+        newsletterId: emails.newsletterId,
+        subject: emails.subject,
+        body: emails.body,
+        sentAt: emails.sentAt,
+        status: emails.status,
+      })
+      .from(emails)
+      .innerJoin(newsletters, eq(emails.newsletterId, newsletters.id))
+      .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
+      .where(eq(teamMembers.userId, userId));
+
+    const decryptedPosts = await Promise.all(
+      userPosts.map(async (post) => ({
+        ...post,
+        body: await decryptDataSubtle(post.body, encryptionKey),
+      }))
+    );
+
+    return {
+      data: decryptedPosts,
+      success: true,
+      message: "User posts fetched successfully.",
+    };
+  } catch (err) {
+    const errorMessage =
+      err instanceof Error
+        ? err.message
+        : "Failed to retrieve user posts due to a server error.";
+    return { data: null, success: false, message: errorMessage };
   }
 };
 

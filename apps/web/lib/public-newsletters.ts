@@ -33,10 +33,27 @@ export interface PublicPostDetail {
 async function getJson<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${API_BASE}${path}`, {
-      // Public pages don't need to be second-by-second fresh — a short
-      // revalidate window keeps this from hitting the API on every request
-      // while still picking up a new post within a minute.
+      // Newsletter metadata and individual post HTML rarely change — a short
+      // revalidate window is fine here.
       next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Always fetches fresh from the API — used for the posts list so that a
+ * deletion is reflected immediately on the public profile instead of
+ * lingering for up to the revalidate window.
+ */
+async function getJsonFresh<T>(path: string): Promise<T | null> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      cache: "no-store",
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -52,7 +69,7 @@ export const getPublicNewsletter = (slug: string) =>
   );
 
 export const getPublicPosts = (slug: string, page = 1) =>
-  getJson<PublicPost[]>(
+  getJsonFresh<PublicPost[]>(
     `/api/v1/public/newsletters/${encodeURIComponent(slug)}/posts?page=${page}`
   );
 

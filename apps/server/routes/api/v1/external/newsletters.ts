@@ -12,7 +12,7 @@ import {
   NewsletterSendLimitError,
 } from "@/services/limits";
 import { logNewsletterSend } from "@/services/newsletter-send-log";
-import { recordSentNewsletterPost } from "@/services/posts";
+import { recordSentNewsletterPost } from "@/services/emails";
 import { moderateNewsletterContent } from "@/services/moderation";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";

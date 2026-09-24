@@ -14,7 +14,6 @@ import sesWebhookRoute from "./routes/api/v1/webhooks/ses";
 import unsubscribeRoutes from "./routes/api/v1/unsubscribe";
 import externalNewslettersRoute from "./routes/api/v1/external/newsletters";
 import profileRoutes from "./routes/api/v1/profiles";
-import postRoutes from "./routes/api/v1/posts";
 import dashboardRoute from "./routes/api/v1/dashboard";
 import emailsRoute from "./routes/api/v1/emails";
 import segmentRoutes from "./routes/api/v1/segments";
@@ -140,9 +139,6 @@ v1.route(
 
 // profile, 70 req per hour
 v1.route("/profile", profileRoutes.use(rateLimiter(60 * 60 * 1000, 70)));
-
-// posts/emails, 90 req per hour
-v1.route("/posts", postRoutes.use(rateLimiter(60 * 60 * 1000, 70)));
 
 // emails, 100 req per hour (for sending newsletters)
 v1.route("/emails", emailsRoute.use(rateLimiter(60 * 60 * 1000, 100)));

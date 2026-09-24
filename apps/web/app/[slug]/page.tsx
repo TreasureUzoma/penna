@@ -12,9 +12,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const newsletter = await getPublicNewsletter(slug);
   if (!newsletter) return {};
 
+  const title = `${newsletter.name} - penna`;
+  const description = newsletter.description ?? `Read ${newsletter.name} on Penna.`;
+  const url = `https://penna.dev/${slug}`;
+
   return {
-    title: `${newsletter.name} - penna`,
-    description: newsletter.description ?? undefined,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website",
+      images: [
+        {
+          url: `/og?slug=${encodeURIComponent(slug)}`,
+          width: 1200,
+          height: 630,
+          alt: `${newsletter.name} newsletter`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    alternates: {
+      canonical: url,
+    },
   };
 }
 
