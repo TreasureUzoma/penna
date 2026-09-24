@@ -6,7 +6,7 @@ import { useEmail, useUpdateEmail } from "@/hooks/use-emails";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { MarkdownSplitEditor } from "@/components/markdown-split-editor";
-import { Loader2, Save, Send, ShieldAlert } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import {
@@ -19,7 +19,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AlbumIcon,
+  Calendar02Icon,
+  SendIcon,
+  ShieldAlertIcon,
+} from "@hugeicons/core-free-icons";
 
 export default function EditPostPage(): React.JSX.Element {
   const params = useParams();
@@ -189,20 +195,31 @@ export default function EditPostPage(): React.JSX.Element {
                 {pendingAction === "save" && (
                   <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                 )}
-                <Save className="w-3.5 h-3.5 mr-1.5" />
+                <HugeiconsIcon
+                  icon={AlbumIcon}
+                  className="w-3.5 h-3.5 mr-1.5"
+                />
                 Save
               </Button>
               <Popover open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" disabled={isUpdating}>
-                    <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
+                    <HugeiconsIcon
+                      icon={Calendar02Icon}
+                      className="w-3.5 h-3.5 mr-1.5"
+                    />
                     Schedule
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 max-w-[calc(100vw-2rem)]" align="end">
+                <PopoverContent
+                  className="w-80 max-w-[calc(100vw-2rem)]"
+                  align="end"
+                >
                   <div className="grid gap-4">
                     <div className="space-y-2">
-                      <h4 className="font-medium leading-none">Schedule Post</h4>
+                      <h4 className="font-medium leading-none">
+                        Schedule Post
+                      </h4>
                       <p className="text-xs text-muted-foreground">
                         Pick a future date and time — the post sends
                         automatically then. To send right away, use{" "}
@@ -234,11 +251,15 @@ export default function EditPostPage(): React.JSX.Element {
                   </div>
                 </PopoverContent>
               </Popover>
-              <Button size="sm" onClick={handlePublishNow} disabled={isUpdating}>
+              <Button
+                size="sm"
+                onClick={handlePublishNow}
+                disabled={isUpdating}
+              >
                 {pendingAction === "publish" && (
                   <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                 )}
-                <Send className="w-3.5 h-3.5 mr-1.5" />
+                <HugeiconsIcon icon={SendIcon} className="w-3.5 h-3.5 mr-1.5" />
                 Publish
               </Button>
             </>
@@ -248,13 +269,13 @@ export default function EditPostPage(): React.JSX.Element {
 
       {email?.moderationBlockedReason && (
         <Alert variant="destructive" className="shrink-0">
-          <ShieldAlert />
+          <HugeiconsIcon icon={ShieldAlertIcon} />
           <AlertTitle>Blocked by content moderation</AlertTitle>
           <AlertDescription>
             <p>{email.moderationBlockedReason}</p>
             <p>
-              This was reverted to a draft instead of sending — edit the
-              content and try publishing again.
+              This was reverted to a draft instead of sending — edit the content
+              and try publishing again.
             </p>
           </AlertDescription>
         </Alert>
@@ -263,7 +284,9 @@ export default function EditPostPage(): React.JSX.Element {
       <Card className="flex-1 flex flex-col min-h-[450px] md:min-h-0 overflow-hidden border-0 shadow-none bg-transparent">
         <CardContent className="p-0 h-full flex flex-col gap-3">
           <div className="shrink-0 bg-background border rounded-lg p-3 space-y-0.5">
-            <label className="text-xs sm:text-sm font-medium">Subject Line</label>
+            <label className="text-xs sm:text-sm font-medium">
+              Subject Line
+            </label>
             <Input
               placeholder="Enter an engaging subject line..."
               value={subject}

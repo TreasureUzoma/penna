@@ -6,9 +6,11 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
-import { ArrowRight, Mail } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { ArrowRight02Icon, Mail01Icon } from "@hugeicons/core-free-icons";
 
 interface LatestPostProps {
   post?: {
@@ -32,7 +34,10 @@ export function LatestPost({ post }: LatestPostProps) {
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-10 text-center">
           <div className="p-3 rounded-full bg-neutral-800 mb-4">
-            <Mail className="h-6 w-6 text-neutral-400" />
+            <HugeiconsIcon
+              icon={Mail01Icon}
+              className="h-6 w-6 text-neutral-400"
+            />
           </div>
           <p className="text-sm text-muted-foreground">
             You haven't sent any posts yet.
@@ -59,7 +64,7 @@ export function LatestPost({ post }: LatestPostProps) {
         <Button variant="ghost" className="w-full justify-between" asChild>
           <Link href={`/newsletters/${slug}/posts/${post.id}`}>
             View post
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <HugeiconsIcon icon={ArrowRight02Icon} className="ml-2 h-4 w-4" />
           </Link>
         </Button>
       </CardFooter>

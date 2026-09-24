@@ -8,7 +8,14 @@ import { useSubscribers } from "@/hooks/use-subscribers";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { MarkdownSplitEditor } from "@/components/markdown-split-editor";
-import { Loader2, Save, Send, Users } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AlbumIcon,
+  Calendar02Icon,
+  SendIcon,
+  UsersRoundIcon,
+} from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Checkbox } from "@workspace/ui/components/checkbox";
@@ -18,7 +25,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
-import { Calendar as CalendarIcon } from "lucide-react";
 
 export default function NewPostPage(): React.JSX.Element {
   const params = useParams();
@@ -160,7 +166,9 @@ export default function NewPostPage(): React.JSX.Element {
     <div className="flex flex-col h-full min-h-[calc(100vh-5rem)] md:h-[calc(100vh-4rem)] -m-4 sm:-m-8 px-4 sm:px-8 py-4 gap-4 overflow-y-auto md:overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Create Post</h2>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+            Create Post
+          </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -173,14 +181,23 @@ export default function NewPostPage(): React.JSX.Element {
           <Popover open={isRecipientsOpen} onOpenChange={setIsRecipientsOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" disabled={isCreating}>
-                <Users className="w-3.5 h-3.5 mr-1.5" />
+                <HugeiconsIcon
+                  icon={UsersRoundIcon}
+                  className="w-3.5 h-3.5 mr-1.5"
+                />
                 Recipients{" "}
-                <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">
+                <Badge
+                  variant="secondary"
+                  className="ml-1.5 text-[10px] px-1.5 py-0"
+                >
                   {getRecipientCount()}
                 </Badge>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 max-w-[calc(100vw-2rem)]" align="end">
+            <PopoverContent
+              className="w-80 max-w-[calc(100vw-2rem)]"
+              align="end"
+            >
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">
@@ -235,17 +252,23 @@ export default function NewPostPage(): React.JSX.Element {
             {pendingAction === "draft" && (
               <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             )}
-            <Save className="w-3.5 h-3.5 mr-1.5" />
+            <HugeiconsIcon icon={AlbumIcon} className="w-3.5 h-3.5 mr-1.5" />
             Save Draft
           </Button>
           <Popover open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" disabled={isCreating}>
-                <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
+                <HugeiconsIcon
+                  icon={Calendar02Icon}
+                  className="w-3.5 h-3.5 mr-1.5"
+                />
                 Schedule
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 max-w-[calc(100vw-2rem)]" align="end">
+            <PopoverContent
+              className="w-80 max-w-[calc(100vw-2rem)]"
+              align="end"
+            >
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">Schedule Post</h4>
@@ -284,7 +307,7 @@ export default function NewPostPage(): React.JSX.Element {
             {pendingAction === "publish" && (
               <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             )}
-            <Send className="w-3.5 h-3.5 mr-1.5" />
+            <HugeiconsIcon icon={SendIcon} className="w-3.5 h-3.5 mr-1.5" />
             Publish
           </Button>
         </div>
@@ -293,7 +316,9 @@ export default function NewPostPage(): React.JSX.Element {
       <Card className="flex-1 flex flex-col min-h-[450px] md:min-h-0 overflow-hidden border-0 shadow-none bg-transparent">
         <CardContent className="p-0 h-full flex flex-col gap-3">
           <div className="shrink-0 bg-background border rounded-lg p-3 space-y-0.5">
-            <label className="text-xs sm:text-sm font-medium">Subject Line</label>
+            <label className="text-xs sm:text-sm font-medium">
+              Subject Line
+            </label>
             <Input
               placeholder="Enter an engaging subject line..."
               value={subject}

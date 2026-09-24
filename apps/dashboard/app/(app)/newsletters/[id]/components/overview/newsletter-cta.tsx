@@ -1,9 +1,16 @@
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
-import { Check, CheckCircle2, PenLine, Send, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import {
+  CheckIcon,
+  CheckmarkCircle01Icon,
+  PencilEdit01Icon,
+  SendIcon,
+  Share08Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 interface NewsletterCTAProps {
   newsletter: any;
@@ -49,7 +56,7 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
     title: string;
     description: string;
     buttonText: string;
-    icon: typeof PenLine;
+    icon: typeof PencilEdit01Icon;
     href?: string;
     onClick?: () => void;
   } | null = null;
@@ -60,7 +67,7 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
       description:
         "You don't have any subscribers yet. Share your signup page to start growing.",
       buttonText: copied ? "Copied!" : "Copy Link",
-      icon: Share2,
+      icon: Share08Icon,
       onClick: handleCopySignupLink,
     };
   } else if (hasNeverSent) {
@@ -69,7 +76,7 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
       description:
         "You're all set up! Share your first newsletter with your subscribers.",
       buttonText: "Create Post",
-      icon: PenLine,
+      icon: PencilEdit01Icon,
       href: `/newsletters/${slug}/posts/new`,
     };
   } else if (isStale) {
@@ -78,7 +85,7 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
       description:
         "It's been a while since your last update. Keep your audience engaged.",
       buttonText: "Send Post",
-      icon: Send,
+      icon: SendIcon,
       href: `/newsletters/${slug}/posts/new`,
     };
   }
@@ -89,7 +96,10 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
         <CardContent>
           <div className="space-y-4">
             <div className="p-3 w-fit rounded-lg bg-neutral-200 dark:bg-neutral-800">
-              <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+              <HugeiconsIcon
+                icon={CheckmarkCircle01Icon}
+                className="h-6 w-6 text-emerald-400"
+              />
             </div>
             <div className="space-y-2">
               <h3 className="text-xl font-bold">You're all caught up</h3>
@@ -113,9 +123,9 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
     <>
       {cta.buttonText}
       {copied ? (
-        <Check className="ml-2 h-4 w-4" />
+        <HugeiconsIcon icon={CheckIcon} className="ml-2 h-4 w-4" />
       ) : (
-        <cta.icon className="ml-2 h-4 w-4" />
+        <HugeiconsIcon icon={cta.icon} className="ml-2 h-4 w-4" />
       )}
     </>
   );
@@ -125,7 +135,10 @@ export function NewsletterCTA({ newsletter, stats }: NewsletterCTAProps) {
       <CardContent>
         <div className="space-y-4">
           <div className="p-3 w-fit rounded-lg bg-neutral-200 dark:bg-neutral-800">
-            <cta.icon className="h-6 w-6 text-emerald-400" />
+            <HugeiconsIcon
+              icon={cta.icon}
+              className="h-6 w-6 text-emerald-400"
+            />
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-bold">{cta.title}</h3>

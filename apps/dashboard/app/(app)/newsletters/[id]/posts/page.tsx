@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useEmails, useDeleteEmail } from "@/hooks/use-emails";
 import { Button } from "@workspace/ui/components/button";
@@ -30,9 +29,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { Loader2, Plus, Trash2, Mail, Pencil, Eye } from "lucide-react";
-import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import {
+  PencilEdit01Icon,
+  PlusIcon,
+  TrashIcon,
+  ViewIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 /**
  * `email.status` only distinguishes "draft" vs "published" in the DB — a
@@ -149,16 +154,25 @@ export default function NewsletterPostsPage() {
                             title={isAlreadySent(email) ? "View" : "Edit"}
                           >
                             {isAlreadySent(email) ? (
-                              <Eye className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                              <HugeiconsIcon
+                                icon={ViewIcon}
+                                className="w-4 h-4 text-muted-foreground hover:text-primary"
+                              />
                             ) : (
-                              <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                              <HugeiconsIcon
+                                icon={PencilEdit01Icon}
+                                className="w-4 h-4 text-muted-foreground hover:text-primary"
+                              />
                             )}
                           </Link>
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon">
-                              <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                              <HugeiconsIcon
+                                icon={TrashIcon}
+                                className="w-4 h-4 text-muted-foreground hover:text-destructive"
+                              />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -193,7 +207,7 @@ export default function NewsletterPostsPage() {
               </p>
               <Button asChild variant="outline">
                 <Link href={`/newsletters/${newsletterId}/posts/new`}>
-                  <Plus className="w-4 h-4 mr-2" />
+                  <HugeiconsIcon icon={PlusIcon} className="w-4 h-4 mr-2" />
                   Create Post
                 </Link>
               </Button>

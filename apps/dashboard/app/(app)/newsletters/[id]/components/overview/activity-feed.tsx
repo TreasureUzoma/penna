@@ -4,8 +4,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Send, AlertCircle, FileEdit } from "lucide-react";
 import { SubscriberAvatar } from "@/components/subscriber-avatar";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  BadgeAlertIcon,
+  LicenseDraftIcon,
+  SendIcon,
+} from "@hugeicons/core-free-icons";
 
 interface ActivityFeedProps {
   activities?: Array<{
@@ -24,11 +29,11 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
   const getIcon = (type: string) => {
     switch (type) {
       case "email":
-        return Send;
+        return SendIcon;
       case "draft":
-        return FileEdit;
+        return LicenseDraftIcon;
       default:
-        return AlertCircle;
+        return BadgeAlertIcon;
     }
   };
 
@@ -62,7 +67,6 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
             </p>
           )}
           {activities?.map((activity) => {
-            const Icon = getIcon(activity.type);
             return (
               <div key={activity.id} className="flex gap-4">
                 <div className="mt-1">
@@ -73,7 +77,10 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                     />
                   ) : (
                     <div className="p-2 rounded-full bg-neutral-100">
-                      <Icon className="h-4 w-4 text-neutral-600" />
+                      <HugeiconsIcon
+                        icon={getIcon(activity.type)}
+                        className="h-4 w-4 text-background"
+                      />
                     </div>
                   )}
                 </div>

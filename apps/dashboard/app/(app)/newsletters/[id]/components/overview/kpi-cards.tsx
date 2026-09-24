@@ -55,7 +55,7 @@ export function KPICards({ stats }: KPICardsProps) {
             <CardTitle className="my-3 text-xs text-muted-foreground">
               {kpi.title}
             </CardTitle>
-            <div className="text-4xl font-bold">{kpi.value}</div>
+            <div className="text-3xl font-bold">{kpi.value}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {kpi.trend && (
                 <span className="text-emerald-500 font-medium mr-1">
