@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useNewsletter, useNewsletterAnalytics } from "@/hooks/use-newsletters";
 import { useEmails } from "@/hooks/use-emails";
-import { Loader2, Mail, MailX, MailWarning } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -85,15 +85,6 @@ export default function NewsletterAnalyticsPage() {
   // status badges, the edit-lock, account-wide recent activity): status
   // published AND sentAt has actually passed — excludes scheduled posts
   // that haven't gone out yet.
-  const sendHistory = (emails ?? [])
-    .filter(
-      (email) =>
-        email.status === "published" &&
-        new Date(email.sentAt).getTime() <= Date.now(),
-    )
-    .sort(
-      (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
-    );
 
   return (
     <div className="space-y-8 pb-10">

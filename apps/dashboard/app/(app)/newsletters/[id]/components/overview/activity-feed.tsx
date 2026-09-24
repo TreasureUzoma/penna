@@ -55,7 +55,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
   };
 
   return (
-    <Card className="h-full">
+    <Card className="h-full md:max-h-[60vh] overflow-y-auto">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
       </CardHeader>
