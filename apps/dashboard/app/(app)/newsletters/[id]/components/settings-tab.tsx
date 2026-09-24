@@ -29,7 +29,7 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { CopyButton } from "@workspace/ui/components/copy-button";
 import { cn } from "@workspace/ui/lib/utils";
-import { Globe, Info, Loader2, Lock, Sparkles, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -55,13 +55,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import { Users } from "lucide-react";
 import { useState } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  InfoIcon,
+  InternetIcon,
+  LockIcon,
+  TrashIcon,
+  UsersRoundIcon,
+} from "@hugeicons/core-free-icons";
 
 interface SettingsTabProps {
   newsletter: {
@@ -272,7 +279,10 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                         onClick={() => field.onChange(true)}
                       >
                         <div className="flex items-center gap-2 font-medium">
-                          <Globe className="w-4 h-4" />
+                          <HugeiconsIcon
+                            icon={InternetIcon}
+                            className="w-4 h-4"
+                          />
                           Public
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -291,7 +301,7 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                         onClick={() => field.onChange(false)}
                       >
                         <div className="flex items-center gap-2 font-medium">
-                          <Lock className="w-4 h-4" />
+                          <HugeiconsIcon icon={LockIcon} className="w-4 h-4" />
                           Private
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -341,7 +351,7 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
           <CardTitle className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger>
-                <Info className="w-3.5 h-3.5" />
+                <HugeiconsIcon icon={InfoIcon} className="w-3.5 h-3.5" />
                 <TooltipContent>
                   <p className="text-sm">
                     Tracking pixels can increase the chance
@@ -394,7 +404,10 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
             >
               <div className="font-medium flex items-center gap-1.5">
                 {!newsletter.canUseEmailTracking && (
-                  <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                  <HugeiconsIcon
+                    icon={LockIcon}
+                    className="w-3.5 h-3.5 text-muted-foreground"
+                  />
                 )}
                 Enable tracking
               </div>
@@ -476,7 +489,10 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
             >
               <div className="font-medium flex items-center gap-1.5">
                 {!newsletter.canRemoveBranding && (
-                  <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                  <HugeiconsIcon
+                    icon={LockIcon}
+                    className="w-3.5 h-3.5 text-muted-foreground"
+                  />
                 )}
                 Remove branding
               </div>
@@ -524,7 +540,10 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
           <div className="flex items-center justify-between gap-3 border rounded-lg p-4">
             <div className="flex items-center gap-3 min-w-0">
               <div className="p-2 rounded-full bg-muted shrink-0">
-                <Users className="w-4 h-4 text-muted-foreground" />
+                <HugeiconsIcon
+                  icon={UsersRoundIcon}
+                  className="w-4 h-4 text-muted-foreground"
+                />
               </div>
               <div className="min-w-0">
                 <p className="font-medium truncate">
@@ -606,7 +625,7 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full sm:w-auto">
-                  <Trash2 className="w-4 h-4 mr-2" />
+                  <HugeiconsIcon icon={TrashIcon} className="w-4 h-4 mr-2" />
                   Delete Newsletter
                 </Button>
               </AlertDialogTrigger>

@@ -15,7 +15,7 @@ import {
 import { CopyButton } from "@workspace/ui/components/copy-button";
 import { Input } from "@workspace/ui/components/input";
 import { Badge } from "@workspace/ui/components/badge";
-import { Loader2, Plus, Trash2, Eye, EyeOff, Check } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -40,6 +40,14 @@ import {
 import { Label } from "@workspace/ui/components/label";
 import { cn } from "@workspace/ui/lib/utils";
 import { API_KEY_SCOPES, type ApiKeyScope } from "@workspace/validations";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  CheckIcon,
+  PlusIcon,
+  TrashIcon,
+  ViewIcon,
+  ViewOffIcon,
+} from "@hugeicons/core-free-icons";
 
 const SCOPE_INFO: Record<ApiKeyScope, { label: string; description: string }> =
   {
@@ -116,7 +124,7 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
           >
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto">
-                <Plus className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={PlusIcon} className="w-4 h-4 mr-2" />
                 Create New Key
               </Button>
             </DialogTrigger>
@@ -160,7 +168,9 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
                             : "border-input",
                         )}
                       >
-                        {isSelected && <Check className="h-3 w-3" />}
+                        {isSelected && (
+                          <HugeiconsIcon icon={CheckIcon} className="h-3 w-3" />
+                        )}
                       </div>
                       <div className="space-y-0.5">
                         <p className="text-sm font-medium">{info.label}</p>
@@ -206,7 +216,7 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="icon">
-                      <Trash2 className="w-4 h-4" />
+                      <HugeiconsIcon icon={TrashIcon} className="w-4 h-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -272,11 +282,12 @@ export function ApiKeysTab({ newsletterId }: { newsletterId: string }) {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     aria-label={showKey ? "Hide key" : "Show key"}
                   >
-                    {showKey ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {
+                      <HugeiconsIcon
+                        icon={showKey ? ViewIcon : ViewOffIcon}
+                        className={"h-4 w-4"}
+                      />
+                    }
                   </button>
                 </div>
                 <CopyButton

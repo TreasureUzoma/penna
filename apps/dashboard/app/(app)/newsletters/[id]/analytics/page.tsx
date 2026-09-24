@@ -4,27 +4,25 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useNewsletter, useNewsletterAnalytics } from "@/hooks/use-newsletters";
 import { useEmails } from "@/hooks/use-emails";
-import { Loader2, Mail, MailX, MailWarning, Clock } from "lucide-react";
+import { Loader2, Mail, MailX, MailWarning } from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table";
-import Link from "next/link";
 import numeral from "numeral";
 import { GrowthChart } from "../components/overview/growth-chart";
 import { GrowthChartSkeleton } from "../components/overview/growth-chart-skeleton";
 import { ActivityFeed } from "../components/overview/activity-feed";
 import { ActivityFeedSkeleton } from "../components/overview/activity-feed-skeleton";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Clock01Icon,
+  MailIcon,
+  MailWarningIcon,
+  MailXIcon,
+} from "@hugeicons/core-free-icons";
 
 /**
  * Deliberately distinct from the Overview tab rather than repeating its
@@ -60,25 +58,25 @@ export default function NewsletterAnalyticsPage() {
     {
       label: "Subscribed",
       value: breakdown?.subscribed ?? 0,
-      icon: Mail,
+      icon: MailIcon,
       color: "text-emerald-500",
     },
     {
       label: "Unsubscribed",
       value: breakdown?.unsubscribed ?? 0,
-      icon: MailX,
+      icon: MailXIcon,
       color: "text-muted-foreground",
     },
     {
       label: "Bounced",
       value: breakdown?.bounced ?? 0,
-      icon: MailWarning,
+      icon: MailWarningIcon,
       color: "text-amber-500",
     },
     {
       label: "Pending",
       value: breakdown?.pending ?? 0,
-      icon: Clock,
+      icon: Clock01Icon,
       color: "text-blue-500",
     },
   ];
@@ -130,7 +128,10 @@ export default function NewsletterAnalyticsPage() {
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {stat.label}
                   </CardTitle>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                  <HugeiconsIcon
+                    icon={stat.icon}
+                    className={`h-4 w-4 ${stat.color}`}
+                  />
                 </CardHeader>
                 <CardContent>
                   <p className="text-xl font-medium">

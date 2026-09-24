@@ -41,14 +41,15 @@ import {
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
 import {
-  Globe,
-  Loader2,
-  RefreshCw,
-  Trash2,
-  CheckCircle2,
-  Clock,
-  Plus,
-} from "lucide-react";
+  CheckmarkCircle01Icon,
+  Clock01Icon,
+  Delete01Icon,
+  InternetIcon,
+  PlusIcon,
+  Refresh01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Loader2 } from "lucide-react";
 
 export default function AccountDomainsPage() {
   const { data: domains, isLoading } = useDomains();
@@ -93,7 +94,6 @@ export default function AccountDomainsPage() {
           ready.
         </p>
       </div>
-
       <form
         onSubmit={handleAdd}
         className="flex flex-col sm:flex-row gap-2 sm:items-center"
@@ -113,7 +113,7 @@ export default function AccountDomainsPage() {
           {isAdding ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : (
-            <Plus className="w-4 h-4 mr-2" />
+            <HugeiconsIcon icon={PlusIcon} className="w-4 h-4 mr-2" />
           )}
           Verify Domain
         </Button>
@@ -127,7 +127,10 @@ export default function AccountDomainsPage() {
 
       {!isLoading && (!domains || domains.length === 0) && (
         <div className="text-center py-12 space-y-2">
-          <Globe className="w-6 h-6 text-muted-foreground mx-auto" />
+          <HugeiconsIcon
+            icon={InternetIcon}
+            className="w-6 h-6 text-muted-foreground mx-auto"
+          />
           <p className="text-sm text-muted-foreground">
             No custom domains yet. Add one above.
           </p>
@@ -151,7 +154,10 @@ export default function AccountDomainsPage() {
                   <TableRow>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <HugeiconsIcon
+                          icon={InternetIcon}
+                          className="w-3.5 h-3.5 text-muted-foreground shrink-0"
+                        />
                         {domain.name}
                       </div>
                     </TableCell>
@@ -220,9 +226,15 @@ export default function AccountDomainsPage() {
                         )}
                       >
                         {domain.verified ? (
-                          <CheckCircle2 className="w-3 h-3" />
+                          <HugeiconsIcon
+                            icon={CheckmarkCircle01Icon}
+                            className="w-3 h-3"
+                          />
                         ) : (
-                          <Clock className="w-3 h-3" />
+                          <HugeiconsIcon
+                            icon={Clock01Icon}
+                            className="w-3 h-3"
+                          />
                         )}
                         {domain.verified
                           ? "Verified"
@@ -242,7 +254,10 @@ export default function AccountDomainsPage() {
                             {isVerifying && pendingId === domain.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <RefreshCw className="w-4 h-4" />
+                              <HugeiconsIcon
+                                icon={Refresh01Icon}
+                                className="w-4 h-4"
+                              />
                             )}
                           </Button>
                         )}
@@ -253,7 +268,10 @@ export default function AccountDomainsPage() {
                               size="icon"
                               disabled={isDeleting}
                             >
-                              <Trash2 className="w-4 h-4 text-destructive" />
+                              <HugeiconsIcon
+                                icon={Delete01Icon}
+                                className="w-4 h-4 text-destructive"
+                              />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>

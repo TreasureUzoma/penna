@@ -45,20 +45,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import {
-  Loader2,
-  Plus,
-  Trash2,
-  ArrowLeft,
-  Users,
-  Search,
-  Copy,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Input } from "@workspace/ui/components/input";
 import Link from "next/link";
 import { SubscriberAvatar } from "@/components/subscriber-avatar";
 import { toast } from "sonner";
 import { CopyButton } from "@workspace/ui/components/copy-button";
+import {
+  ArrowLeft01Icon,
+  PlusIcon,
+  Search01Icon,
+  TrashIcon,
+  UsersRoundIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 export default function SegmentDetailPage() {
   const params = useParams();
@@ -132,7 +132,7 @@ export default function SegmentDetailPage() {
         <p className="text-muted-foreground">Segment not found</p>
         <Button asChild variant="outline">
           <Link href={`/newsletters/${newsletterId}/segments`}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4 mr-2" />
             Back to Segments
           </Link>
         </Button>
@@ -153,7 +153,7 @@ export default function SegmentDetailPage() {
               className="h-8 w-8 flex-shrink-0"
             >
               <Link href={`/newsletters/${newsletterId}/segments`}>
-                <ArrowLeft className="w-4 h-4" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
               </Link>
             </Button>
             <div className="min-w-0 flex-1">
@@ -173,7 +173,7 @@ export default function SegmentDetailPage() {
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex-1 sm:flex-initial">
-                <Plus className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={PlusIcon} className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">Add Subscribers</span>
                 <span className="sm:hidden">Add</span>
               </Button>
@@ -189,7 +189,10 @@ export default function SegmentDetailPage() {
               </DialogHeader>
               <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
                 <div className="relative flex-shrink-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <HugeiconsIcon
+                    icon={Search01Icon}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
+                  />
                   <Input
                     placeholder="Search subscribers..."
                     value={searchQuery}
@@ -224,7 +227,10 @@ export default function SegmentDetailPage() {
                           onClick={() => handleAddSubscriber(s.id)}
                           className="flex-shrink-0"
                         >
-                          <Plus className="w-4 h-4 sm:mr-1" />
+                          <HugeiconsIcon
+                            icon={PlusIcon}
+                            className="w-4 h-4 sm:mr-1"
+                          />
                           <span className="hidden sm:inline">Add</span>
                         </Button>
                       </div>
@@ -275,7 +281,7 @@ export default function SegmentDetailPage() {
                 size="icon"
                 className="flex-shrink-0"
               >
-                <Trash2 className="w-4 h-4" />
+                <HugeiconsIcon icon={TrashIcon} className="w-4 h-4" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="max-w-[95vw] sm:max-w-lg">
@@ -318,7 +324,7 @@ export default function SegmentDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
+            <HugeiconsIcon icon={UsersRoundIcon} className="w-5 h-5" />
             Segment Overview
           </CardTitle>
         </CardHeader>
@@ -381,7 +387,10 @@ export default function SegmentDetailPage() {
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon">
-                              <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                              <HugeiconsIcon
+                                icon={TrashIcon}
+                                className="w-4 h-4 text-muted-foreground hover:text-destructive"
+                              />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -446,7 +455,10 @@ export default function SegmentDetailPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Users className="w-12 h-12 text-muted-foreground mb-4" />
+              <HugeiconsIcon
+                icon={UsersRoundIcon}
+                className="w-12 h-12 text-muted-foreground mb-4"
+              />
               <p className="text-muted-foreground mb-4">
                 No subscribers in this segment yet
               </p>
@@ -454,7 +466,7 @@ export default function SegmentDetailPage() {
                 variant="outline"
                 onClick={() => setIsAddDialogOpen(true)}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={PlusIcon} className="w-4 h-4 mr-2" />
                 Add subscribers
               </Button>
             </div>

@@ -54,20 +54,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import {
-  AlertTriangle,
-  Crown,
-  Loader2,
-  Plus,
-  UserMinus,
-  UserPlus,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@workspace/ui/components/alert";
 import type { TeamRoles } from "@workspace/types";
+import {
+  AlertTriangle,
+  CrownIcon,
+  PlusIcon,
+  UserMinusIcon,
+  UserPlus,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 function CreateTeamDialog() {
   const [open, setOpen] = useState(false);
@@ -79,7 +80,7 @@ function CreateTeamDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <Plus className="w-4 h-4 mr-2" />
+          <HugeiconsIcon icon={PlusIcon} className="w-4 h-4 mr-2" />
           New Team
         </Button>
       </DialogTrigger>
@@ -258,7 +259,7 @@ function TeamSettingsContent() {
 
       {isOverCap && (
         <Alert variant="destructive">
-          <AlertTriangle className="w-4 h-4" />
+          <HugeiconsIcon icon={AlertTriangle} className="w-4 h-4" />
           <AlertTitle>
             Over the {billing?.plan.name} plan's member limit
           </AlertTitle>
@@ -303,7 +304,7 @@ function TeamSettingsContent() {
                       : undefined
                   }
                 >
-                  <UserPlus className="w-4 h-4 mr-2" />
+                  <HugeiconsIcon icon={UserPlus} className="w-4 h-4 mr-2" />
                   Invite Member
                 </Button>
               </DialogTrigger>
@@ -393,7 +394,10 @@ function TeamSettingsContent() {
                           disabled={isTransferring}
                           title="Transfer ownership"
                         >
-                          <Crown className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                          <HugeiconsIcon
+                            icon={CrownIcon}
+                            className="w-4 h-4 text-muted-foreground hover:text-primary"
+                          />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -451,7 +455,10 @@ function TeamSettingsContent() {
                           disabled={isRemoving}
                           title="Remove from team"
                         >
-                          <UserMinus className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                          <HugeiconsIcon
+                            icon={UserMinusIcon}
+                            className="w-4 h-4 text-muted-foreground hover:text-destructive"
+                          />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

@@ -1,18 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useModalStore } from "@/stores/use-modal-store";
 import {
   useSegments,
   useCreateSegment,
   useDeleteSegment,
-  useSegmentSubscribers,
-  useAddSubscriberToSegment,
-  useRemoveSubscriberFromSegment,
   type Segment,
 } from "@/hooks/use-segments";
-import { useSubscribers } from "@/hooks/use-subscribers";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -50,7 +46,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { Loader2, Plus, Trash2, Users, X, Eye } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -63,6 +59,8 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form";
 import { createSegmentSchema, CreateSegment } from "@workspace/validations";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { PlusIcon, TrashIcon, ViewIcon } from "@hugeicons/core-free-icons";
 
 export default function NewsletterSegmentsPage() {
   const params = useParams();
@@ -213,13 +211,19 @@ export default function NewsletterSegmentsPage() {
                         <Link
                           href={`/newsletters/${newsletterId}/segments/${segment.id}`}
                         >
-                          <Eye className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                          <HugeiconsIcon
+                            icon={ViewIcon}
+                            className="w-4 h-4 text-muted-foreground hover:text-primary"
+                          />
                         </Link>
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon">
-                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                            <HugeiconsIcon
+                              icon={TrashIcon}
+                              className="w-4 h-4 text-muted-foreground hover:text-destructive"
+                            />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -254,7 +258,7 @@ export default function NewsletterSegmentsPage() {
                 variant="outline"
                 onClick={() => openModal("new-segment")}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={PlusIcon} className="w-4 h-4 mr-2" />
                 Create your first segment
               </Button>
             </div>
