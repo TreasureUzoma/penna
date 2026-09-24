@@ -1,22 +1,17 @@
 "use client";
 
 import {
-  CheckCircle2,
-  Circle,
+  CheckCircle,
+  CheckmarkCircle01Icon,
   ChevronRight,
-  Rocket,
-  UserPlus,
-  Mail,
-  Layout,
-} from "lucide-react";
+  CircleIcon,
+  Layout01Icon,
+  Mail01Icon,
+  UserPlusIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@workspace/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
+import { Card, CardContent } from "@workspace/ui/components/card";
 import Link from "next/link";
 
 export default function OnboardingPage() {
@@ -24,21 +19,21 @@ export default function OnboardingPage() {
     {
       title: "Create your first newsletter",
       description: "Set up a home for your newsletter or blog.",
-      icon: Layout,
+      icon: Layout01Icon,
       completed: true, // Assuming if they are here, they might have one or we show how
       href: "/newsletters/new",
     },
     {
       title: "Add your first subscriber",
       description: "Import existing contacts or add them manually.",
-      icon: UserPlus,
+      icon: UserPlusIcon,
       completed: false,
       href: "/newsletters",
     },
     {
       title: "Send your first post",
       description: "Write something amazing and share it with the world.",
-      icon: Mail,
+      icon: Mail01Icon,
       completed: false,
       href: "/newsletters",
     },
@@ -68,14 +63,20 @@ export default function OnboardingPage() {
               <Link href={step.href} className="flex items-center p-6 gap-6">
                 <div className="relative">
                   {step.completed ? (
-                    <CheckCircle2 className="w-8 h-8 text-primary" />
+                    <HugeiconsIcon
+                      icon={CheckmarkCircle01Icon}
+                      className="w-8 h-8 text-primary"
+                    />
                   ) : (
-                    <Circle className="w-8 h-8 text-muted-foreground" />
+                    <HugeiconsIcon
+                      icon={CircleIcon}
+                      className="w-8 h-8 text-muted-foreground"
+                    />
                   )}
                 </div>
 
                 <div className="p-3 bg-muted rounded-xl group-hover:bg-primary/5 group-hover:text-primary transition-colors">
-                  <step.icon className="w-6 h-6" />
+                  <HugeiconsIcon icon={step.icon} className="w-6 h-6" />
                 </div>
 
                 <div className="flex-1 space-y-1">
@@ -83,7 +84,10 @@ export default function OnboardingPage() {
                   <p className="text-muted-foreground">{step.description}</p>
                 </div>
 
-                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                <HugeiconsIcon
+                  icon={ChevronRight}
+                  className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform"
+                />
               </Link>
             </CardContent>
           </Card>
