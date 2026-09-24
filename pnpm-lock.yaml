@@ -47,6 +47,12 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.9.1(@standard-schema/spec@1.1.0)(react-hook-form@7.87.0(react@19.2.3))(zod@3.25.76)
+      '@hugeicons/core-free-icons':
+        specifier: ^4.3.5
+        version: 4.3.5
+      '@hugeicons/react':
+        specifier: ^1.1.10
+        version: 1.1.10(react@19.2.3)
       '@marsidev/react-turnstile':
         specifier: ^1.6.1
         version: 1.6.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -320,6 +326,12 @@ importers:
       '@ai-sdk/react':
         specifier: ^4.0.110
         version: 4.0.110(react@19.2.3)(zod@4.6.1)
+      '@hugeicons/core-free-icons':
+        specifier: ^4.3.5
+        version: 4.3.5
+      '@hugeicons/react':
+        specifier: ^1.1.10
+        version: 1.1.10(react@19.2.3)
       '@streamdown/code':
         specifier: ^1.1.1
         version: 1.1.1(react@19.2.3)
@@ -463,6 +475,12 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.9.1(@standard-schema/spec@1.1.0)(react-hook-form@7.87.0(react@19.2.3))(zod@3.25.76)
+      '@hugeicons/core-free-icons':
+        specifier: ^4.3.5
+        version: 4.3.5
+      '@hugeicons/react':
+        specifier: ^1.1.10
+        version: 1.1.10(react@19.2.3)
       '@lexical/react':
         specifier: ^0.38.2
         version: 0.38.2(@types/react@19.3.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(yjs@13.6.32)
@@ -1638,6 +1656,14 @@ packages:
         optional: true
       zod:
         optional: true
+
+  '@hugeicons/core-free-icons@4.3.5':
+    resolution: {integrity: sha512-Sv+NjHRPnQk+yZsGCMcGznCHdTfJR9PMMOEKcJYAQU4gy90dmlc9PwdtvYOImBZIjiheMsTLL5eMn2DmHxUiUg==}
+
+  '@hugeicons/react@1.1.10':
+    resolution: {integrity: sha512-9tAsd92yMVVGP+E+d8cM+wc0VnXuYZHNbWQi7TOe8k2neawmhiaFmVFbzyruejhOMa197/LbgvSED32ayUo3ZA==}
+    peerDependencies:
+      react: '>=16.0.0'
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -8976,6 +9002,12 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       zod: 3.25.76
 
+  '@hugeicons/core-free-icons@4.3.5': {}
+
+  '@hugeicons/react@1.1.10(react@19.2.3)':
+    dependencies:
+      react: 19.2.3
+
   '@humanfs/core@0.19.2':
     dependencies:
       '@humanfs/types': 0.15.0
@@ -12568,7 +12600,7 @@ snapshots:
       '@next/eslint-plugin-next': 16.1.1
       eslint: 9.39.5(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.10
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.5(jiti@2.7.0))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-react: 7.37.5(eslint@9.39.5(jiti@2.7.0))
@@ -12595,7 +12627,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.5(jiti@2.7.0)):
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0)):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3(supports-color@8.1.1)
@@ -12610,13 +12642,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.14.0(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0)):
+  eslint-module-utils@2.14.0(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       eslint: 9.39.5(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.10
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.5(jiti@2.7.0))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0))
     transitivePeerDependencies:
       - supports-color
 
@@ -12631,7 +12663,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.39.5(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.10
-      eslint-module-utils: 2.14.0(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
+      eslint-module-utils: 2.14.0(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0))
       hasown: 2.0.4
       is-core-module: 2.16.2
       is-glob: 4.0.3

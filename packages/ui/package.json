@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@hugeicons/core-free-icons": "^4.3.5",
+    "@hugeicons/react": "^1.1.10",
     "@lexical/react": "^0.38.2",
     "@lexical/rich-text": "^0.38.2",
     "@lexical/table": "^0.38.2",

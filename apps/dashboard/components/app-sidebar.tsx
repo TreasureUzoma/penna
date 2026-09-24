@@ -3,19 +3,21 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  LayoutDashboard,
-  FileText,
-  BarChart3,
-  Users,
-  Settings,
-  BookOpen,
-  LogOut,
-  ChevronDown,
-  Globe,
-  X,
-  Tags,
-} from "lucide-react";
+  AnalysisTextLinkIcon,
+  ChevronDownIcon,
+  DashboardSquare02Icon,
+  GoogleDocIcon,
+  InboxIcon,
+  InternetIcon,
+  Logout01Icon,
+  NewsIcon,
+  Settings01Icon,
+  TagsIcon,
+  UsersRoundIcon,
+  XIcon,
+} from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "motion/react";
 import Logo from "@workspace/ui/components/logo";
 import { Button } from "@workspace/ui/components/button";
@@ -92,22 +94,22 @@ export default function AppSidebar({
     {
       label: "Newsletters",
       href: "/newsletters",
-      icon: <LayoutDashboard className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={NewsIcon} className="w-4 h-4" />,
     },
     {
       label: "Domains",
       href: "/domains",
-      icon: <Globe className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={InternetIcon} className="w-4 h-4" />,
     },
     {
       label: "Settings",
       href: "/settings",
-      icon: <Settings className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={Settings01Icon} className="w-4 h-4" />,
     },
     {
       label: "Docs",
       href: "/docs",
-      icon: <BookOpen className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={GoogleDocIcon} className="w-4 h-4" />,
     },
   ];
 
@@ -116,37 +118,41 @@ export default function AppSidebar({
         {
           label: "Overview",
           href: `/newsletters/${newsletterSlug}`,
-          icon: <LayoutDashboard className="w-4 h-4" />,
+          icon: (
+            <HugeiconsIcon icon={DashboardSquare02Icon} className="w-4 h-4" />
+          ),
         },
         {
           label: "Posts",
           href: `/newsletters/${newsletterSlug}/posts`,
-          icon: <FileText className="w-4 h-4" />,
+          icon: <HugeiconsIcon icon={InboxIcon} className="w-4 h-4" />,
         },
         {
           label: "Analytics",
           href: `/newsletters/${newsletterSlug}/analytics`,
-          icon: <BarChart3 className="w-4 h-4" />,
+          icon: (
+            <HugeiconsIcon icon={AnalysisTextLinkIcon} className="w-4 h-4" />
+          ),
         },
         {
           label: "Subscribers",
           href: `/newsletters/${newsletterSlug}/subscribers`,
-          icon: <Users className="w-4 h-4" />,
+          icon: <HugeiconsIcon icon={UsersRoundIcon} className="w-4 h-4" />,
         },
         {
           label: "Segments",
           href: `/newsletters/${newsletterSlug}/segments`,
-          icon: <Tags className="w-4 h-4" />,
+          icon: <HugeiconsIcon icon={TagsIcon} className="w-4 h-4" />,
         },
         {
           label: "Domains",
           href: `/newsletters/${newsletterSlug}/domains`,
-          icon: <Globe className="w-4 h-4" />,
+          icon: <HugeiconsIcon icon={InternetIcon} className="w-4 h-4" />,
         },
         {
           label: "Settings",
           href: `/newsletters/${newsletterSlug}/settings`,
-          icon: <Settings className="w-4 h-4" />,
+          icon: <HugeiconsIcon icon={Settings01Icon} className="w-4 h-4" />,
         },
       ]
     : [];
@@ -200,7 +206,7 @@ export default function AppSidebar({
             onClick={onClose}
             aria-label="Close menu"
           >
-            <X className="w-4 h-4" />
+            <HugeiconsIcon icon={XIcon} className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
@@ -208,7 +214,8 @@ export default function AppSidebar({
             className="h-8 w-8 hidden md:inline-flex"
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
-            <ChevronDown
+            <HugeiconsIcon
+              icon={ChevronDownIcon}
               className={cn(
                 "w-4 h-4 transition-transform duration-300",
                 isCollapsed ? "rotate-90" : "-rotate-90",
@@ -328,7 +335,10 @@ export default function AppSidebar({
                       className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted transition-colors text-foreground"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
-                      <Settings className="w-4 h-4" />
+                      <HugeiconsIcon
+                        icon={Settings01Icon}
+                        className="w-4 h-4"
+                      />
                       Settings
                     </Link>
                     <Separator className="my-1" />
@@ -349,7 +359,7 @@ export default function AppSidebar({
                         setIsUserMenuOpen(false);
                       }}
                     >
-                      <LogOut className="w-4 h-4" />
+                      <HugeiconsIcon icon={Logout01Icon} className="w-4 h-4" />
                       Logout
                     </p>
                   </motion.div>

@@ -16,7 +16,7 @@ const Logo = ({ className, showText = true, imageClassName }: LogoProps) => {
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-1.5 select-none",
+        "flex items-center justify-center gap-1 select-none",
         className,
       )}
     >
@@ -24,7 +24,7 @@ const Logo = ({ className, showText = true, imageClassName }: LogoProps) => {
         src={logoSrc}
         alt="Penna Logo"
         className={cn(
-          "h-6 w-auto object-contain invert dark:invert-0",
+          "h-5 w-auto object-contain invert dark:invert-0",
           imageClassName,
         )}
       />

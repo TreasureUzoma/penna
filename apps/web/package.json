@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.110",
+    "@hugeicons/core-free-icons": "^4.3.5",
+    "@hugeicons/react": "^1.1.10",
     "@streamdown/code": "^1.1.1",
     "@workspace/constants": "workspace:*",
     "@workspace/ui": "workspace:*",
