@@ -6,6 +6,7 @@ export const meta = {
   developer: {
     name: "treasure uzoma",
     url: "https://idolo.dev",
+    nickname: "idolodev",
   },
   email: "hello@idolo.dev",
   salesEmail: "hello@idolo.dev",

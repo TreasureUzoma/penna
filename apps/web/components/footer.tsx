@@ -72,15 +72,19 @@ export const Footer = () => {
         <p className="text-muted-foreground whitespace-nowrap truncate">
           &copy; {new Date().getFullYear()} {meta.name}. mit licensed.
         </p>
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <Link
+
+        <p>
+          built with ❤️ by{" "}
+          <a
             href={meta.developer.url}
             className="underline hover:text-muted-foreground whitespace-nowrap"
             target="_blank"
             rel="noopener noreferrer"
           >
-            developer
-          </Link>
+            {meta.developer.name} ({meta.developer.nickname})
+          </a>
+        </p>
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <div className="scale-80">
             <ModeToggle />
           </div>
