@@ -31,6 +31,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
 
 export interface PostEditorProps {
   newsletterId: string;
@@ -73,6 +83,56 @@ export function PostEditor({
     "draft" | "save" | "schedule" | "publish" | null
   >(null);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
+  const initialSubject = initialData?.subject || "";
+  const initialContent = initialData?.body || "";
+
+  // Check if form is dirty (user started typing / changed fields)
+  const isDirty =
+    !isSubmitting &&
+    (subject !== initialSubject || content !== initialContent);
+
+  // Prevent browser refresh / tab close when form is dirty
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty]);
+
+  // Intercept browser back/forward buttons when form is dirty
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handlePopState = () => {
+      if (isDirty) {
+        const confirmLeave = window.confirm(
+          "You have unsaved changes in your post. Are you sure you want to leave?",
+        );
+        if (!confirmLeave) {
+          window.history.pushState(null, "", window.location.href);
+        }
+      }
+    };
+
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isDirty]);
+
   useEffect(() => {
     if (initialData) {
       if (initialData.subject !== undefined) setSubject(initialData.subject);
@@ -85,8 +145,6 @@ export function PostEditor({
     }
   }, [initialData]);
 
-  // A post is already sent if it's an existing post with status "published"
-  // and its sentAt date is in the past.
   const isAlreadySent = Boolean(
     isEditing &&
       initialData?.status === "published" &&
@@ -99,6 +157,14 @@ export function PostEditor({
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
   const minScheduleValue = toLocalDatetimeValue(new Date());
+
+  const handleCancel = () => {
+    if (isDirty) {
+      setShowCancelModal(true);
+    } else {
+      router.push(`/newsletters/${newsletterId}/posts`);
+    }
+  };
 
   const handleSegmentToggle = (segmentId: string) => {
     setSelectedSegments((prev) =>
@@ -137,6 +203,7 @@ export function PostEditor({
   const handleSaveDraftOrChanges = () => {
     if (!validateFields()) return;
 
+    setIsSubmitting(true);
     if (isEditing && postId) {
       setPendingAction("save");
       updateEmail(
@@ -154,6 +221,7 @@ export function PostEditor({
             );
             router.push(`/newsletters/${newsletterId}/posts`);
           },
+          onError: () => setIsSubmitting(false),
           onSettled: () => setPendingAction(null),
         },
       );
@@ -171,6 +239,7 @@ export function PostEditor({
             toast.success("Draft saved");
             router.push(`/newsletters/${newsletterId}/posts`);
           },
+          onError: () => setIsSubmitting(false),
           onSettled: () => setPendingAction(null),
         },
       );
@@ -181,6 +250,7 @@ export function PostEditor({
     if (!validateFields()) return;
     if (!scheduledDate) return;
 
+    setIsSubmitting(true);
     setPendingAction("schedule");
     const payload = {
       subject,
@@ -201,6 +271,7 @@ export function PostEditor({
             );
             router.push(`/newsletters/${newsletterId}/posts`);
           },
+          onError: () => setIsSubmitting(false),
           onSettled: () => setPendingAction(null),
         },
       );
@@ -213,6 +284,7 @@ export function PostEditor({
           );
           router.push(`/newsletters/${newsletterId}/posts`);
         },
+        onError: () => setIsSubmitting(false),
         onSettled: () => setPendingAction(null),
       });
     }
@@ -221,6 +293,7 @@ export function PostEditor({
   const handlePublishNow = () => {
     if (!validateFields()) return;
 
+    setIsSubmitting(true);
     setPendingAction("publish");
     const payload = {
       subject,
@@ -237,6 +310,7 @@ export function PostEditor({
             toast.success("Post published — sending now");
             router.push(`/newsletters/${newsletterId}/posts`);
           },
+          onError: () => setIsSubmitting(false),
           onSettled: () => setPendingAction(null),
         },
       );
@@ -246,6 +320,7 @@ export function PostEditor({
           toast.success("Post published — sending now");
           router.push(`/newsletters/${newsletterId}/posts`);
         },
+        onError: () => setIsSubmitting(false),
         onSettled: () => setPendingAction(null),
       });
     }
@@ -263,7 +338,7 @@ export function PostEditor({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`/newsletters/${newsletterId}/posts`)}
+            onClick={handleCancel}
           >
             Cancel
           </Button>
@@ -477,6 +552,28 @@ export function PostEditor({
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard Unsaved Changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have started typing/editing this post. If you leave now, your unsaved changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowCancelModal(false)}>
+              Keep Editing
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => router.push(`/newsletters/${newsletterId}/posts`)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard & Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
