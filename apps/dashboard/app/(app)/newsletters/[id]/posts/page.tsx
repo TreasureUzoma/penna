@@ -35,7 +35,6 @@ import {
   PencilEdit01Icon,
   PlusIcon,
   TrashIcon,
-  ViewIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -81,15 +80,7 @@ function getDisplayStatus(email: {
   };
 }
 
-// Matches the same lock condition on the post edit page itself — once a
-// post has actually gone out, that page is read-only, so link to it as
-// "View" rather than "Edit".
-function isAlreadySent(email: { status: string; sentAt: string }) {
-  return (
-    email.status === "published" &&
-    new Date(email.sentAt).getTime() <= Date.now()
-  );
-}
+
 
 export default function NewsletterPostsPage() {
   const params = useParams();
@@ -151,19 +142,12 @@ export default function NewsletterPostsPage() {
                         <Button variant="ghost" size="icon" asChild>
                           <Link
                             href={`/newsletters/${newsletterId}/posts/${email.id}`}
-                            title={isAlreadySent(email) ? "View" : "Edit"}
+                            title="Edit"
                           >
-                            {isAlreadySent(email) ? (
-                              <HugeiconsIcon
-                                icon={ViewIcon}
-                                className="w-4 h-4 text-muted-foreground hover:text-primary"
-                              />
-                            ) : (
-                              <HugeiconsIcon
-                                icon={PencilEdit01Icon}
-                                className="w-4 h-4 text-muted-foreground hover:text-primary"
-                              />
-                            )}
+                            <HugeiconsIcon
+                              icon={PencilEdit01Icon}
+                              className="w-4 h-4 text-muted-foreground hover:text-primary"
+                            />
                           </Link>
                         </Button>
                         <AlertDialog>

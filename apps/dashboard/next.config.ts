@@ -4,12 +4,14 @@ import { withBotId } from "botid/next/config";
 const nextConfig = {
   transpilePackages: ["@workspace/ui"],
   images: {
-    remotePatterns: [
-      {
-        protocol: "https" as const,
-        hostname: process.env.R2_PUBLIC_URL || "",
-      },
-    ],
+    remotePatterns: process.env.R2_PUBLIC_URL
+      ? [
+          {
+            protocol: "https" as const,
+            hostname: process.env.R2_PUBLIC_URL,
+          },
+        ]
+      : [],
   },
 
   assetPrefix: "/dashboard-static",
