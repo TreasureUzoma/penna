@@ -91,8 +91,7 @@ export function PostEditor({
 
   // Check if form is dirty (user started typing / changed fields)
   const isDirty =
-    !isSubmitting &&
-    (subject !== initialSubject || content !== initialContent);
+    !isSubmitting && (subject !== initialSubject || content !== initialContent);
 
   // Prevent browser refresh / tab close when form is dirty
   useEffect(() => {
@@ -147,9 +146,9 @@ export function PostEditor({
 
   const isAlreadySent = Boolean(
     isEditing &&
-      initialData?.status === "published" &&
-      initialData?.sentAt &&
-      new Date(initialData.sentAt).getTime() <= Date.now(),
+    initialData?.status === "published" &&
+    initialData?.sentAt &&
+    new Date(initialData.sentAt).getTime() <= Date.now(),
   );
 
   const toLocalDatetimeValue = (date: Date) => {
@@ -215,9 +214,7 @@ export function PostEditor({
         {
           onSuccess: () => {
             toast.success(
-              isAlreadySent
-                ? "Post updated successfully"
-                : "Changes saved",
+              isAlreadySent ? "Post updated successfully" : "Changes saved",
             );
             router.push(`/newsletters/${newsletterId}/posts`);
           },
@@ -335,19 +332,12 @@ export function PostEditor({
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCancel}
-          >
+          <Button variant="outline" size="sm" onClick={handleCancel}>
             Cancel
           </Button>
 
           {!isAlreadySent && (
-            <Popover
-              open={isRecipientsOpen}
-              onOpenChange={setIsRecipientsOpen}
-            >
+            <Popover open={isRecipientsOpen} onOpenChange={setIsRecipientsOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" disabled={isPending}>
                   <HugeiconsIcon
@@ -373,8 +363,8 @@ export function PostEditor({
                       Select Recipients
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      Choose which segments to send to, or leave all unchecked to
-                      send to all subscribers.
+                      Choose which segments to send to, or leave all unchecked
+                      to send to all subscribers.
                     </p>
                   </div>
                   {segments && segments.length > 0 ? (
@@ -484,18 +474,11 @@ export function PostEditor({
                 </PopoverContent>
               </Popover>
 
-              <Button
-                size="sm"
-                onClick={handlePublishNow}
-                disabled={isPending}
-              >
+              <Button size="sm" onClick={handlePublishNow} disabled={isPending}>
                 {pendingAction === "publish" && (
                   <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                 )}
-                <HugeiconsIcon
-                  icon={SendIcon}
-                  className="w-3.5 h-3.5 mr-1.5"
-                />
+                <HugeiconsIcon icon={SendIcon} className="w-3.5 h-3.5 mr-1.5" />
                 Publish
               </Button>
             </>
@@ -505,12 +488,9 @@ export function PostEditor({
 
       {isAlreadySent && (
         <Alert className="shrink-0 bg-blue-50/50 border-blue-200 text-blue-900 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-200">
-          <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-          <AlertTitle className="font-semibold text-blue-900 dark:text-blue-100">
-            Note on Editing Sent Posts
-          </AlertTitle>
           <AlertDescription className="text-xs text-blue-800 dark:text-blue-300">
-            Editing this post updates the version published on your newsletter's public website and web archive. It does not edit or re-send the email that was already sent to subscribers' inboxes.
+            Editing this post updates the web version and archive, but not the
+            email already sent to subscribers.
           </AlertDescription>
         </Alert>
       )}
@@ -539,7 +519,7 @@ export function PostEditor({
               placeholder="Enter an engaging subject line..."
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="text-base sm:text-lg font-medium border-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50 h-auto p-0"
+              className="text-base sm:text-lg font-medium border-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50 h-auto px-1"
             />
           </div>
 
@@ -558,7 +538,8 @@ export function PostEditor({
           <AlertDialogHeader>
             <AlertDialogTitle>Discard Unsaved Changes?</AlertDialogTitle>
             <AlertDialogDescription>
-              You have started typing/editing this post. If you leave now, your unsaved changes will be lost.
+              You have started typing/editing this post. If you leave now, your
+              unsaved changes will be lost.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
