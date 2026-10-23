@@ -17,7 +17,11 @@ import { moderateNewsletterContent } from "@/services/moderation";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import type { ApiKeyScope } from "@workspace/validations";
+import {
+  createNewsletterSubscriberSchema,
+  type ApiKeyScope,
+} from "@workspace/validations";
+import { validationErrorResponse } from "@/utils/validation-error-response";
 
 type ExternalNewsletterContext = {
   Variables: {
@@ -52,19 +56,30 @@ function requireScope(
   return null;
 }
 
-externalNewslettersRoute.post("/subscriber/new", async (c) => {
-  const newsletterData = c.get("newsletter");
+externalNewslettersRoute.post(
+  "/subscriber/new",
+  zValidator(
+    "json",
+    createNewsletterSubscriberSchema.omit({ newsletterId: true }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
+    },
+  ),
+  async (c) => {
+    const newsletterData = c.get("newsletter");
 
-  const scopeError = requireScope(newsletterData, "subscribers:write");
-  if (scopeError) return c.json(scopeError, 403);
+    const scopeError = requireScope(newsletterData, "subscribers:write");
+    if (scopeError) return c.json(scopeError, 403);
 
-  const { email } = await c.req.json();
-  const serviceData = await createNewsletterSubscriber({
-    newsletterId: newsletterData.id,
-    email,
-  });
-  return c.json(serviceData, routeStatus(serviceData));
-});
+    const { email, name } = await c.req.json();
+    const serviceData = await createNewsletterSubscriber({
+      newsletterId: newsletterData.id,
+      email,
+      name,
+    });
+    return c.json(serviceData, routeStatus(serviceData));
+  },
+);
 
 externalNewslettersRoute.get("/subscribers", async (c) => {
   const newsletterData = c.get("newsletter");
