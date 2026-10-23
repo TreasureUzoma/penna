@@ -364,7 +364,7 @@ another@example.com,Jane Smith`}
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3">
                       <code className="text-xs break-all">
-                        POST /api/v1/newsletters/{newsletterId}/subscribers
+                        POST /api/v1/external/newsletters/subscriber/new
                       </code>
                     </div>
                   </div>
@@ -390,7 +390,7 @@ another@example.com,Jane Smith`}
 
                   <div className="pt-2">
                     <Link
-                      href="/docs/api/subscribers"
+                      href="/docs/integrations/create"
                       target="_blank"
                       className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
                     >
