@@ -62,7 +62,9 @@ externalNewslettersRoute.post(
     "json",
     createNewsletterSubscriberSchema.omit({ newsletterId: true }),
     (result, c) => {
-      if (!result.success) return validationErrorResponse(c, result.error);
+      if (!result.success) {
+        return validationErrorResponse(c, result.error);
+      }
     },
   ),
   async (c) => {
@@ -71,12 +73,14 @@ externalNewslettersRoute.post(
     const scopeError = requireScope(newsletterData, "subscribers:write");
     if (scopeError) return c.json(scopeError, 403);
 
-    const { email, name } = await c.req.json();
+    const { email, name } = c.req.valid("json");
+
     const serviceData = await createNewsletterSubscriber({
       newsletterId: newsletterData.id,
       email,
       name,
     });
+
     return c.json(serviceData, routeStatus(serviceData));
   },
 );
