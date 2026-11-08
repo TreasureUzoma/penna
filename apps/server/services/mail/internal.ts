@@ -244,3 +244,36 @@ export const sendSubscriberLimitWarningEmail = async (
   }
   return result;
 };
+
+export const sendNewsletterWelcomeEmail = async ({
+  email,
+  firstName,
+  newsletterName,
+  subject,
+  body,
+}: {
+  email: string;
+  firstName?: string | null;
+  newsletterName: string;
+  subject?: string;
+  body: string;
+}) => {
+  const greetingName = firstName?.trim() || "there";
+  const html = `
+    <p>Hi ${greetingName},</p>
+    <p>${body.replace(/\n/g, "<br />")}</p>
+    <p>— ${newsletterName}</p>
+  `;
+
+  const result = await sendSystemEmail({
+    to: email,
+    subject: subject || `Welcome to ${newsletterName}`,
+    html,
+  });
+
+  if (!result.success) {
+    console.error("Failed to send newsletter welcome email:", result.error);
+  }
+
+  return result;
+};

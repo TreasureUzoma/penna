@@ -20,7 +20,7 @@ const moderationSchema = z.object({
   category: z
     .string()
     .describe(
-      "Short label for the primary concern, e.g. 'clean', 'promotional-spam', 'phishing', 'scam', 'hate', 'adult', or similar.",
+      "Short label for the primary concern, e.g. 'clean', 'promotional-spam', 'phishing', 'scam', 'hate', 'adult', 'bad-welcome-email', or similar.",
     ),
   reason: z.string().describe("One or two sentences explaining the verdict."),
 });
@@ -33,8 +33,11 @@ Your job is narrow: catch abuse of our sending infrastructure, not police ordina
 - Unsolicited bulk spam unrelated to any legitimate newsletter purpose
 - Hate speech, harassment, or content sexualizing minors
 - Explicit adult content
+- Terrible or abusive welcome emails: generic, empty, spammy, manipulative, clickbait-heavy, or obviously low-quality onboarding copy that feels misleading, desperate, or harmful to subscribers
 
-Do NOT flag legitimate content just because it mentions discounts, crypto, dating, health, or politics — those are normal newsletter topics. A real business promoting real products or sharing real updates is "clean" even if salesy. Only use "block" when you're confident the content itself is abusive, not merely because it's promotional. Use "review" when you're genuinely unsure. Default to "clean" for ordinary newsletters.`;
+Examples of bad welcome emails to flag include: fake urgency, fake prizes, bait-and-switch claims, repeated nonsense, aggressive sales pressure, obvious scammy language, mass-message style clickbait, or copy that looks designed to trick new subscribers rather than welcome them.
+
+Do NOT flag legitimate content just because it mentions discounts, crypto, dating, health, or politics — those are normal newsletter topics. A real business promoting real products or sharing real updates is "clean" even if salesy. Only use "block" when you're confident the content itself is abusive or deceptive, not merely because it's promotional. Use "review" for low-quality, misleading, or borderline onboarding copy that should probably not be sent in a welcome email. Default to "clean" for ordinary newsletters.`;
 
 /**
  * Classifies a newsletter's subject+content for spam/phishing/scam intent

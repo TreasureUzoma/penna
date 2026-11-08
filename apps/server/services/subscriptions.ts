@@ -12,7 +12,10 @@ import {
   syncSubscriberLimitWarnings,
   SubscriberLimitError,
 } from "./limits";
-import { sendSubscriberVerificationEmail } from "./mail/internal";
+import {
+  sendNewsletterWelcomeEmail,
+  sendSubscriberVerificationEmail,
+} from "./mail/internal";
 import { envConfig } from "@/config";
 import { sign } from "hono/jwt";
 
@@ -20,6 +23,31 @@ const getSubscriberFirstName = (name?: string | null) => {
   const trimmed = name?.trim();
   if (!trimmed) return "there";
   return trimmed.split(/\s+/)[0];
+};
+
+const getWelcomeEmailConfig = async (newsletterId: string) => {
+  const [newsletter] = await db
+    .select({ config: newsletters.config, name: newsletters.name })
+    .from(newsletters)
+    .where(eq(newsletters.id, newsletterId));
+
+  const config = (newsletter?.config as Record<string, unknown> | null) ?? {};
+  const welcomeEmail =
+    (config.welcomeEmail as Record<string, unknown> | undefined) ?? {};
+
+  return {
+    enabled: !!welcomeEmail.enabled,
+    subject:
+      typeof welcomeEmail.subject === "string"
+        ? welcomeEmail.subject
+        : `Welcome to ${newsletter?.name ?? "our newsletter"}`,
+    body:
+      typeof welcomeEmail.body === "string" &&
+      welcomeEmail.body.trim().length > 0
+        ? welcomeEmail.body
+        : "Thanks for subscribing — we’re glad to have you.",
+    newsletterName: newsletter?.name ?? "our newsletter",
+  };
 };
 
 export const sendVerificationLink = async (
@@ -96,6 +124,17 @@ export const confirmNewsletterSubscriber = async (
     .set({ status: "subscribed", updatedAt: new Date() })
     .where(eq(subscribers.id, subscriber.id))
     .returning();
+
+  const welcomeConfig = await getWelcomeEmailConfig(newsletterId);
+  if (welcomeConfig.enabled) {
+    await sendNewsletterWelcomeEmail({
+      email: subscriber.email,
+      firstName: getSubscriberFirstName(subscriber.name),
+      newsletterName: welcomeConfig.newsletterName,
+      subject: welcomeConfig.subject,
+      body: welcomeConfig.body,
+    });
+  }
 
   return {
     success: true,

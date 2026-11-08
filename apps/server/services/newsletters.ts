@@ -18,6 +18,7 @@ import type {
   NewNewsletter,
   UpdateNewsletter,
 } from "@workspace/validations";
+import { moderateNewsletterContent } from "./moderation";
 
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { paginate } from "@/utils/pagination";
@@ -172,7 +173,8 @@ export const updateNewsletter = async (
     if (
       data.removeBranding !== undefined ||
       data.avatarUrl !== undefined ||
-      data.emailTracking !== undefined
+      data.emailTracking !== undefined ||
+      data.welcomeEmail !== undefined
     ) {
       if (data.removeBranding) {
         const allowed = await canRemoveBranding(newsletterId);
@@ -198,6 +200,36 @@ export const updateNewsletter = async (
         }
       }
 
+      if (data.welcomeEmail !== undefined) {
+        const subject = (data.welcomeEmail.subject ?? "").trim();
+        const body = (data.welcomeEmail.body ?? "").trim();
+        const shouldReviewWelcomeEmail =
+          data.welcomeEmail.enabled !== false || !!subject || !!body;
+
+        if (shouldReviewWelcomeEmail) {
+          const [newsletter] = await db
+            .select({ name: newsletters.name })
+            .from(newsletters)
+            .where(eq(newsletters.id, newsletterId));
+
+          const moderation = await moderateNewsletterContent({
+            subject:
+              subject || `Welcome to ${newsletter?.name ?? "this newsletter"}`,
+            content: body || "Welcome email",
+            newsletterName: newsletter?.name ?? "this newsletter",
+          });
+
+          if (moderation.verdict !== "clean") {
+            return {
+              data: null,
+              success: false,
+              message:
+                "Your welcome email was flagged by our spam/phishing moderation check. Please revise the subject and message and try again.",
+            };
+          }
+        }
+      }
+
       const [existing] = await db
         .select({ config: newsletters.config })
         .from(newsletters)
@@ -217,6 +249,15 @@ export const updateNewsletter = async (
       }
       if (data.emailTracking !== undefined) {
         mergedConfig.emailTracking = !!data.emailTracking;
+      }
+      if (data.welcomeEmail !== undefined) {
+        const currentWelcome =
+          (mergedConfig.welcomeEmail as Record<string, unknown> | undefined) ??
+          {};
+        mergedConfig.welcomeEmail = {
+          ...currentWelcome,
+          ...(data.welcomeEmail ?? {}),
+        };
       }
       updateValues.config = mergedConfig;
     }

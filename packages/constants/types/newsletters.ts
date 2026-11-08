@@ -4,5 +4,14 @@ export type Newsletter = {
   name: string;
   description: string;
   isPublicAt: string | null;
-  config?: { avatarUrl?: string | null; removeBranding?: boolean } | null;
+  config?: {
+    avatarUrl?: string | null;
+    removeBranding?: boolean;
+    emailTracking?: boolean;
+    welcomeEmail?: {
+      enabled?: boolean;
+      subject?: string;
+      body?: string;
+    };
+  } | null;
 };

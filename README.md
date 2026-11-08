@@ -8,7 +8,7 @@ Penna helps developers create, manage, and deliver newsletters to their audience
 - Collaborative Workspaces: Create teams, invite members, and assign roles to collaborate on newsletter management safely.
 - Advanced Subscriber Management: Organize subscribers into dynamic segments and automatically handle one-click unsubscribes.
 - External API Access: Generate scoped API keys for programmatic delivery and subscriber onboarding directly from your own applications.
-- AI Content Moderation: Automatically screen outgoing email content for phishing, scams, and spam before delivery.
+- AI Content Moderation: Automatically screen outgoing email content for phishing, scams, spam, and low-quality or abusive welcome email copy before delivery.
 - Integrated Billing: Handle tiered subscriptions, seat management, and usage limits seamlessly through Paddle checkout.
 
 ## Technologies Used

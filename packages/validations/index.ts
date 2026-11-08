@@ -196,6 +196,19 @@ export const updateNewsletterSchema = z.object({
   isPublic: z.boolean().optional(),
   removeBranding: z.boolean().optional(),
   emailTracking: z.boolean().optional(),
+  welcomeEmail: z
+    .object({
+      enabled: z.boolean().optional(),
+      subject: z
+        .string()
+        .max(120, "Subject must be 120 characters or less")
+        .optional(),
+      body: z
+        .string()
+        .max(2000, "Body must be 2000 characters or less")
+        .optional(),
+    })
+    .optional(),
   // Empty string clears it back to the initials fallback — see
   // updateNewsletter in apps/server/services/newsletters.ts.
   avatarUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),

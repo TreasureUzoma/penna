@@ -30,6 +30,7 @@ import { Input } from "@workspace/ui/components/input";
 import { CopyButton } from "@workspace/ui/components/copy-button";
 import { cn } from "@workspace/ui/lib/utils";
 import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -55,7 +56,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import { useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -82,6 +82,11 @@ interface SettingsTabProps {
       removeBranding?: boolean;
       avatarUrl?: string | null;
       emailTracking?: boolean;
+      welcomeEmail?: {
+        enabled?: boolean;
+        subject?: string;
+        body?: string;
+      };
     } | null;
     /** Computed server-side from the newsletter owner's plan — see routes/api/v1/newsletters.ts's `/slug/:slug`. */
     canRemoveBranding: boolean;
@@ -170,6 +175,38 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
   function toggleEmailTracking(enable: boolean) {
     if (enable && !newsletter.canUseEmailTracking) return;
     updateNewsletter({ emailTracking: enable });
+  }
+
+  const [welcomeEmailSettings, setWelcomeEmailSettings] = useState({
+    enabled: !!newsletter.config?.welcomeEmail?.enabled,
+    subject:
+      newsletter.config?.welcomeEmail?.subject ||
+      `Welcome to ${newsletter.name}`,
+    body:
+      newsletter.config?.welcomeEmail?.body ||
+      "Thanks for subscribing — we’re glad to have you.",
+  });
+
+  useEffect(() => {
+    setWelcomeEmailSettings({
+      enabled: !!newsletter.config?.welcomeEmail?.enabled,
+      subject:
+        newsletter.config?.welcomeEmail?.subject ||
+        `Welcome to ${newsletter.name}`,
+      body:
+        newsletter.config?.welcomeEmail?.body ||
+        "Thanks for subscribing — we’re glad to have you.",
+    });
+  }, [newsletter.config, newsletter.name]);
+
+  function saveWelcomeEmailSettings() {
+    updateNewsletter({
+      welcomeEmail: {
+        enabled: welcomeEmailSettings.enabled,
+        subject: welcomeEmailSettings.subject,
+        body: welcomeEmailSettings.body,
+      },
+    });
   }
 
   return (
@@ -522,6 +559,107 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
               Saving...
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Welcome Email
+          </CardTitle>
+          <CardDescription>
+            Send a welcome message right after someone confirms their
+            subscription.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              className={cn(
+                "cursor-pointer border rounded-lg p-4 flex flex-col gap-2 transition-all hover:border-primary/50",
+                !welcomeEmailSettings.enabled
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "bg-card",
+              )}
+              onClick={() =>
+                setWelcomeEmailSettings((prev) => ({ ...prev, enabled: false }))
+              }
+            >
+              <div className="font-medium">Off</div>
+              <p className="text-sm text-muted-foreground">
+                No welcome email is sent after confirmation.
+              </p>
+            </div>
+
+            <div
+              className={cn(
+                "cursor-pointer border rounded-lg p-4 flex flex-col gap-2 transition-all hover:border-primary/50",
+                welcomeEmailSettings.enabled
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "bg-card",
+              )}
+              onClick={() =>
+                setWelcomeEmailSettings((prev) => ({ ...prev, enabled: true }))
+              }
+            >
+              <div className="font-medium">On</div>
+              <p className="text-sm text-muted-foreground">
+                Automatically send a friendly welcome message after they
+                confirm.
+              </p>
+            </div>
+          </div>
+
+          {welcomeEmailSettings.enabled && (
+            <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Subject</label>
+                <Input
+                  value={welcomeEmailSettings.subject}
+                  onChange={(event) =>
+                    setWelcomeEmailSettings((prev) => ({
+                      ...prev,
+                      subject: event.target.value,
+                    }))
+                  }
+                  placeholder={`Welcome to ${newsletter.name}`}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Message</label>
+                <Textarea
+                  value={welcomeEmailSettings.body}
+                  onChange={(event) =>
+                    setWelcomeEmailSettings((prev) => ({
+                      ...prev,
+                      body: event.target.value,
+                    }))
+                  }
+                  rows={6}
+                  className="max-h-80 overflow-y-auto"
+                  placeholder="Thanks for subscribing — we’re glad to have you."
+                />
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                The email uses the subscriber's first name automatically when
+                available.
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={saveWelcomeEmailSettings}
+              disabled={isUpdating}
+            >
+              {isUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save welcome email
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
