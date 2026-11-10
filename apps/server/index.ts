@@ -41,10 +41,11 @@ app.get("/test-workflow", async (c) => {
 });
 
 app.onError((err, c) => {
+  console.error("Unhandled API error", err);
   return c.json(
     {
       success: false,
-      message: err.message || "Internal server error",
+      message: "An unexpected error occurred. Please try again later.",
       data: null,
     },
     500,
@@ -52,6 +53,47 @@ app.onError((err, c) => {
 });
 
 const v1 = new Hono().basePath("/api/v1");
+
+const internalErrorPattern = /Failed query:|params:\s|SQLSTATE|relation .+ does not exist|column .+ does not exist|duplicate key value|violates .+ constraint|ECONNREFUSED|ENOTFOUND/i;
+
+v1.use("*", async (c, next) => {
+  await next();
+
+  const response = c.res;
+  if (
+    response.status < 400 ||
+    !response.headers.get("content-type")?.includes("application/json")
+  ) {
+    return;
+  }
+
+  const payload = await response.clone().json().catch(() => null);
+  const message = payload?.message;
+  if (
+    typeof message !== "string" ||
+    !internalErrorPattern.test(message)
+  ) {
+    return;
+  }
+
+  console.error("Internal API error response", {
+    method: c.req.method,
+    path: c.req.path,
+    status: response.status,
+    message,
+  });
+
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  c.res = new Response(
+    JSON.stringify({
+      success: false,
+      message: "An unexpected error occurred. Please try again later.",
+      data: null,
+    }),
+    { status: response.status, headers },
+  );
+});
 
 v1.get("/test-workflow", rateLimiter(60 * 1000, 5), async (c) => {
   await start(myTestWorkflow);

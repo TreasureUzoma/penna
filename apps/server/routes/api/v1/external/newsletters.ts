@@ -79,6 +79,7 @@ externalNewslettersRoute.post(
       newsletterId: newsletterData.id,
       email,
       name,
+      source: "api",
     });
 
     return c.json(serviceData, routeStatus(serviceData));

@@ -7,6 +7,7 @@ export interface Subscriber {
   id: string;
   email: string;
   name: string | null;
+  source: string;
   status: "subscribed" | "unsubscribed" | "pending" | "bounced";
   createdAt: string;
 }

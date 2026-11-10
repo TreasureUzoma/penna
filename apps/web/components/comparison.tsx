@@ -46,6 +46,12 @@ export const Comparison = () => {
       buttondown: false,
       mailchimp: false,
     },
+    {
+      name: "webhooks / automation triggers",
+      penna: true,
+      buttondown: true,
+      mailchimp: true,
+    },
   ];
 
   const FeatureIcon = ({ value }: { value: boolean }) =>

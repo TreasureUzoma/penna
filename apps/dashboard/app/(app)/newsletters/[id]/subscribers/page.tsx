@@ -420,6 +420,7 @@ another@example.com,Jane Smith`}
                   <TableRow>
                     <TableHead>Email</TableHead>
                     <TableHead>Name</TableHead>
+                    <TableHead>Source</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -438,6 +439,9 @@ another@example.com,Jane Smith`}
                         </div>
                       </TableCell>
                       <TableCell>{subscriber.name || "-"}</TableCell>
+                      <TableCell className="capitalize">
+                        {subscriber.source.replace(/_/g, " ")}
+                      </TableCell>
                       <TableCell>
                         <span
                           className={cn(

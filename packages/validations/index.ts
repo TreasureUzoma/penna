@@ -166,6 +166,31 @@ export const createApiKeySchema = z.object({
 
 export type CreateApiKey = z.infer<typeof createApiKeySchema>;
 
+export const newsletterWebhookSchema = z.object({
+  url: z.string().url("Enter a valid webhook URL").optional(),
+  secret: z
+    .string()
+    .min(1, "Webhook secret cannot be empty")
+    .max(255, "Webhook secret must be 255 characters or less")
+    .optional(),
+  events: z
+    .array(
+      z.enum([
+        "subscriber.created",
+        "subscriber.confirmed",
+        "subscriber.unsubscribed",
+      ]),
+      {
+        required_error: "Select at least one webhook event",
+      },
+    )
+    .min(1, "Select at least one webhook event")
+    .max(3, "Too many webhook events selected")
+    .optional(),
+});
+
+export type NewsletterWebhookConfig = z.infer<typeof newsletterWebhookSchema>;
+
 export const updateNewsletterSchema = z.object({
   name: z
     .string()
@@ -196,6 +221,7 @@ export const updateNewsletterSchema = z.object({
   isPublic: z.boolean().optional(),
   removeBranding: z.boolean().optional(),
   emailTracking: z.boolean().optional(),
+  webhooks: newsletterWebhookSchema.optional(),
   welcomeEmail: z
     .object({
       enabled: z.boolean().optional(),
@@ -387,6 +413,7 @@ export const createNewsletterSubscriberSchema = z.object({
   newsletterId: z
     .string({ required_error: "Newsletter is required" })
     .min(1, "Newsletter is required"),
+  source: z.enum(["website", "api", "manual", "csv_import"]).optional(),
 });
 
 export type CreateSubscriber = z.infer<typeof createNewsletterSubscriberSchema>;

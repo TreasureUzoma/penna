@@ -79,6 +79,7 @@ export const subscribers = pgTable("subscribers", {
   newsletterId: uuid("newsletter_id").notNull(),
   name: text("name"),
   email: text("email").notNull(),
+  source: text("source").default("unknown").notNull(),
   status: subscriberStatusEnum("status").default("subscribed").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -98,7 +99,6 @@ export const users = pgTable("users", {
   id: uuid("id").defaultRandom().notNull().unique(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  signupIp: text("signup_ip"),
   subscriptionType: userSubscriptionEnum("subscription_type").default("free"),
   plan: text("plan").default("hobby").notNull(),
 });

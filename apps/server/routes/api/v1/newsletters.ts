@@ -382,7 +382,7 @@ newslettersRoute.get(
       pageNumber,
       limitNumber,
     );
-    return c.json(serviceData, routeStatus(serviceData));
+    return c.json(serviceData, serviceData.success ? 200 : 500);
   },
 );
 
@@ -414,7 +414,7 @@ newslettersRoute.post(
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
-    const serviceData = await createSubscriber(newsletter.id, email, name);
+    const serviceData = await createSubscriber(newsletter.id, email, name, "manual");
     return c.json(serviceData, routeStatus(serviceData));
   },
 );

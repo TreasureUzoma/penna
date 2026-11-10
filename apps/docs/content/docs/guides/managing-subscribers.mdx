@@ -41,15 +41,13 @@ async function subscribeUser(email) {
 }
 ```
 
-### Bulk Import (Coming Soon)
+### Bulk Import
 
 Import subscribers from CSV:
 
-1. Prepare a CSV file with email column
-2. Go to **Subscribers** → **Import**
-3. Upload your CSV
-4. Map columns
-5. Review and confirm
+1. Prepare a CSV file with an `email` column and an optional `name` column
+2. Go to **Subscribers** and open **CSV Import**
+3. Upload your CSV file
 
 ## Viewing Subscribers
 
@@ -63,6 +61,18 @@ Your subscriber list shows:
 - Status (Active, Unsubscribed)
 - Engagement metrics (coming soon)
 
+### Subscriber source
+
+The subscriber list includes a **Source** column that shows how each subscriber was added:
+
+- **Website** — signed up through the public newsletter form
+- **API** — added through the external API
+- **Manual** — added from the dashboard
+- **CSV import** — added by importing a file
+- **Unknown** — existing subscriber with no recorded source
+
+The source is set when a subscriber is added. Resubscribing records the new signup path.
+
 ### Search & Filter
 
 Find subscribers quickly:
@@ -74,14 +84,7 @@ Find subscribers quickly:
 
 ### Subscriber Details
 
-Click any subscriber to view:
-
-- Full email address
-- Subscription date and time
-- Source (API, manual, import)
-- Segments they belong to
-- Newsletter engagement history
-- Manage subscription status
+Subscriber source is visible in the **Source** column in the subscriber list.
 
 ## Organizing with Segments
 

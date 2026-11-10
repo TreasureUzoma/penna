@@ -8,6 +8,20 @@
       "when": 1789666634719,
       "tag": "0000_mature_shinobi_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794302062540,
+      "tag": "0001_subscriber_source",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794304697939,
+      "tag": "0002_remove_signup_ip",
+      "breakpoints": true
     }
   ]
 }

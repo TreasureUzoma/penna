@@ -210,6 +210,7 @@ publicNewslettersRoute.post(
       newsletterId: newsletterRes.data.id,
       email,
       name,
+      source: "website",
     });
     return c.json(
       serviceData,

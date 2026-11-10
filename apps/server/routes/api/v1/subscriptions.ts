@@ -101,7 +101,10 @@ subscriptionRoutes.post(
       "admin",
     ]);
     if (!newsletter) return;
-    const serviceData = await createNewsletterSubscriber(body);
+    const serviceData = await createNewsletterSubscriber({
+      ...body,
+      source: "manual",
+    });
     return c.json(serviceData, routeStatus(serviceData));
   }
 );

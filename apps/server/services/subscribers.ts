@@ -41,12 +41,10 @@ export const getSubscribers = async (
       data: paginatedData,
     };
   } catch (err) {
+    console.error("Failed to fetch newsletter subscribers", err);
     return {
       success: false,
-      message:
-        err instanceof Error
-          ? err.message
-          : "Something went wrong fetching subscribers",
+      message: "Unable to fetch subscribers. Please try again later.",
       data: null,
     };
   }
@@ -56,6 +54,7 @@ export const createSubscriber = async (
   newsletterId: string,
   email: string,
   name?: string,
+  source: "manual" | "csv_import" = "manual",
 ): Promise<ServiceResponse> => {
   try {
     const [existingSubscriber] = await db
@@ -97,6 +96,7 @@ export const createSubscriber = async (
           .update(subscribers)
           .set({
             status: "pending",
+            source,
             name: name ?? existingSubscriber.name,
             updatedAt: new Date(),
           })
@@ -132,6 +132,7 @@ export const createSubscriber = async (
         email,
         name,
         status: "pending",
+        source,
       })
       .returning();
 
@@ -259,6 +260,7 @@ export const importSubscribersFromCsv = async (
           email: row.email,
           name: row.name,
           status: "subscribed" as const,
+          source: "csv_import",
         })),
       )
       .onConflictDoNothing({

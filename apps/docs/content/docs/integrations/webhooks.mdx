@@ -1,0 +1,92 @@
+---
+title: Newsletter Webhooks
+description: "Receive real-time notifications when subscribers are created, confirmed, or unsubscribed."
+---
+
+# Newsletter Webhooks
+
+Penna lets each newsletter publish a small webhook payload when subscriber lifecycle events happen. This is useful for syncing external CRMs, triggering internal automation, or recording subscriber activity in your app.
+
+## Supported events
+
+The newsletter webhook config accepts a URL plus a secret and one or more of these events:
+
+- `subscriber.created` — fired when a signup is initiated or a subscriber is reactivated
+- `subscriber.confirmed` — fired after a pending subscriber confirms their email
+- `subscriber.unsubscribed` — fired when a subscriber is marked unsubscribed
+
+## Configure a webhook
+
+Set the `webhooks` object on the newsletter config via the dashboard or API. You must provide:
+
+- a valid `url`
+- at least one event in `events`
+
+An optional `secret` is also supported and can be used to validate the request signature.
+
+```json
+{
+  "webhooks": {
+    "url": "https://example.com/webhooks/penna",
+    "secret": "super-secret-signing-key",
+    "events": [
+      "subscriber.created",
+      "subscriber.confirmed",
+      "subscriber.unsubscribed"
+    ]
+  }
+}
+```
+
+## Payload
+
+Each webhook is a POST request with JSON content. The payload includes the event name, an ISO timestamp, the newsletter ID, the newsletter name, and a `subscriber` object when available.
+
+```json
+{
+  "event": "subscriber.confirmed",
+  "timestamp": "2025-01-15T12:30:00.000Z",
+  "newsletterId": "a4e2c7d2-7ab6-4d8d-b6c1-7bcb9f87c42a",
+  "newsletterName": "Product Updates",
+  "subscriber": {
+    "id": "bf0f6ac8-cd9e-4d19-baf8-1bb8f9d74f8d",
+    "email": "user@example.com",
+    "name": "Jane Doe",
+    "status": "subscribed",
+    "createdAt": "2025-01-10T09:15:00.000Z"
+  }
+}
+```
+
+## Headers
+
+Penna sends the request with these headers:
+
+- `Content-Type: application/json`
+- `User-Agent: penna-webhook/1.0`
+- `X-Penna-Webhook-Event: <event-name>`
+- `X-Penna-Webhook-Secret: <secret>` when a secret is configured
+
+## Reliability
+
+Webhook delivery is best-effort. If the endpoint returns a non-2xx status, Penna logs a warning and does not retry automatically. For important downstream workflows, you should treat the webhook as a signal and verify the payload from your application or service.
+
+## Example receiver
+
+```js
+export async function POST(request) {
+  const payload = await request.json();
+
+  if (request.headers.get("x-penna-webhook-event") === "subscriber.confirmed") {
+    console.log("Confirmed subscriber:", payload.subscriber?.email);
+  }
+
+  return Response.json({ ok: true });
+}
+```
+
+## Security notes
+
+- always use HTTPS for your webhook endpoint
+- validate the `X-Penna-Webhook-Secret` header if you configured a secret
+- treat the payload as untrusted and verify the event name and newsletter ID before acting on it

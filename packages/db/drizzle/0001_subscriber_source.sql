@@ -1,0 +1,1 @@
+ALTER TABLE "subscribers" ADD COLUMN "source" text DEFAULT 'unknown' NOT NULL;

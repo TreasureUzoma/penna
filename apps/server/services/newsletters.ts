@@ -174,6 +174,7 @@ export const updateNewsletter = async (
       data.removeBranding !== undefined ||
       data.avatarUrl !== undefined ||
       data.emailTracking !== undefined ||
+      data.webhooks !== undefined ||
       data.welcomeEmail !== undefined
     ) {
       if (data.removeBranding) {
@@ -197,6 +198,42 @@ export const updateNewsletter = async (
             message:
               "Email tracking requires a Pro plan and a verified custom sending domain. Add and verify a custom domain first.",
           };
+        }
+      }
+
+      if (data.webhooks !== undefined) {
+        const [newsletter] = await db
+          .select({ slug: newsletters.slug, name: newsletters.name })
+          .from(newsletters)
+          .where(eq(newsletters.id, newsletterId));
+
+        if (
+          data.webhooks.url &&
+          (!data.webhooks.events || data.webhooks.events.length === 0)
+        ) {
+          return {
+            data: null,
+            success: false,
+            message:
+              "Select at least one webhook event before saving a webhook URL.",
+          };
+        }
+
+        if (
+          data.webhooks.events &&
+          data.webhooks.events.length > 0 &&
+          !data.webhooks.url
+        ) {
+          return {
+            data: null,
+            success: false,
+            message: "Add a webhook URL to receive these newsletter events.",
+          };
+        }
+
+        if (newsletter && data.webhooks.url && !data.webhooks.secret) {
+          // Accept a secretless webhook as a valid config, but keep the
+          // option for later if assigning a signing secret is desired.
         }
       }
 
@@ -242,13 +279,17 @@ export const updateNewsletter = async (
         mergedConfig.removeBranding = data.removeBranding;
       }
       if (data.avatarUrl !== undefined) {
-        // Empty string clears it back to the initials fallback — same
-        // "unset by writing empty" convention used for other optional
-        // profile-ish fields (e.g. profile.ts's avatarUrl).
         mergedConfig.avatarUrl = data.avatarUrl || null;
       }
       if (data.emailTracking !== undefined) {
         mergedConfig.emailTracking = !!data.emailTracking;
+      }
+      if (data.webhooks !== undefined) {
+        mergedConfig.webhooks = {
+          ...((existing?.config as Record<string, unknown> | null)?.webhooks as
+            Record<string, unknown> | undefined),
+          ...(data.webhooks ?? {}),
+        };
       }
       if (data.welcomeEmail !== undefined) {
         const currentWelcome =
@@ -259,36 +300,56 @@ export const updateNewsletter = async (
           ...(data.welcomeEmail ?? {}),
         };
       }
-      updateValues.config = mergedConfig;
-    }
 
-    if (Object.keys(updateValues).length === 0) {
+      const [updatedNewsletter] = await db
+        .update(newsletters)
+        .set({
+          config: mergedConfig,
+          updatedAt: new Date(),
+        })
+        .where(eq(newsletters.id, newsletterId))
+        .returning();
+
       return {
-        data: null,
-        success: false,
-        message: "No fields to update",
+        data: updatedNewsletter,
+        success: true,
+        message: "Newsletter updated successfully",
       };
     }
 
-    const [updatedNewsletter] = await db
-      .update(newsletters)
-      .set(updateValues)
-      .where(eq(newsletters.id, newsletterId))
-      .returning();
+    // no config fields changed, but there may still be scalar top-level fields
+    if (Object.keys(updateValues).length > 0) {
+      const [updatedNewsletter] = await db
+        .update(newsletters)
+        .set({ ...updateValues, updatedAt: new Date() })
+        .where(eq(newsletters.id, newsletterId))
+        .returning();
+
+      return {
+        data: updatedNewsletter,
+        success: true,
+        message: "Newsletter updated successfully",
+      };
+    }
 
     return {
-      data: updatedNewsletter,
+      data: null,
       success: true,
-      message: "Newsletter updated successfully",
+      message: "No changes to save",
     };
   } catch (err) {
+    if (err instanceof Error) {
+      return {
+        data: null,
+        success: false,
+        message: err.message,
+      };
+    }
+
     return {
       data: null,
       success: false,
-      message:
-        err instanceof Error
-          ? err.message
-          : "Something went wrong updating newsletter",
+      message: "Something went wrong updating the newsletter.",
     };
   }
 };

@@ -18,6 +18,7 @@ import {
 } from "./mail/internal";
 import { envConfig } from "@/config";
 import { sign } from "hono/jwt";
+import { sendNewsletterWebhookEvent } from "./webhooks";
 
 const getSubscriberFirstName = (name?: string | null) => {
   const trimmed = name?.trim();
@@ -125,6 +126,22 @@ export const confirmNewsletterSubscriber = async (
     .where(eq(subscribers.id, subscriber.id))
     .returning();
 
+  if (!confirmed) {
+    return {
+      success: false,
+      message: "Unable to confirm this subscription.",
+      data: null,
+    };
+  }
+
+  await sendNewsletterWebhookEvent(newsletterId, "subscriber.confirmed", {
+    id: confirmed.id,
+    email: confirmed.email,
+    name: confirmed.name,
+    status: confirmed.status,
+    createdAt: confirmed.createdAt?.toISOString() ?? null,
+  });
+
   const welcomeConfig = await getWelcomeEmailConfig(newsletterId);
   if (welcomeConfig.enabled) {
     await sendNewsletterWelcomeEmail({
@@ -214,6 +231,18 @@ export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
           body.name ?? existingSubscriber.name,
         );
 
+        await sendNewsletterWebhookEvent(
+          body.newsletterId,
+          "subscriber.created",
+          {
+            id: existingSubscriber.id,
+            email: existingSubscriber.email,
+            name: existingSubscriber.name,
+            status: existingSubscriber.status,
+            createdAt: existingSubscriber.createdAt?.toISOString() ?? null,
+          },
+        );
+
         return {
           success: true,
           data: existingSubscriber,
@@ -235,16 +264,37 @@ export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
         .update(subscribers)
         .set({
           status: "pending",
+          source: body.source ?? "api",
           name: body.name ?? existingSubscriber.name,
           updatedAt: new Date(),
         })
         .where(eq(subscribers.id, existingSubscriber.id))
         .returning();
 
+      if (!resubscribed) {
+        return {
+          success: false,
+          data: null,
+          message: "Unable to re-activate this subscriber.",
+        };
+      }
+
       await sendVerificationLink(
         body.newsletterId,
         body.email,
         body.name ?? existingSubscriber.name,
+      );
+
+      await sendNewsletterWebhookEvent(
+        body.newsletterId,
+        "subscriber.created",
+        {
+          id: resubscribed.id,
+          email: resubscribed.email,
+          name: resubscribed.name,
+          status: resubscribed.status,
+          createdAt: resubscribed.createdAt?.toISOString() ?? null,
+        },
       );
 
       return {
@@ -263,8 +313,17 @@ export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
         email: body.email,
         newsletterId: body.newsletterId,
         status: "pending",
+        source: body.source ?? "api",
       })
       .returning();
+
+    if (!subscriber) {
+      return {
+        success: false,
+        data: null,
+        message: "Failed to create subscriber.",
+      };
+    }
 
     void syncSubscriberLimitWarnings({ ...usage, count: usage.count });
 
@@ -273,6 +332,14 @@ export const createNewsletterSubscriber = async (body: CreateSubscriber) => {
       body.email,
       body.name ?? null,
     );
+
+    await sendNewsletterWebhookEvent(body.newsletterId, "subscriber.created", {
+      id: subscriber.id,
+      email: subscriber.email,
+      name: subscriber.name,
+      status: subscriber.status,
+      createdAt: subscriber.createdAt?.toISOString() ?? null,
+    });
 
     return {
       success: true,
@@ -321,6 +388,12 @@ export const removeNewsletterSubscriber = async (
           eq(subscribers.email, email),
         ),
       );
+
+    await sendNewsletterWebhookEvent(newsletterId, "subscriber.unsubscribed", {
+      email,
+      status: "unsubscribed",
+      createdAt: null,
+    });
 
     return {
       data: null,
@@ -373,7 +446,7 @@ export const getNewsletterSubscriberExistence = async (
 
 export const confirmUnsubscribe = async (body: UnsubscribeRequest) => {
   try {
-    const unsubscribe = await db
+    const [unsubscribe] = await db
       .update(subscribers)
       .set({ status: "unsubscribed" })
       .where(
@@ -381,7 +454,28 @@ export const confirmUnsubscribe = async (body: UnsubscribeRequest) => {
           eq(subscribers.newsletterId, body.newsletterId),
           eq(subscribers.email, body.email),
         ),
-      );
+      )
+      .returning();
+
+    if (!unsubscribe) {
+      return {
+        success: false,
+        data: null,
+        message: "Subscriber not found.",
+      };
+    }
+
+    await sendNewsletterWebhookEvent(
+      body.newsletterId,
+      "subscriber.unsubscribed",
+      {
+        id: unsubscribe.id,
+        email: unsubscribe.email,
+        name: unsubscribe.name,
+        status: unsubscribe.status,
+        createdAt: unsubscribe.createdAt?.toISOString() ?? null,
+      },
+    );
 
     const [newsletter] = await db
       .select({ name: newsletters.name })
