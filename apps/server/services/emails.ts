@@ -1,6 +1,6 @@
 import { envConfig } from "@/config";
 import { decryptDataSubtle, encryptDataSubtle } from "@/lib/encrypt";
-import { renderNewsletterMarkdown } from "@/lib/markdown";
+import { renderNewsletterMarkdown, renderNewsletterTemplate } from "@/lib/markdown";
 import { db } from "@workspace/db";
 import { emails, newsletters, teamMembers } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
@@ -380,6 +380,10 @@ export const getPublicEmails = async (
   try {
     const offset = (page - 1) * limit;
 
+    const [newsletter] = await db
+      .select({ id: newsletters.id, slug: newsletters.slug, name: newsletters.name })
+      .from(newsletters)
+      .where(eq(newsletters.id, newsletterId));
     const rows = await db
       .select({
         id: emails.id,
@@ -404,11 +408,28 @@ export const getPublicEmails = async (
         let excerpt = "";
         try {
           const decrypted = await decryptDataSubtle(row.body, encryptionKey);
-          excerpt = excerptOf(decrypted);
+          const templateContext = {
+            subscriber: { email: "", name: "", first_name: "" },
+            newsletter: newsletter ?? { id: newsletterId, slug: "", name: "" },
+            email: { subject: row.subject, publish_date: row.sentAt },
+            unsubscribe_url: "",
+          };
+          excerpt = excerptOf(renderNewsletterTemplate(decrypted, templateContext));
         } catch (e) {
           console.error(`Failed to decrypt email body for ${row.id}`, e);
         }
-        return { id: row.id, subject: row.subject, sentAt: row.sentAt, excerpt };
+        const templateContext = {
+          subscriber: { email: "", name: "", first_name: "" },
+          newsletter: newsletter ?? { id: newsletterId, slug: "", name: "" },
+          email: { subject: row.subject, publish_date: row.sentAt },
+          unsubscribe_url: "",
+        };
+        return {
+          id: row.id,
+          subject: renderNewsletterTemplate(row.subject, templateContext),
+          sentAt: row.sentAt,
+          excerpt,
+        };
       })
     );
 
@@ -449,10 +470,21 @@ export const getPublicEmail = async (
       return { success: false, message: "Post not found", data: null };
     }
 
+    const [newsletter] = await db
+      .select({ id: newsletters.id, slug: newsletters.slug, name: newsletters.name })
+      .from(newsletters)
+      .where(eq(newsletters.id, newsletterId));
+    const templateContext = {
+      subscriber: { email: "", name: "", first_name: "" },
+      newsletter: newsletter ?? { id: newsletterId, slug: "", name: "" },
+      email: { subject: row.subject, publish_date: row.sentAt },
+      unsubscribe_url: "",
+    };
+
     let html = "<p>Failed to load content.</p>";
     try {
       const decrypted = await decryptDataSubtle(row.body, encryptionKey);
-      html = renderNewsletterMarkdown(decrypted);
+      html = renderNewsletterMarkdown(decrypted, templateContext);
     } catch (e) {
       console.error(`Failed to decrypt email body for ${row.id}`, e);
     }
@@ -460,7 +492,12 @@ export const getPublicEmail = async (
     return {
       success: true,
       message: "Fetched post successfully",
-      data: { id: row.id, subject: row.subject, sentAt: row.sentAt, html },
+      data: {
+        id: row.id,
+        subject: renderNewsletterTemplate(row.subject, templateContext),
+        sentAt: row.sentAt,
+        html,
+      },
     };
   } catch (err) {
     return {

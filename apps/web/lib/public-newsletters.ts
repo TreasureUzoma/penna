@@ -75,6 +75,6 @@ export const getPublicPosts = (slug: string, page = 1) =>
   );
 
 export const getPublicPost = (slug: string, postId: string) =>
-  getJson<PublicPostDetail>(
+  getJsonFresh<PublicPostDetail>(
     `/api/v1/public/newsletters/${encodeURIComponent(slug)}/posts/${encodeURIComponent(postId)}`
   );
