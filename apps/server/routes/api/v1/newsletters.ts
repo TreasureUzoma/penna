@@ -41,6 +41,7 @@ import {
 import { routeStatus } from "@/lib/utils";
 import { validationErrorResponse } from "@/utils/validation-error-response";
 import { getNewsletterOrFail } from "@/utils/newsletter-access";
+import { renderNewsletterMarkdown } from "@/lib/markdown";
 
 const newslettersRoute = new Hono<AppBindings>();
 
@@ -355,6 +356,33 @@ newslettersRoute.get("/", async (c) => {
 // (PATCH /teams/:id/members/:userId, POST /teams/:id/invites,
 // POST /invites/accept, GET /invites).
 
+newslettersRoute.post(
+  "/:id/markdown-preview",
+  zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  zValidator("json", z.object({ content: z.string().max(100_000) }), (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const { content } = c.req.valid("json");
+    const newsletterOrRes = await getNewsletterOrFail(c, id, ["owner", "admin", "editor"]);
+    if (newsletterOrRes instanceof Response) return newsletterOrRes;
+
+    return c.json({
+      success: true,
+      data: {
+        html: renderNewsletterMarkdown(content, {
+          subscriber: { name: "Taylor Reader", first_name: "Taylor", email: "taylor@example.com" },
+          newsletter: { id: newsletterOrRes.id, name: newsletterOrRes.name, slug: newsletterOrRes.slug },
+          email: { subject: "A sample newsletter", publish_date: new Date() },
+          unsubscribe_url: "https://example.com/unsubscribe",
+        }),
+      },
+    });
+  },
+);
 // get newsletter subscribers
 newslettersRoute.get(
   "/:id/subscribers",

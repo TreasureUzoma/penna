@@ -2,6 +2,7 @@ import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { envConfig } from "@/config";
 import { buildListUnsubscribeHeaders } from "@/lib/list-unsubscribe";
+import { renderNewsletterMarkdown, renderNewsletterTemplate } from "../../lib/markdown";
 import { applyBranding, appendUnsubscribeFooter } from "../mail/branding";
 import { dbLite, schema } from "./db-lite";
 
@@ -112,31 +113,46 @@ async function addWorkflowTracking(
 }
 
 async function sendWorkflowNewsletterEmail(
-  newsletter: { id: string; slug: string },
-  recipientEmail: string,
-  subject: string,
-  html: string,
+  newsletter: { id: string; slug: string; name: string },
+  subscriber: { email: string; name: string | null },
+  subjectTemplate: string,
+  markdownBody: string,
+  publishDate: string,
+  removeBranding: boolean,
   fromDomain: string | null,
   emailId?: string,
 ): Promise<boolean> {
   try {
     const { unsubscribeUrl, header } = await buildListUnsubscribeHeaders(
       newsletter.id,
-      recipientEmail,
+      subscriber.email,
     );
-    const htmlWithFooter = appendUnsubscribeFooter(html, unsubscribeUrl);
+    const name = subscriber.name?.trim() ?? "";
+    const context = {
+      subscriber: {
+        ...subscriber,
+        first_name: name ? name.split(/\s+/)[0] : "",
+      },
+      newsletter,
+      email: { subject: subjectTemplate, publish_date: publishDate },
+      unsubscribe_url: unsubscribeUrl,
+    };
+    const subject = renderNewsletterTemplate(subjectTemplate, context);
+    const html = renderNewsletterMarkdown(markdownBody, context);
+    const brandedHtml = applyBranding(html, removeBranding);
+    const htmlWithFooter = appendUnsubscribeFooter(brandedHtml, unsubscribeUrl);
     const trackedHtml = emailId
       ? await addWorkflowTracking(
           htmlWithFooter,
           emailId,
           newsletter.id,
-          recipientEmail,
+          subscriber.email,
         )
       : htmlWithFooter;
     await sesClient.send(
       new SendEmailCommand({
         FromEmailAddress: `${newsletter.slug}@${fromDomain || envConfig.NEWSLETTER_DOMAIN}`,
-        Destination: { ToAddresses: [recipientEmail] },
+        Destination: { ToAddresses: [subscriber.email] },
         Content: {
           Simple: {
             Subject: { Data: subject, Charset: "UTF-8" },
@@ -159,30 +175,19 @@ async function sendWorkflowNewsletterEmail(
       (error instanceof Error &&
         /relation .*email_recipients.* does not exist/i.test(error.message));
 
-    if (isMissingTrackingTable) {
-      return false;
-    }
+    if (isMissingTrackingTable) return false;
 
     try {
-      if (!emailId) {
-        return false;
-      }
-
+      if (!emailId) return false;
       await dbLite
         .delete(schema.emailRecipients)
         .where(
           and(
             eq(schema.emailRecipients.emailId, emailId),
-            eq(schema.emailRecipients.email, recipientEmail),
+            eq(schema.emailRecipients.email, subscriber.email),
           ),
         );
-    } catch (cleanupError) {
-      const cleanupMissingTable =
-        (cleanupError as { code?: string } | undefined)?.code === "42P01" ||
-        (cleanupError instanceof Error &&
-          /relation .*email_recipients.* does not exist/i.test(
-            cleanupError.message,
-          ));
+    } catch {
       // intentionally silent on cleanup errors
     }
     // intentionally silent on send errors
@@ -191,25 +196,27 @@ async function sendWorkflowNewsletterEmail(
 }
 
 export async function sendWorkflowEmailChunk(
-  newsletter: { id: string; slug: string },
-  recipientEmails: string[],
-  subject: string,
-  html: string,
+  newsletter: { id: string; slug: string; name: string },
+  subscribers: Array<{ email: string; name: string | null }>,
+  subjectTemplate: string,
+  markdownBody: string,
+  publishDate: string,
   removeBranding: boolean,
   emailId?: string,
 ): Promise<{ sent: number; failed: number }> {
   const fromDomain = await getWorkflowSendingDomain(newsletter.id);
-  const brandedHtml = applyBranding(html, removeBranding);
   let sent = 0;
   let failed = 0;
 
-  for (const recipientEmail of recipientEmails) {
+  for (const subscriber of subscribers) {
     if (
       await sendWorkflowNewsletterEmail(
         newsletter,
-        recipientEmail,
-        subject,
-        brandedHtml,
+        subscriber,
+        subjectTemplate,
+        markdownBody,
+        publishDate,
+        removeBranding,
         fromDomain,
         emailId,
       )

@@ -1,6 +1,5 @@
 import { and, eq } from "drizzle-orm";
 import { decryptDataSubtle } from "@/lib/encrypt";
-import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { envConfig } from "@/config";
 import { moderateNewsletterContent } from "../moderation";
 import { dbLite, schema } from "./db-lite";
@@ -13,11 +12,12 @@ export type PrepareEmailSendResult =
   | { status: "cancelled" | "skipped" | "failed"; reason: string }
   | {
       status: "ready";
-      newsletter: { id: string; slug: string };
+      newsletter: { id: string; slug: string; name: string };
       emailId?: string;
       subject: string;
-      html: string;
-      recipientEmails: string[];
+      markdown: string;
+      publishDate: string;
+      subscribers: Array<{ email: string; name: string | null }>;
       removeBranding: boolean;
     };
 
@@ -73,7 +73,7 @@ export async function prepareEmailSend(
   }
 
   const subscriberRows = await dbLite
-    .select({ email: schema.subscribers.email })
+    .select({ email: schema.subscribers.email, name: schema.subscribers.name })
     .from(schema.subscribers)
     .where(
       and(
@@ -81,15 +81,15 @@ export async function prepareEmailSend(
         eq(schema.subscribers.status, "subscribed"),
       ),
     );
-  const recipientEmails = subscriberRows.map((r) => r.email);
+  const recipients = subscriberRows.map((row) => ({ email: row.email, name: row.name }));
 
   console.log("[workflow] prepareEmailSend subscribers loaded", {
     emailId,
     newsletterId: newsletter.id,
-    recipientCount: recipientEmails.length,
+    recipientCount: recipients.length,
   });
 
-  if (recipientEmails.length === 0) {
+  if (recipients.length === 0) {
     console.warn("[workflow] prepareEmailSend skipped: no recipients", {
       emailId,
       newsletterId: newsletter.id,
@@ -133,8 +133,6 @@ export async function prepareEmailSend(
     };
   }
 
-  const html = renderNewsletterMarkdown(rawBody);
-
   const removeBranding =
     (await canWorkflowRemoveBranding(newsletter.teamId)) &&
     (newsletter.config as { removeBranding?: boolean } | null)
@@ -143,20 +141,21 @@ export async function prepareEmailSend(
   console.log("[workflow] prepareEmailSend ready", {
     emailId,
     newsletterId: newsletter.id,
-    recipientCount: recipientEmails.length,
+    recipientCount: recipients.length,
     removeBranding,
   });
 
   return {
     status: "ready",
-    newsletter: { id: newsletter.id, slug: newsletter.slug },
+    newsletter: { id: newsletter.id, slug: newsletter.slug, name: newsletter.name },
     emailId: (newsletter.config as { emailTracking?: boolean } | null)
       ?.emailTracking
       ? email.id
       : undefined,
     subject: email.subject,
-    html,
-    recipientEmails,
+    markdown: rawBody,
+    publishDate: email.sentAt.toISOString(),
+    subscribers: recipients,
     removeBranding,
   };
 }
@@ -174,10 +173,11 @@ export interface SendEmailChunkResult {
  * to recipients this same chunk already reached.
  */
 export async function sendEmailChunk(
-  newsletter: { id: string; slug: string },
+  newsletter: { id: string; slug: string; name: string },
   subject: string,
-  html: string,
-  recipientEmails: string[],
+  markdown: string,
+  subscribers: Array<{ email: string; name: string | null }>,
+  publishDate: string,
   removeBranding: boolean,
   emailId?: string,
 ): Promise<SendEmailChunkResult> {
@@ -186,15 +186,16 @@ export async function sendEmailChunk(
   console.log("[workflow] sendEmailChunk start", {
     emailId,
     newsletterId: newsletter.id,
-    recipientCount: recipientEmails.length,
+    recipientCount: subscribers.length,
   });
 
   try {
     const result = await sendWorkflowEmailChunk(
       newsletter,
-      recipientEmails,
+      subscribers,
       subject,
-      html,
+      markdown,
+      publishDate,
       removeBranding,
       emailId,
     );
@@ -211,6 +212,6 @@ export async function sendEmailChunk(
       emailId,
       error,
     });
-    return { sent: 0, failed: recipientEmails.length };
+    return { sent: 0, failed: subscribers.length };
   }
 }

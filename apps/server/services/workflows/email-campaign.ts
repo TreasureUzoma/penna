@@ -50,7 +50,7 @@ export async function emailCampaignWorkflow({
     return prepared;
   }
 
-  const chunks = chunk(prepared.recipientEmails, CHUNK_SIZE);
+  const chunks = chunk(prepared.subscribers, CHUNK_SIZE);
   let sent = 0;
   let failed = 0;
 
@@ -64,8 +64,9 @@ export async function emailCampaignWorkflow({
         sendEmailChunk(
           prepared.newsletter,
           prepared.subject,
-          prepared.html,
+          prepared.markdown,
           recipients,
+          prepared.publishDate,
           prepared.removeBranding,
           prepared.emailId
         )

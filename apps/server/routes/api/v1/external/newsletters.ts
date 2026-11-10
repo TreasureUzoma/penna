@@ -1,12 +1,11 @@
 import { routeStatus } from "@/lib/utils";
-import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { newsletterApiKey } from "@/middlewares/newsletter-api-keys";
 import {
   getSubscribers,
-  getSubscribedEmailsFromList,
+  getSubscribedSubscribersFromList,
 } from "@/services/subscribers";
 import { createNewsletterSubscriber } from "@/services/subscriptions";
-import { sendEmailNewsletter } from "@/services/mail/external";
+import { sendPersonalizedEmailNewsletter } from "@/services/mail/external";
 import {
   assertNewsletterSendCapacity,
   NewsletterSendLimitError,
@@ -202,7 +201,7 @@ externalNewslettersRoute.post(
       }
 
       const candidateList = Array.from(candidateEmails);
-      const recipients = await getSubscribedEmailsFromList(
+      const recipients = await getSubscribedSubscribersFromList(
         newsletterData.id,
         candidateList,
       );
@@ -253,13 +252,11 @@ externalNewslettersRoute.post(
         );
       }
 
-      const htmlContent = renderNewsletterMarkdown(content);
-
-      const result = await sendEmailNewsletter(
-        { id: newsletterData.id, slug: newsletterData.slug },
+      const result = await sendPersonalizedEmailNewsletter(
+        { id: newsletterData.id, slug: newsletterData.slug, name: newsletterData.name },
         recipients,
         subject,
-        htmlContent,
+        content,
       );
 
       // The send already happened and can't be undone, so a failure here

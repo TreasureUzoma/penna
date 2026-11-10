@@ -348,6 +348,23 @@ export const getSubscribedEmailsFromList = async (
   return rows.map((r) => r.email);
 };
 
+export const getSubscribedSubscribersFromList = async (
+  newsletterId: string,
+  emails: string[],
+): Promise<Array<{ email: string; name: string | null }>> => {
+  if (emails.length === 0) return [];
+
+  return db
+    .select({ email: subscribers.email, name: subscribers.name })
+    .from(subscribers)
+    .where(
+      and(
+        eq(subscribers.newsletterId, newsletterId),
+        eq(subscribers.status, "subscribed"),
+        inArray(subscribers.email, emails),
+      ),
+    );
+};
 export const deleteSubscriber = async (
   newsletterId: string,
   subscriberId: string,

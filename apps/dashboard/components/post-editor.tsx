@@ -525,6 +525,7 @@ export function PostEditor({
 
           <div className="flex-1 min-h-0">
             <MarkdownSplitEditor
+              newsletterId={newsletterId}
               value={content}
               onChange={setContent}
               className="h-full shadow-sm"

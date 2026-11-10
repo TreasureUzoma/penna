@@ -26,7 +26,7 @@ This endpoint uses both the Public Key and Private Key for authentication.
 | Field             | Type       | Required | Description                                                                                                                                                              |
 | ----------------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `subject`         | `string`   | Yes      | The email subject line.                                                                                                                                                  |
-| `content`         | `string`   | Yes      | The newsletter body. Supports a small markdown subset (`#`, `##`, `###`, blank lines) which is converted to basic HTML before sending.                                   |
+| `content`         | `string`   | Yes      | The newsletter body. Supports GitHub-style Markdown, footnotes, task lists, code fences, sub/superscript, and supported standalone media links. Template variables are rendered for each recipient.                                   |
 | `recipientEmails` | `string[]` | No\*     | Email addresses to send to. **Must belong to actual subscribers of this newsletter** — see [Recipient scoping](#recipient-scoping) below. Max 5,000 entries per request. |
 | `segmentIds`      | `string[]` | No\*     | A list of segment IDs. Subscribers belonging to these segments are resolved, merged, and deduplicated with `recipientEmails`. See [Segmentations & External API](/docs/integrations/segments) for details. |
 
@@ -41,6 +41,33 @@ This endpoint uses both the Public Key and Private Key for authentication.
 }
 ```
 
+## Markdown and templates
+
+The API uses the same Markdown renderer as dashboard sends: GitHub-style tables and task lists, fenced code blocks, footnotes, strikethrough, `~subscript~`, `^superscript^`, smart punctuation, and linked cards for standalone YouTube, Vimeo, Spotify, SoundCloud, Bandcamp, GIPHY, Instagram, X, and GitHub Gist URLs. Raw HTML is sanitized before it is sent. Safe inline styles including colors, font styles, padding, borders, border radius, and inline-block display are retained. For example, `<a href="https://example.com" style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 16px; border-radius: 6px; text-decoration: none">Read more</a>` creates a button-style link; `<style>` blocks and unsupported CSS properties are stripped.
+
+Templates render separately for every resolved subscriber in the email subject and content:
+
+| Variable | Meaning |
+| --- | --- |
+| `{{ subscriber.name }}` | Subscriber name |
+| `{{ subscriber.first_name }}` | First word of the subscriber name |
+| `{{ subscriber.email }}` | Subscriber email |
+| `{{ newsletter.name }}` | Newsletter name |
+| `{{ newsletter.slug }}` | Newsletter slug |
+| `{{ email.subject }}` | Original subject template |
+| `{{ email.publish_date }}` | Send date |
+| `{{ unsubscribe_url }}` | Recipient's unsubscribe link |
+
+Supported filters: `default`, `upper`, `lower`, `capfirst`, and `urlencode`. Conditional blocks support `{% if variable %}`, `{% else %}`, and `{% endif %}` (also `not`, `==`, and `!=`).
+
+```json
+{
+  "subject": "A note for {{ subscriber.first_name | default: 'there' }}",
+  "content": "Hi {{ subscriber.first_name | default: 'there' }}!\n\n{% if subscriber.name %}Thanks for reading, {{ subscriber.first_name }}.{% else %}Welcome aboard!{% endif %}\n\n[Unsubscribe]({{ unsubscribe_url }})"
+}
+```
+
+Variables are resolved only for active subscribers included in the request (including subscribers resolved from segments). Unsupported or unavailable variables remain unchanged in the rendered message.
 ## Recipient Scoping & Per-Request Limit
 
 `recipientEmails` is **not** an open list of arbitrary addresses — every address is checked against this newsletter's active subscribers (added via `POST /subscriber/new` or the dashboard). Any address that is not an active subscriber is silently skipped rather than failing the whole request. The response field `data.skippedNonSubscribers` reports how many were dropped.

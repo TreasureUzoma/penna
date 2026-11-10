@@ -4,7 +4,7 @@ import {
   SendEmailCommand as SendEmailV2Command,
 } from "@aws-sdk/client-sesv2";
 import { envConfig } from "@/config";
-import { buildListUnsubscribeHeaders } from "@/lib/list-unsubscribe";
+import { buildListUnsubscribeHeaders, type ListUnsubscribeInfo } from "@/lib/list-unsubscribe";
 import { appendUnsubscribeFooter } from "./branding";
 import { addEmailTracking, removeEmailTracking } from "./tracking";
 
@@ -42,6 +42,7 @@ export interface SendNewsletterOptions {
   /** A verified custom domain to send from instead of the shared `NEWSLETTER_DOMAIN` — see `services/domains.ts`. */
   fromDomain?: string | null;
   emailId?: string;
+  unsubscribeInfo?: ListUnsubscribeInfo;
 }
 
 export interface SendBulkNewsletterOptions {
@@ -70,15 +71,13 @@ export const sendNewsletterEmail = async (
       replyTo,
       fromDomain,
       emailId,
+      unsubscribeInfo,
     } = options;
 
     // Per-recipient: the token embedded in both the visible footer link and
     // the List-Unsubscribe header is signed for this exact (newsletter, email)
     // pair, so it can't be reused to unsubscribe someone else.
-    const { unsubscribeUrl, header } = await buildListUnsubscribeHeaders(
-      newsletterId,
-      recipientEmail,
-    );
+    const { unsubscribeUrl, header } = unsubscribeInfo ?? await buildListUnsubscribeHeaders(newsletterId, recipientEmail);
     const htmlWithFooter = appendUnsubscribeFooter(html, unsubscribeUrl);
     const trackedHtml = emailId
       ? await addEmailTracking(

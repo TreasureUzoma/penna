@@ -11,8 +11,8 @@ export const Hero = () => {
           <p className="text-lg text-muted-foreground leading-relaxed">
             write, send, and grow your newsletter from a dashboard that
             doesn't fight you — subscribers, segments, analytics, and your
-            own domain, all in one place. automate any of it with a real API
-            when you need to.
+            own domain, rich Markdown, and per-subscriber templates, all
+            controllable from a real API.
           </p>
         </div>
 

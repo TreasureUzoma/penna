@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@workspace/ui/lib/utils";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 
 interface MarkdownSplitEditorProps {
+  newsletterId: string;
   value: string;
   onChange: (value: string) => void;
   className?: string;
@@ -30,6 +32,7 @@ interface MarkdownSplitEditorProps {
 }
 
 export function MarkdownSplitEditor({
+  newsletterId,
   value,
   onChange,
   className,
@@ -41,59 +44,28 @@ export function MarkdownSplitEditor({
   );
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // Simple Markdown Parser (Regex based)
-  const parseMarkdown = (text: string) => {
-    if (!text) return "";
-    let html = text
-      // Code blocks
-      .replace(
-        /```([\s\S]*?)```/g,
-        '<pre class="bg-muted p-4 rounded-md my-4 overflow-x-auto text-sm font-mono"><code>$1</code></pre>',
-      )
-      // Inline code
-      .replace(
-        /`([^`]+)`/g,
-        '<code class="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">$1</code>',
-      )
-      // Images
-      .replace(
-        /!\[(.*?)\]\((.*?)\)/g,
-        '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 border" />',
-      )
-      // Links
-      .replace(
-        /\[(.*?)\]\((.*?)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-4 hover:opacity-80">$1</a>',
-      )
-      // Headers
-      .replace(
-        /^# (.*$)/gm,
-        '<h1 class="text-2xl md:text-3xl font-bold mt-6 mb-4">$1</h1>',
-      )
-      .replace(
-        /^## (.*$)/gm,
-        '<h2 class="text-xl md:text-2xl font-semibold mt-5 mb-3">$1</h2>',
-      )
-      .replace(
-        /^### (.*$)/gm,
-        '<h3 class="text-lg md:text-xl font-medium mt-4 mb-2">$1</h3>',
-      )
-      // Bold
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      // Italic
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      // Blockquote
-      .replace(
-        /^> (.*$)/gm,
-        '<blockquote class="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground">$1</blockquote>',
-      )
-      // Unordered Lists (simple support)
-      .replace(/^\- (.*$)/gm, '<li class="ml-4 list-disc">$1</li>')
-      // Line breaks
-      .replace(/\n/g, "<br />");
+  const [previewContent, setPreviewContent] = useState(value);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setPreviewContent(value), 250);
+    return () => window.clearTimeout(timeout);
+  }, [value]);
 
-    return html;
-  };
+  const { data: previewHtml, isFetching: isPreviewLoading } = useQuery({
+    queryKey: ["markdown-preview", newsletterId, previewContent],
+    queryFn: async ({ signal }) => {
+      const response = await api.post<{ data: { html: string } }>(
+        `/newsletters/${newsletterId}/markdown-preview`,
+        { content: previewContent },
+        { signal },
+      );
+      return response.data.data.html;
+    },
+    placeholderData: (previousHtml) => previousHtml,
+    refetchOnWindowFocus: false,
+    enabled: Boolean(newsletterId && previewContent),
+    staleTime: 30_000,
+    gcTime: 0,
+  });
 
   const insertText = (before: string, after: string = "") => {
     const textarea = textareaRef.current;
@@ -285,6 +257,11 @@ export function MarkdownSplitEditor({
           >
             <LinkIcon className="h-4 w-4" />
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => insertText("~~", "~~")} title="Strikethrough" className="h-8 px-2 shrink-0">S̶</Button>
+          <Button variant="ghost" size="sm" onClick={() => insertText("~", "~")} title="Subscript" className="h-8 px-2 shrink-0">x₂</Button>
+          <Button variant="ghost" size="sm" onClick={() => insertText("^", "^")} title="Superscript" className="h-8 px-2 shrink-0">x²</Button>
+          <Button variant="ghost" size="sm" onClick={() => insertText("| Column | Column |\n| --- | --- |\n| Value | Value |\n")} title="Insert table" className="h-8 px-2 shrink-0">Table</Button>
+          <Button variant="ghost" size="sm" onClick={() => insertText("{{ subscriber.first_name | default: 'there' }}")} title="Insert personalization" className="h-8 px-2 shrink-0">Vars</Button>
           <div className="relative shrink-0">
             <Button
               variant="ghost"
@@ -308,6 +285,14 @@ export function MarkdownSplitEditor({
             </Button>
           </div>
         </div>
+      )}
+
+      {!readOnly && activeTab === "write" && (
+        <details className="border-b bg-muted/10 px-3 py-2 text-xs text-muted-foreground shrink-0">
+          <summary className="cursor-pointer select-none font-medium">Markdown & personalization guide</summary>
+          <p className="mt-2">Supports tables, task lists, fenced code, footnotes, ~~strikethrough~~, ~subscript~, ^superscript^, and standalone links to YouTube, Vimeo, Spotify, SoundCloud, Bandcamp, GIPHY, Instagram, X, and GitHub Gist.</p>
+          <p className="mt-1"><code>{"{{ subscriber.first_name }}"}</code>, <code>{"{{ subscriber.name }}"}</code>, <code>{"{{ subscriber.email }}"}</code>, <code>{"{{ newsletter.name }}"}</code>, <code>{"{{ email.publish_date }}"}</code>, and <code>{"{{ unsubscribe_url }}"}</code> are available. Add <code>| default: 'there'</code>, <code>| upper</code>, <code>| lower</code>, <code>| capfirst</code>, or <code>| urlencode</code>. Use <code>{"{% if subscriber.name %}...{% else %}...{% endif %}"}</code> for conditional content.</p>
+        </details>
       )}
 
       {/* Editor & Preview Split Container */}
@@ -337,10 +322,10 @@ export function MarkdownSplitEditor({
           )}
         >
           {value ? (
-            <div dangerouslySetInnerHTML={{ __html: parseMarkdown(value) }} />
+            <div dangerouslySetInnerHTML={{ __html: previewHtml ?? "" }} />
           ) : (
             <p className="text-muted-foreground text-sm italic">
-              Preview will appear here...
+              {isPreviewLoading ? "Rendering preview..." : "Preview will appear here..."}
             </p>
           )}
         </div>

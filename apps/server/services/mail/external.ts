@@ -1,9 +1,12 @@
 import { sendNewsletterEmail, sendBulkNewsletterEmails } from "./ses";
+import { renderNewsletterMarkdown, renderNewsletterTemplate } from "@/lib/markdown";
+import { buildListUnsubscribeHeaders } from "@/lib/list-unsubscribe";
 import { applyBranding } from "./branding";
 import { getVerifiedSendingDomain } from "../domains";
 import { canRemoveBranding } from "../newsletters";
 import { db } from "@workspace/db";
 import { newsletters } from "@workspace/db/schema";
+import type { NewsletterTemplateContext } from "@/lib/markdown";
 import { eq } from "drizzle-orm";
 
 const getNewsletterBrandingPreference = async (newsletterId: string) => {
@@ -78,4 +81,64 @@ export const sendEmailNewsletter = async (
   }
 
   return result;
+};
+
+export const sendPersonalizedEmailNewsletter = async (
+  newsletter: { id: string; slug: string; name: string },
+  subscribers: Array<{ email: string; name: string | null }>,
+  subjectTemplate: string,
+  markdown: string,
+) => {
+  const shouldRemoveBranding = await getNewsletterBrandingPreference(newsletter.id);
+  const fromDomain = await getVerifiedSendingDomain(newsletter.id);
+  const results = {
+    success: true,
+    sent: 0,
+    failed: 0,
+    errors: [] as Array<{ email: string; error: string }>,
+  };
+
+  for (const subscriber of subscribers) {
+    try {
+      const unsubscribeInfo = await buildListUnsubscribeHeaders(newsletter.id, subscriber.email);
+      const name = subscriber.name?.trim() ?? "";
+      const context: NewsletterTemplateContext = {
+        subscriber: { ...subscriber, first_name: name ? name.split(/\s+/)[0] : "" },
+        newsletter,
+        email: { subject: subjectTemplate, publish_date: new Date() },
+        unsubscribe_url: unsubscribeInfo.unsubscribeUrl,
+      };
+      const subject = renderNewsletterTemplate(subjectTemplate, context);
+      const renderedHtml = applyBranding(
+        renderNewsletterMarkdown(markdown, context),
+        shouldRemoveBranding,
+      );
+      const result = await sendNewsletterEmail({
+        newsletterId: newsletter.id,
+        newsletterSlug: newsletter.slug,
+        recipientEmail: subscriber.email,
+        subject,
+        html: renderedHtml,
+        fromDomain,
+        unsubscribeInfo,
+      });
+
+      if (result.success) {
+        results.sent++;
+      } else {
+        results.failed++;
+        results.errors.push({ email: subscriber.email, error: result.error || "Failed to send email" });
+      }
+    } catch (error) {
+      results.failed++;
+      results.errors.push({
+        email: subscriber.email,
+        error: error instanceof Error ? error.message : "Failed to send email",
+      });
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+
+  results.success = results.failed === 0;
+  return results;
 };

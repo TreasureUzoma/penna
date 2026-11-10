@@ -35,20 +35,57 @@ This guide walks you through creating and sending newsletters using both the Pen
 
 **Markdown support:**
 
-Penna supports basic markdown formatting:
+Penna supports GitHub-style Markdown and newsletter personalization:
 
-```markdown
+````markdown
 # Main Heading
 
 ## Subheading
 
-Here's a paragraph with **bold text** and _italic text_.
+Here's **bold**, _italic_, ~~strikethrough~~, ~subscript~, and ^superscript^.
 
-- Bullet point 1
-- Bullet point 2
+- [x] A completed task
+- [ ] A task to do
+
+| Feature | Example |
+| --- | --- |
+| Footnote | Text with a note[^1] |
+
+[^1]: Footnotes appear at the end of the email.
+
+```ts
+const greeting = "Hello, world!";
+```
 
 [Link text](https://example.com)
+````
+
+Standalone links from YouTube, Vimeo, Spotify, SoundCloud, Bandcamp, GIPHY, Instagram, X, and GitHub Gist become linked media cards. Images use standard Markdown syntax: `![description](https://example.com/image.png)`. Raw HTML is sanitized before delivery. Safe inline styles include colors, font styles, padding, borders, border radius, and inline-block display. For example, `<a href="https://example.com" style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 16px; border-radius: 6px; text-decoration: none">Read more</a>` creates a button-style link; `<style>` blocks and unsupported CSS properties are stripped.
+
+### Personalization and Templates
+
+Use these variables in dashboard and API sends; values are resolved separately for each subscriber:
+
+| Variable | Meaning |
+| --- | --- |
+| `{{ subscriber.name }}` | Subscriber's full name |
+| `{{ subscriber.first_name }}` | First word of the subscriber's name |
+| `{{ subscriber.email }}` | Subscriber's email address |
+| `{{ newsletter.name }}` | Newsletter name |
+| `{{ newsletter.slug }}` | Newsletter slug |
+| `{{ email.subject }}` | Email subject |
+| `{{ email.publish_date }}` | Scheduled/published date |
+| `{{ unsubscribe_url }}` | Subscriber's unsubscribe link |
+
+Filters include `default`, `upper`, `lower`, `capfirst`, and `urlencode`:
+
+```markdown
+Hi {{ subscriber.first_name | default: 'there' }},
+
+{% if subscriber.name %}Thanks for reading, {{ subscriber.first_name }}!{% else %}Thanks for being here!{% endif %}
 ```
+
+Template tags are evaluated before Markdown. The preview uses sample subscriber details; real sends use each subscriber's details.
 
 **Formatting tips:**
 
@@ -177,7 +214,7 @@ console.log(result);
 | Field             | Type     | Required | Description                               |
 | ----------------- | -------- | -------- | ----------------------------------------- |
 | `subject`         | string   | Yes      | Email subject line                        |
-| `content`         | string   | Yes      | Newsletter body (supports basic markdown) |
+| `content`         | string   | Yes      | Newsletter body (GitHub-style Markdown and per-subscriber templates supported) |
 | `recipientEmails` | string[] | No\*     | Specific email addresses                  |
 | `segmentIds`      | string[] | No\*     | Segment IDs to send to                    |
 
@@ -244,7 +281,7 @@ The total recipients are merged and deduplicated automatically.
 
 ### Markdown Support
 
-Content supports basic markdown:
+Content supports GitHub-style Markdown, footnotes, task lists, code fences, sub/superscript, and supported media link cards. API subjects and content also support per-subscriber template variables and conditionals:
 
 ```javascript
 {
@@ -265,18 +302,13 @@ Check it out: [link](https://example.com)
 }
 ```
 
-**Currently supported:**
+Supported template variables include `{{ subscriber.name }}`, `{{ subscriber.first_name }}`, `{{ subscriber.email }}`, `{{ newsletter.name }}`, `{{ email.publish_date }}`, and `{{ unsubscribe_url }}`. Filters include `default`, `upper`, `lower`, `capfirst`, and `urlencode`.
 
-- `#`, `##`, `###` headings
-- Blank lines (paragraph breaks)
-- Basic text formatting
+```markdown
+Hi {{ subscriber.first_name | default: 'there' }}!
 
-**Coming soon:**
-
-- Lists, links, bold, italic
-- Images
-- Tables
-- Code blocks
+{% if subscriber.name %}Thanks for reading, {{ subscriber.first_name }}.{% else %}Welcome aboard!{% endif %}
+```
 
 ### Success Response
 
