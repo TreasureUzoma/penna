@@ -292,8 +292,9 @@ export function SettingsTab({ newsletter }: SettingsTabProps) {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Description" {...field} />
+                      <Textarea placeholder="A short description of your newsletter" rows={4} {...field} />
                     </FormControl>
+                    <p className="text-xs text-muted-foreground">Supports Markdown: **bold**, *italic*, and [links](https://example.com).</p>
                     <FormMessage />
                   </FormItem>
                 )}

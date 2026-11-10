@@ -1,4 +1,5 @@
 import { getPublicNewsletterBySlug } from "@/services/newsletters";
+import { renderNewsletterMarkdown } from "@/lib/markdown";
 import { getPublicEmails, getPublicEmail } from "@/services/emails";
 import {
   confirmNewsletterSubscriber,
@@ -127,10 +128,19 @@ publicNewslettersRoute.get(
   async (c) => {
     const { slug } = c.req.valid("param");
     const serviceData = await loadPublicNewsletter(slug);
-    return c.json(
-      serviceData,
-      (serviceData.success ? 200 : 404) as ContentfulStatusCode,
-    );
+    if (serviceData.success && serviceData.data) {
+      return c.json(
+        {
+          ...serviceData,
+          data: {
+            ...serviceData.data,
+            descriptionHtml: renderNewsletterMarkdown(serviceData.data.description ?? ""),
+          },
+        },
+        200,
+      );
+    }
+    return c.json(serviceData, 404);
   },
 );
 
