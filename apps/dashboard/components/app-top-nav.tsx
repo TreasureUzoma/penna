@@ -10,6 +10,8 @@ import Logo from "@workspace/ui/components/logo";
 import { Separator } from "@workspace/ui/components/separator";
 import { cn } from "@workspace/ui/lib/utils";
 import { useGetProfile } from "@/hooks/use-auth";
+import { useTeams } from "@/hooks/use-teams";
+import { useTeamSubscription } from "@/hooks/use-team-billing";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import {
   Avatar,
@@ -85,6 +87,11 @@ export default function AppTopNav() {
   }
 
   const { data: profileData, isLoading: profileLoading } = useGetProfile();
+  const { data: teams, isLoading: teamsLoading } = useTeams();
+  const { data: teamBilling, isLoading: billingLoading } = useTeamSubscription(
+    teams?.[0]?.id ?? "",
+  );
+  const displayedPlan = teamBilling?.plan.name ?? profileData?.plan ?? "Free";
   return (
     <>
       <header className="w-full bg-background relative">
@@ -112,7 +119,7 @@ export default function AppTopNav() {
               )}
             />
             <div className="flex gap-2.5 text-sm leading-tight">
-              {profileLoading ? (
+              {profileLoading || (teamsLoading && !teams) || billingLoading ? (
                 <>
                   <Skeleton className="w-24 h-3 rounded-sm" />
                   <Skeleton className="w-20 h-3 rounded-sm mt-1" />
@@ -127,7 +134,7 @@ export default function AppTopNav() {
                     href="/billings"
                     className="bg-muted text-xs px-2 py-1 rounded-full"
                   >
-                    {profileData?.plan ?? "Free"}
+                    {displayedPlan}
                   </Link>
                 </div>
               )}

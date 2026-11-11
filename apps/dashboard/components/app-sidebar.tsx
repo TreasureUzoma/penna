@@ -34,6 +34,8 @@ import {
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip";
 import { useGetProfile } from "@/hooks/use-auth";
+import { useTeams } from "@/hooks/use-teams";
+import { useTeamSubscription } from "@/hooks/use-team-billing";
 import { TeamSwitcher } from "./team-switcher";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { useSelectedLayoutSegments } from "next/navigation";
@@ -61,6 +63,11 @@ export default function AppSidebar({
   const router = useRouter();
   const segments = useSelectedLayoutSegments();
   const { data: profileData, isLoading: profileLoading } = useGetProfile();
+  const { data: teams, isLoading: teamsLoading } = useTeams();
+  const { data: teamBilling, isLoading: billingLoading } = useTeamSubscription(
+    teams?.[0]?.id ?? "",
+  );
+  const displayedPlan = teamBilling?.plan.name ?? profileData?.plan ?? "Free";
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   const isNewsletterRoute =
@@ -286,7 +293,7 @@ export default function AppSidebar({
       {/* User Section */}
       <div className="p-3 space-y-3">
         <div className="relative" ref={userMenuRef}>
-          {profileLoading ? (
+          {profileLoading || (teamsLoading && !teams) || billingLoading ? (
             <div className="flex items-center gap-3 px-3">
               <Skeleton className="w-8 h-8 rounded-lg flex-shrink-0" />
               {!isCollapsed && <Skeleton className="h-3 flex-1 rounded" />}
@@ -311,7 +318,7 @@ export default function AppSidebar({
                       {profileData?.email}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {profileData?.plan ?? "Free"}
+                      {displayedPlan}
                     </p>
                   </div>
                 )}
