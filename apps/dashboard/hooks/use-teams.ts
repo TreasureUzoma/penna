@@ -96,6 +96,11 @@ export function useDeleteTeam() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
+      queryClient.invalidateQueries({ queryKey: ["newsletters"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-newsletters"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-activity"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-analytics"] });
       toast.success("Team deleted successfully");
     },
     onError: (error) => {

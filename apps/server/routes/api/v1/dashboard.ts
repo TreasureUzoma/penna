@@ -14,23 +14,41 @@ import { z } from "zod";
 const dashboardRoute = new Hono<AppBindings>();
 
 // Get dashboard stats only (doesn't change with search/filter)
-dashboardRoute.get("/stats", async (c) => {
-  const cookieUser = c.get("user") as AuthType;
-  const serviceData = await getDashboardOverview(cookieUser.id, 1, 1);
-
-  if (!serviceData.success || !serviceData.data) {
-    return c.json(serviceData, routeStatus(serviceData));
-  }
-
-  return c.json(
-    {
-      success: true,
-      message: "Dashboard stats fetched successfully",
-      data: { stats: serviceData.data.stats },
+dashboardRoute.get(
+  "/stats",
+  zValidator(
+    "query",
+    z.object({ teamId: z.string().uuid().optional() }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
     },
-    200
-  );
-});
+  ),
+  async (c) => {
+    const cookieUser = c.get("user") as AuthType;
+    const { teamId } = c.req.valid("query");
+    const serviceData = await getDashboardOverview(
+      cookieUser.id,
+      1,
+      1,
+      undefined,
+      undefined,
+      teamId,
+    );
+
+    if (!serviceData.success || !serviceData.data) {
+      return c.json(serviceData, routeStatus(serviceData));
+    }
+
+    return c.json(
+      {
+        success: true,
+        message: "Dashboard stats fetched successfully",
+        data: { stats: serviceData.data.stats },
+      },
+      200,
+    );
+  },
+);
 
 // Get dashboard newsletters only (filtered by search/sort)
 dashboardRoute.get(
@@ -40,14 +58,15 @@ dashboardRoute.get(
   }),
   async (c) => {
     const cookieUser = c.get("user") as AuthType;
-    const { page, limit, sort, search } = c.req.valid("query");
+    const { page, limit, sort, search, teamId } = c.req.valid("query");
 
     const serviceData = await getDashboardOverview(
       cookieUser.id,
       page,
       limit,
       sort,
-      search
+      search,
+      teamId,
     );
 
     if (!serviceData.success || !serviceData.data) {
@@ -60,43 +79,57 @@ dashboardRoute.get(
         message: "Dashboard newsletters fetched successfully",
         data: { newsletters: serviceData.data.newsletters },
       },
-      200
+      200,
     );
-  }
+  },
 );
 
 // Recent activity across all of the user's newsletters (most recently sent posts)
-dashboardRoute.get("/activity", async (c) => {
-  const cookieUser = c.get("user") as AuthType;
-  const serviceData = await getRecentActivity(cookieUser.id);
-
-  return c.json(
-    {
-      success: serviceData.success,
-      message: serviceData.message,
-      data: { activity: serviceData.data },
+dashboardRoute.get(
+  "/activity",
+  zValidator(
+    "query",
+    z.object({ teamId: z.string().uuid().optional() }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
     },
-    routeStatus(serviceData)
-  );
-});
+  ),
+  async (c) => {
+    const cookieUser = c.get("user") as AuthType;
+    const { teamId } = c.req.valid("query");
+    const serviceData = await getRecentActivity(cookieUser.id, 5, teamId);
+
+    return c.json(
+      {
+        success: serviceData.success,
+        message: serviceData.message,
+        data: { activity: serviceData.data },
+      },
+      routeStatus(serviceData),
+    );
+  },
+);
 
 // Account-wide analytics — combined subscriber growth + top newsletters
 dashboardRoute.get(
   "/analytics",
   zValidator(
     "query",
-    z.object({ days: z.coerce.number().min(1).max(365).default(30) }),
+    z.object({
+      days: z.coerce.number().min(1).max(365).default(30),
+      teamId: z.string().uuid().optional(),
+    }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
-    }
+    },
   ),
   async (c) => {
     const cookieUser = c.get("user") as AuthType;
-    const { days } = c.req.valid("query");
+    const { days, teamId } = c.req.valid("query");
 
-    const serviceData = await getAccountAnalytics(cookieUser.id, days);
+    const serviceData = await getAccountAnalytics(cookieUser.id, days, teamId);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // Get full dashboard overview (backward compatibility)
@@ -107,18 +140,19 @@ dashboardRoute.get(
   }),
   async (c) => {
     const cookieUser = c.get("user") as AuthType;
-    const { page, limit, sort, search } = c.req.valid("query");
+    const { page, limit, sort, search, teamId } = c.req.valid("query");
 
     const serviceData = await getDashboardOverview(
       cookieUser.id,
       page,
       limit,
       sort,
-      search
+      search,
+      teamId,
     );
 
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 export default dashboardRoute;

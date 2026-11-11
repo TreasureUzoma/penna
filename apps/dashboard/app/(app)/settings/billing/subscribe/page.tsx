@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
-import { useTeams } from "@/hooks/use-teams";
+import { useActiveTeam } from "@/hooks/use-active-team";
 import {
   useTeamSubscription,
   useCancelTeamSubscription,
@@ -38,10 +38,11 @@ function SubscribePageContent(): React.ReactNode {
   const planSlug = searchParams.get("plan");
   const teamSlug = searchParams.get("team");
 
-  const { data: teams, isLoading: isLoadingTeams } = useTeams();
+  const { teams, activeTeam: savedActiveTeam, isLoading: isLoadingTeams } =
+    useActiveTeam();
   const activeTeam =
     (teamSlug ? teams?.find((t) => t.slug === teamSlug) : undefined) ??
-    teams?.[0];
+    savedActiveTeam;
 
   const { data: billing, isLoading: isLoadingBilling } = useTeamSubscription(
     activeTeam?.id ?? "",

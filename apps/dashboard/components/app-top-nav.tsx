@@ -10,7 +10,7 @@ import Logo from "@workspace/ui/components/logo";
 import { Separator } from "@workspace/ui/components/separator";
 import { cn } from "@workspace/ui/lib/utils";
 import { useGetProfile } from "@/hooks/use-auth";
-import { useTeams } from "@/hooks/use-teams";
+import { useActiveTeam } from "@/hooks/use-active-team";
 import { useTeamSubscription } from "@/hooks/use-team-billing";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import {
@@ -87,9 +87,9 @@ export default function AppTopNav() {
   }
 
   const { data: profileData, isLoading: profileLoading } = useGetProfile();
-  const { data: teams, isLoading: teamsLoading } = useTeams();
+  const { activeTeam, isLoading: teamsLoading } = useActiveTeam();
   const { data: teamBilling, isLoading: billingLoading } = useTeamSubscription(
-    teams?.[0]?.id ?? "",
+    activeTeam?.id ?? "",
   );
   const displayedPlan = teamBilling?.plan.name ?? "Free";
   return (
@@ -119,7 +119,7 @@ export default function AppTopNav() {
               )}
             />
             <div className="flex gap-2.5 text-sm leading-tight">
-              {profileLoading || (teamsLoading && !teams) || billingLoading ? (
+              {profileLoading || teamsLoading || billingLoading ? (
                 <>
                   <Skeleton className="w-24 h-3 rounded-sm" />
                   <Skeleton className="w-20 h-3 rounded-sm mt-1" />

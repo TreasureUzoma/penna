@@ -34,7 +34,7 @@ import {
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip";
 import { useGetProfile } from "@/hooks/use-auth";
-import { useTeams } from "@/hooks/use-teams";
+import { useActiveTeam } from "@/hooks/use-active-team";
 import { useTeamSubscription } from "@/hooks/use-team-billing";
 import { TeamSwitcher } from "./team-switcher";
 import { Skeleton } from "@workspace/ui/components/skeleton";
@@ -63,9 +63,9 @@ export default function AppSidebar({
   const router = useRouter();
   const segments = useSelectedLayoutSegments();
   const { data: profileData, isLoading: profileLoading } = useGetProfile();
-  const { data: teams, isLoading: teamsLoading } = useTeams();
+  const { activeTeam, isLoading: teamsLoading } = useActiveTeam();
   const { data: teamBilling, isLoading: billingLoading } = useTeamSubscription(
-    teams?.[0]?.id ?? "",
+    activeTeam?.id ?? "",
   );
   const displayedPlan = teamBilling?.plan.name ?? "Free";
   const [isCollapsed, setIsCollapsed] = React.useState(false);
@@ -293,7 +293,7 @@ export default function AppSidebar({
       {/* User Section */}
       <div className="p-3 space-y-3">
         <div className="relative" ref={userMenuRef}>
-          {profileLoading || (teamsLoading && !teams) || billingLoading ? (
+          {profileLoading || teamsLoading || billingLoading ? (
             <div className="flex items-center gap-3 px-3">
               <Skeleton className="w-8 h-8 rounded-lg flex-shrink-0" />
               {!isCollapsed && <Skeleton className="h-3 flex-1 rounded" />}

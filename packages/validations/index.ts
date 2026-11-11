@@ -476,6 +476,7 @@ export const insertPostSchema = z.object({
 export type InsertPost = z.infer<typeof insertPostSchema>;
 
 export const dashboardOverviewSchema = z.object({
+  teamId: z.string().uuid().optional(),
   page: z.coerce
     .number({ invalid_type_error: "Page must be a number" })
     .min(1, "Page must be at least 1")

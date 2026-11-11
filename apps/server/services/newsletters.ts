@@ -673,7 +673,12 @@ export const getPublicNewsletterBySlug = async (slug: string) => {
   };
 };
 
-export const getNewslettersByUser = (userId: string, page = 1, limit = 10) => {
+export const getNewslettersByUser = (
+  userId: string,
+  page = 1,
+  limit = 10,
+  teamId?: string,
+) => {
   console.log("[newsletters] getNewslettersByUser start", {
     userId,
     page,
@@ -697,7 +702,11 @@ export const getNewslettersByUser = (userId: string, page = 1, limit = 10) => {
     .from(newsletters)
     .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
     .leftJoin(subscribers, eq(newsletters.id, subscribers.newsletterId))
-    .where(eq(teamMembers.userId, userId))
+    .where(
+      teamId
+        ? and(eq(teamMembers.userId, userId), eq(newsletters.teamId, teamId))
+        : eq(teamMembers.userId, userId),
+    )
     .groupBy(
       newsletters.id,
       newsletters.slug,
@@ -716,7 +725,11 @@ export const getNewslettersByUser = (userId: string, page = 1, limit = 10) => {
     .select({ count: count() })
     .from(newsletters)
     .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
-    .where(eq(teamMembers.userId, userId));
+    .where(
+      teamId
+        ? and(eq(teamMembers.userId, userId), eq(newsletters.teamId, teamId))
+        : eq(teamMembers.userId, userId),
+    );
 
   const result = paginate(dbQuery, countQuery, page, limit);
 

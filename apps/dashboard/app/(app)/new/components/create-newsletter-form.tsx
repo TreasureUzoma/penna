@@ -22,7 +22,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import { toast } from "sonner";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { useEffect } from "react";
-import { useTeams } from "@/hooks/use-teams";
+import { useActiveTeam } from "@/hooks/use-active-team";
 import {
   Select,
   SelectContent,
@@ -35,7 +35,7 @@ import { showErrorToast } from "@/lib/error-toast";
 
 export function CreateNewsletterForm() {
   const router = useRouter();
-  const { data: teams, isLoading: isLoadingTeams } = useTeams();
+  const { teams, activeTeam, isLoading: isLoadingTeams } = useActiveTeam();
   // Only owner/admin can create a newsletter under a team (mirrors the
   // server-side getTeamOrFail(["owner","admin"]) check on POST /new).
   const availableTeams = (teams ?? []).filter(
@@ -56,10 +56,13 @@ export function CreateNewsletterForm() {
   // Most people only ever have the one (implicit) team — skip making them
   // pick when there's nothing to pick between.
   useEffect(() => {
-    if (availableTeams.length === 1 && !form.getValues("teamId")) {
-      form.setValue("teamId", availableTeams[0]!.id);
+    const defaultTeam =
+      availableTeams.find((team) => team.id === activeTeam?.id) ??
+      (availableTeams.length === 1 ? availableTeams[0] : undefined);
+    if (defaultTeam && !form.getValues("teamId")) {
+      form.setValue("teamId", defaultTeam.id);
     }
-  }, [availableTeams, form]);
+  }, [availableTeams, activeTeam?.id, form]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (values: NewNewsletter) => {

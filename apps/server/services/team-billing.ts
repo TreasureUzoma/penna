@@ -36,11 +36,31 @@ const getLiveTeamSubscription = async (teamId: string) => {
   return sub ?? null;
 };
 
+const getUncanceledTeamSubscription = async (teamId: string) => {
+  const [sub] = await db
+    .select()
+    .from(teamSubscriptions)
+    .where(
+      and(
+        eq(teamSubscriptions.teamId, teamId),
+        inArray(teamSubscriptions.status, [
+          "active",
+          "trialing",
+          "past_due",
+          "paused",
+        ]),
+      ),
+    )
+    .orderBy(desc(teamSubscriptions.updatedAt))
+    .limit(1);
+  return sub ?? null;
+};
+
 /** Backs the Settings > Billing page — the team's current live subscription, if any. */
 export const getTeamSubscription = async (
   teamId: string,
 ): Promise<ServiceResponse> => {
-  const sub = await getLiveTeamSubscription(teamId);
+  const sub = await getUncanceledTeamSubscription(teamId);
   return {
     success: true,
     message: sub
@@ -157,7 +177,7 @@ export const cancelTeamSubscription = async (
   teamId: string,
 ): Promise<ServiceResponse> => {
   try {
-    const sub = await getLiveTeamSubscription(teamId);
+    const sub = await getUncanceledTeamSubscription(teamId);
     if (!sub) {
       return {
         success: false,

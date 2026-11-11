@@ -254,6 +254,33 @@ export const updateTeam = async (
  */
 export const deleteTeam = async (teamId: string): Promise<ServiceResponse> => {
   try {
+    const [openSubscription] = await db
+      .select({ id: teamSubscriptions.id })
+      .from(teamSubscriptions)
+      .where(
+        q(
+          and(
+            eq(teamSubscriptions.teamId, teamId),
+            inArray(teamSubscriptions.status, [
+              "active",
+              "trialing",
+              "past_due",
+              "paused",
+            ]),
+          ),
+        ),
+      )
+      .limit(1);
+
+    if (openSubscription) {
+      return {
+        data: null,
+        success: false,
+        message:
+          "Cancel this team's Paddle subscription and wait for Paddle to confirm cancellation before deleting the team.",
+      };
+    }
+
     await db.delete(teams).where(q(eq(teams.id, teamId)));
     return { data: null, success: true, message: "Team deleted successfully" };
   } catch (err) {

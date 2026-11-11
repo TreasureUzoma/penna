@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@workspace/axios";
 import type { DashboardOverview } from "@workspace/validations";
 import type { ServiceResponse } from "@workspace/types";
+import { useActiveTeam } from "@/hooks/use-active-team";
 
 interface DashboardData {
   stats: {
@@ -22,35 +23,41 @@ interface DashboardData {
 }
 
 export function useDashboardStats() {
+  const { activeTeam, isLoading: isLoadingTeams } = useActiveTeam();
   return useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["dashboard-stats", activeTeam?.id],
     queryFn: async () => {
+      const query = activeTeam ? `?teamId=${activeTeam.id}` : "";
       const res =
         await api.get<ServiceResponse<{ stats: DashboardData["stats"] }>>(
-          `/dashboard/stats`
+          `/dashboard/stats${query}`
         );
       return res.data.data;
     },
+    enabled: !isLoadingTeams,
   });
 }
 
 export function useDashboardNewsletters(
   params: Omit<DashboardOverview, "limit"> & { limit?: number }
 ) {
+  const { activeTeam, isLoading: isLoadingTeams } = useActiveTeam();
   return useQuery({
-    queryKey: ["dashboard-newsletters", params],
+    queryKey: ["dashboard-newsletters", params, activeTeam?.id],
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       if (params.page) searchParams.set("page", params.page.toString());
       if (params.limit) searchParams.set("limit", params.limit.toString());
       if (params.sort) searchParams.set("sort", params.sort);
       if (params.search) searchParams.set("search", params.search);
+      if (activeTeam) searchParams.set("teamId", activeTeam.id);
 
       const res = await api.get<
         ServiceResponse<{ newsletters: DashboardData["newsletters"] }>
       >(`/dashboard/newsletters?${searchParams.toString()}`);
       return res.data.data;
     },
+    enabled: !isLoadingTeams,
   });
 }
 
@@ -64,14 +71,17 @@ export interface RecentActivityItem {
 }
 
 export function useDashboardActivity() {
+  const { activeTeam, isLoading: isLoadingTeams } = useActiveTeam();
   return useQuery({
-    queryKey: ["dashboard-activity"],
+    queryKey: ["dashboard-activity", activeTeam?.id],
     queryFn: async () => {
+      const query = activeTeam ? `?teamId=${activeTeam.id}` : "";
       const res = await api.get<
         ServiceResponse<{ activity: RecentActivityItem[] }>
-      >(`/dashboard/activity`);
+      >(`/dashboard/activity${query}`);
       return res.data.data;
     },
+    enabled: !isLoadingTeams,
   });
 }
 
@@ -88,32 +98,39 @@ interface AccountAnalytics {
 }
 
 export function useDashboardAnalytics(days: number) {
+  const { activeTeam, isLoading: isLoadingTeams } = useActiveTeam();
   return useQuery({
-    queryKey: ["dashboard-analytics", days],
+    queryKey: ["dashboard-analytics", days, activeTeam?.id],
     queryFn: async () => {
+      const params = new URLSearchParams({ days: days.toString() });
+      if (activeTeam) params.set("teamId", activeTeam.id);
       const res = await api.get<ServiceResponse<AccountAnalytics>>(
-        `/dashboard/analytics?days=${days}`
+        `/dashboard/analytics?${params.toString()}`
       );
       return res.data.data;
     },
+    enabled: !isLoadingTeams,
   });
 }
 
 // Keep the old hook for backward compatibility if needed elsewhere
 export function useDashboardOverview(params: DashboardOverview) {
+  const { activeTeam, isLoading: isLoadingTeams } = useActiveTeam();
   return useQuery({
-    queryKey: ["dashboard-overview", params],
+    queryKey: ["dashboard-overview", params, activeTeam?.id],
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       if (params.page) searchParams.set("page", params.page.toString());
       if (params.limit) searchParams.set("limit", params.limit.toString());
       if (params.sort) searchParams.set("sort", params.sort);
       if (params.search) searchParams.set("search", params.search);
+      if (activeTeam) searchParams.set("teamId", activeTeam.id);
 
       const res = await api.get<ServiceResponse<DashboardData>>(
         `/dashboard/overview?${searchParams.toString()}`
       );
       return res.data;
     },
+    enabled: !isLoadingTeams,
   });
 }

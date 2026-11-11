@@ -19,7 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
-import { useTeams } from "@/hooks/use-teams";
+import { useActiveTeam } from "@/hooks/use-active-team";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { EntityAvatar } from "@workspace/ui/components/entity-avatar";
 
@@ -34,13 +34,12 @@ export function TeamSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: teams, isLoading } = useTeams();
-
-  const activeSlug =
+  const { teams, activeTeam, setActiveTeam, isLoading } = useActiveTeam();
+  const selectedTeam =
     pathname === "/settings/team"
-      ? (searchParams.get("team") ?? teams?.[0]?.slug)
-      : teams?.[0]?.slug;
-  const selectedTeam = teams?.find((t) => t.slug === activeSlug);
+      ? (teams.find((team) => team.slug === searchParams.get("team")) ??
+        activeTeam)
+      : activeTeam;
 
   if (!isLoading && (!teams || teams.length === 0)) return null;
 
@@ -77,7 +76,19 @@ export function TeamSwitcher() {
                 <CommandItem
                   key={team.id}
                   onSelect={() => {
-                    router.push(`/settings/team?team=${team.slug}`);
+                    setActiveTeam(team);
+                    if (pathname === "/settings/team") {
+                      router.push(`/settings/team?team=${team.slug}`);
+                    } else if (pathname.startsWith("/settings/billing")) {
+                      router.push(`/settings/billing?team=${team.slug}`);
+                    } else if (
+                      pathname.startsWith("/newsletters/") ||
+                      pathname === "/new"
+                    ) {
+                      router.push("/newsletters");
+                    } else {
+                      router.push(pathname);
+                    }
                     setOpen(false);
                   }}
                   className="text-sm gap-2"

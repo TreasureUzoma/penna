@@ -325,32 +325,44 @@ newslettersRoute.post(
 );
 
 // get all newsletters
-newslettersRoute.get("/", async (c) => {
-  const { page, limit } = c.req.query();
-  const cookieUser = c.get("user") as AuthType;
-
-  const pageNumber = page ? parseInt(page) : undefined;
-  const limitNumber = limit ? parseInt(limit) : undefined;
-
-  // GET /api/v1/newsletters (silent)
-
-  const newsletter = await getNewslettersByUser(
-    cookieUser.id,
-    pageNumber,
-    limitNumber,
-  );
-
-  // GET /api/v1/newsletters result (silent)
-
-  return c.json(
-    {
-      data: newsletter,
-      success: true,
-      message: "Fetched all newsletters successfully",
+newslettersRoute.get(
+  "/",
+  zValidator(
+    "query",
+    z.object({ teamId: z.string().uuid().optional() }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
     },
-    200,
-  );
-});
+  ),
+  async (c) => {
+    const { page, limit } = c.req.query();
+    const { teamId } = c.req.valid("query");
+    const cookieUser = c.get("user") as AuthType;
+
+    const pageNumber = page ? parseInt(page) : undefined;
+    const limitNumber = limit ? parseInt(limit) : undefined;
+
+    // GET /api/v1/newsletters (silent)
+
+    const newsletter = await getNewslettersByUser(
+      cookieUser.id,
+      pageNumber,
+      limitNumber,
+      teamId,
+    );
+
+    // GET /api/v1/newsletters result (silent)
+
+    return c.json(
+      {
+        data: newsletter,
+        success: true,
+        message: "Fetched all newsletters successfully",
+      },
+      200,
+    );
+  },
+);
 
 // Roles/invites now live at the team level — see routes/api/v1/teams.ts
 // (PATCH /teams/:id/members/:userId, POST /teams/:id/invites,
@@ -361,21 +373,37 @@ newslettersRoute.post(
   zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
-  zValidator("json", z.object({ content: z.string().max(100_000) }), (result, c) => {
-    if (!result.success) return validationErrorResponse(c, result.error);
-  }),
+  zValidator(
+    "json",
+    z.object({ content: z.string().max(100_000) }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
+    },
+  ),
   async (c) => {
     const { id } = c.req.valid("param");
     const { content } = c.req.valid("json");
-    const newsletterOrRes = await getNewsletterOrFail(c, id, ["owner", "admin", "editor"]);
+    const newsletterOrRes = await getNewsletterOrFail(c, id, [
+      "owner",
+      "admin",
+      "editor",
+    ]);
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
 
     return c.json({
       success: true,
       data: {
         html: renderNewsletterMarkdown(content, {
-          subscriber: { name: "Taylor Reader", first_name: "Taylor", email: "taylor@example.com" },
-          newsletter: { id: newsletterOrRes.id, name: newsletterOrRes.name, slug: newsletterOrRes.slug },
+          subscriber: {
+            name: "Taylor Reader",
+            first_name: "Taylor",
+            email: "taylor@example.com",
+          },
+          newsletter: {
+            id: newsletterOrRes.id,
+            name: newsletterOrRes.name,
+            slug: newsletterOrRes.slug,
+          },
           email: { subject: "A sample newsletter", publish_date: new Date() },
           unsubscribe_url: "https://example.com/unsubscribe",
         }),
@@ -442,7 +470,12 @@ newslettersRoute.post(
     if (newsletterOrRes instanceof Response) return newsletterOrRes;
     const newsletter = newsletterOrRes;
 
-    const serviceData = await createSubscriber(newsletter.id, email, name, "manual");
+    const serviceData = await createSubscriber(
+      newsletter.id,
+      email,
+      name,
+      "manual",
+    );
     return c.json(serviceData, routeStatus(serviceData));
   },
 );

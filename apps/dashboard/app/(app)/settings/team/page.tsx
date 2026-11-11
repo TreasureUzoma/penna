@@ -3,14 +3,18 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  useTeams,
   useTeamMembers,
   useUpdateTeamMemberRole,
   useTransferTeamOwnership,
   useInviteToTeam,
   useCreateTeam,
   useRemoveTeamMember,
+  useDeleteTeam,
 } from "@/hooks/use-teams";
+import {
+  setActiveTeamSlug,
+  useActiveTeam,
+} from "@/hooks/use-active-team";
 import { useTeamSubscription } from "@/hooks/use-team-billing";
 import {
   Avatar,
@@ -54,7 +58,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -71,6 +75,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 
 function CreateTeamDialog() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -79,7 +84,7 @@ function CreateTeamDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" className="w-full sm:w-auto">
           <HugeiconsIcon icon={PlusIcon} className="w-4 h-4 mr-2" />
           New Team
         </Button>
@@ -130,7 +135,12 @@ function CreateTeamDialog() {
               createTeam(
                 { name: name.trim(), slug },
                 {
-                  onSuccess: () => {
+                  onSuccess: (result) => {
+                    const newTeamSlug = result?.data?.team?.slug;
+                    if (newTeamSlug) {
+                      setActiveTeamSlug(newTeamSlug);
+                      router.push(`/settings/team?team=${newTeamSlug}`);
+                    }
                     setOpen(false);
                     setName("");
                     setSlug("");
@@ -159,13 +169,18 @@ export default function TeamSettingsPage() {
 function TeamSettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: teams, isLoading: isLoadingTeams } = useTeams();
+  const {
+    teams,
+    activeTeam: savedActiveTeam,
+    setActiveTeam,
+    isLoading: isLoadingTeams,
+  } = useActiveTeam();
 
   const requestedSlug = searchParams.get("team");
   const activeTeam =
     (requestedSlug
       ? teams?.find((t) => t.slug === requestedSlug)
-      : undefined) ?? teams?.[0];
+      : undefined) ?? savedActiveTeam;
 
   const { data: members, isLoading: isLoadingMembers } = useTeamMembers(
     activeTeam?.id ?? "",
@@ -180,6 +195,7 @@ function TeamSettingsContent() {
   const { mutate: removeMember, isPending: isRemoving } = useRemoveTeamMember(
     activeTeam?.id ?? "",
   );
+  const { mutate: deleteTeam, isPending: isDeletingTeam } = useDeleteTeam();
   const { data: billing } = useTeamSubscription(activeTeam?.id ?? "");
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
@@ -226,20 +242,22 @@ function TeamSettingsContent() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-6 md:px-8 md:py-8 space-y-6">
-      <div className="flex items-center justify-between gap-2">
+    <div className="min-h-screen min-w-0 w-full px-3 py-5 sm:px-4 sm:py-6 md:px-8 md:py-8 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {teams && teams.length > 1 ? (
-          <div className="flex items-center gap-2">
+          <div className="flex w-full sm:w-auto items-center gap-2">
             <Label className="text-sm text-muted-foreground shrink-0">
               Team
             </Label>
             <Select
               value={activeTeam.slug}
-              onValueChange={(slug) =>
-                router.push(`/settings/team?team=${slug}`)
-              }
+              onValueChange={(slug) => {
+                const team = teams.find((candidate) => candidate.slug === slug);
+                if (team) setActiveTeam(team);
+                router.push(`/settings/team?team=${slug}`);
+              }}
             >
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="min-w-0 flex-1 sm:w-64 sm:flex-none">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -254,7 +272,9 @@ function TeamSettingsContent() {
         ) : (
           <div />
         )}
-        <CreateTeamDialog />
+        <div className="w-full sm:w-auto">
+          <CreateTeamDialog />
+        </div>
       </div>
 
       {isOverCap && (
@@ -384,7 +404,7 @@ function TeamSettingsContent() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                <div className="flex max-w-full flex-wrap items-center justify-end gap-2 self-end sm:self-auto">
                   {activeTeam.role === "owner" && member.role !== "owner" && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -488,6 +508,63 @@ function TeamSettingsContent() {
           )}
         </CardContent>
       </Card>
+
+      {activeTeam.role === "owner" && (
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-destructive">Delete team</CardTitle>
+            <CardDescription>
+              Permanently delete {activeTeam.name} and the newsletters and
+              content it owns.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={isDeletingTeam}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete team
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete {activeTeam.name}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently deletes the team, its newsletters,
+                    subscribers, posts, API keys, and team members. This cannot
+                    be undone. Any active Paddle subscription must be canceled
+                    before the team can be deleted.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep team</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    disabled={isDeletingTeam}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      deleteTeam(activeTeam.id, {
+                        onSuccess: () => {
+                          const nextTeam = teams.find(
+                            (team) => team.id !== activeTeam.id,
+                          );
+                          setActiveTeam(nextTeam ?? null);
+                          router.push("/newsletters");
+                        },
+                      });
+                    }}
+                  >
+                    {isDeletingTeam && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Delete team permanently
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

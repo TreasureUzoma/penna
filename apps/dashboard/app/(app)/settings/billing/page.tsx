@@ -23,7 +23,7 @@ import { Label } from "@workspace/ui/components/label";
 import { Check, Loader2 } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { plans } from "@workspace/constants/plans";
-import { useTeams } from "@/hooks/use-teams";
+import { useActiveTeam } from "@/hooks/use-active-team";
 import { useTeamSubscription, useCancelTeamSubscription } from "@/hooks/use-team-billing";
 import { SettingsLayout } from "../components/settings-layout";
 import { useQueryClient } from "@tanstack/react-query";
@@ -120,12 +120,17 @@ function usePaddleTransactionCheckout(teamId: string) {
 function BillingSettingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: teams, isLoading: isLoadingTeams } = useTeams();
+  const {
+    teams,
+    activeTeam: savedActiveTeam,
+    setActiveTeam,
+    isLoading: isLoadingTeams,
+  } = useActiveTeam();
 
   const requestedSlug = searchParams.get("team");
   const activeTeam =
     (requestedSlug ? teams?.find((t) => t.slug === requestedSlug) : undefined) ??
-    teams?.[0];
+    savedActiveTeam;
 
   usePaddleTransactionCheckout(activeTeam?.id ?? "");
 
@@ -168,7 +173,11 @@ function BillingSettingsPageContent() {
             <Label className="text-sm text-muted-foreground shrink-0">Team</Label>
             <Select
               value={activeTeam.slug}
-              onValueChange={(slug) => router.push(`/settings/billing?team=${slug}`)}
+              onValueChange={(slug) => {
+                const team = teams.find((candidate) => candidate.slug === slug);
+                if (team) setActiveTeam(team);
+                router.push(`/settings/billing?team=${slug}`);
+              }}
             >
               <SelectTrigger className="w-64">
                 <SelectValue />
@@ -304,7 +313,7 @@ function BillingSettingsPageContent() {
           </div>
         </div>
 
-        {currentPlan.price !== 0 && isOwnerOrAdmin && (
+        {sub && isOwnerOrAdmin && (
           <Card className="border-destructive/20 bg-destructive/5">
             <CardHeader>
               <CardTitle className="text-destructive">
@@ -313,7 +322,9 @@ function BillingSettingsPageContent() {
               <CardDescription>
                 {sub?.scheduledChange
                   ? "Already scheduled to cancel — the team keeps its plan until then."
-                  : "Cancel at the end of the current billing period and downgrade to Hobby."}
+                  : sub.status === "past_due" || sub.status === "paused"
+                    ? "Cancel this subscription to stop Paddle from retrying or resuming charges."
+                    : "Cancel at the end of the current billing period and downgrade to Hobby."}
               </CardDescription>
             </CardHeader>
             <CardContent>

@@ -27,14 +27,22 @@ export const getDashboardOverview = async (
   page = 1,
   limit = 10,
   sort: DashboardOverview["sort"] = "newest",
-  search?: string
+  search?: string,
+  teamId?: string,
 ): Promise<ServiceResponse> => {
   try {
     const userNewsletters = await db
       .select({ id: newsletters.id })
       .from(newsletters)
       .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
-      .where(eq(teamMembers.userId, userId));
+      .where(
+        teamId
+          ? and(
+              eq(teamMembers.userId, userId),
+              eq(newsletters.teamId, teamId),
+            )
+          : eq(teamMembers.userId, userId),
+      );
 
     const newsletterIds = userNewsletters.map((p) => p.id);
 
@@ -85,6 +93,7 @@ export const getDashboardOverview = async (
 
     // Build where conditions
     const whereConditions = [eq(teamMembers.userId, userId)];
+    if (teamId) whereConditions.push(eq(newsletters.teamId, teamId));
 
     if (search && search.trim()) {
       whereConditions.push(
@@ -143,21 +152,29 @@ export const getDashboardOverview = async (
 };
 
 /**
- * The most recently *actually sent* posts across every newsletter the user
- * belongs to — scheduled-but-not-yet-sent posts are excluded (they're not
+ * The most recently *actually sent* posts across the selected team's
+ * newsletters (or all teams if omitted) — scheduled-but-not-yet-sent posts are excluded (they're not
  * "activity" yet), matching the same published-and-sentAt-has-passed check
  * used to lock post editing (see the dashboard's posts/[postId] page).
  */
 export const getRecentActivity = async (
   userId: string,
-  limit = 5
+  limit = 5,
+  teamId?: string,
 ): Promise<ServiceResponse> => {
   try {
     const userNewsletters = await db
       .select({ id: newsletters.id })
       .from(newsletters)
       .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
-      .where(eq(teamMembers.userId, userId));
+      .where(
+        teamId
+          ? and(
+              eq(teamMembers.userId, userId),
+              eq(newsletters.teamId, teamId),
+            )
+          : eq(teamMembers.userId, userId),
+      );
 
     const newsletterIds = userNewsletters.map((p) => p.id);
 
@@ -208,21 +225,29 @@ export const getRecentActivity = async (
 };
 
 /**
- * Account-wide analytics — combined subscriber growth across every newsletter
- * the user belongs to, plus a ranking of their top newsletters by active
- * subscriber count. Distinct from `getNewsletterAnalytics` (services/
- * analytics.ts), which is scoped to one newsletter.
+ * Workspace analytics — subscriber growth and top newsletters by active
+ * subscriber count for the selected team (or all teams if omitted). Distinct
+ * from `getNewsletterAnalytics` (services/analytics.ts), which is scoped to
+ * one newsletter.
  */
 export const getAccountAnalytics = async (
   userId: string,
-  days: number = 30
+  days: number = 30,
+  teamId?: string,
 ): Promise<ServiceResponse> => {
   try {
     const userNewsletters = await db
       .select({ id: newsletters.id })
       .from(newsletters)
       .innerJoin(teamMembers, eq(newsletters.teamId, teamMembers.teamId))
-      .where(eq(teamMembers.userId, userId));
+      .where(
+        teamId
+          ? and(
+              eq(teamMembers.userId, userId),
+              eq(newsletters.teamId, teamId),
+            )
+          : eq(teamMembers.userId, userId),
+      );
 
     const newsletterIds = userNewsletters.map((p) => p.id);
 
@@ -283,7 +308,14 @@ export const getAccountAnalytics = async (
           eq(subscribers.status, "subscribed")
         )
       )
-      .where(eq(teamMembers.userId, userId))
+      .where(
+        teamId
+          ? and(
+              eq(teamMembers.userId, userId),
+              eq(newsletters.teamId, teamId),
+            )
+          : eq(teamMembers.userId, userId),
+      )
       .groupBy(newsletters.id)
       .orderBy(desc(count(subscribers.id)))
       .limit(5);

@@ -6,6 +6,7 @@ import type { UpdateNewsletter } from "@workspace/validations";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { showErrorToast } from "../lib/error-toast";
+import { useActiveTeam } from "@/hooks/use-active-team";
 
 type PaginatedResponse<T> = {
   data: T[];
@@ -20,14 +21,17 @@ type PaginatedResponse<T> = {
 };
 
 export function useNewsletters() {
+  const { activeTeam, isLoading: isLoadingTeams } = useActiveTeam();
   return useQuery({
-    queryKey: ["newsletters"],
+    queryKey: ["newsletters", activeTeam?.id],
     queryFn: async () => {
+      const query = activeTeam ? `?teamId=${activeTeam.id}` : "";
       const res = await api.get<{ data: PaginatedResponse<Newsletter> }>(
-        "/newsletters",
+        `/newsletters${query}`,
       );
       return res.data.data.data;
     },
+    enabled: !isLoadingTeams,
   });
 }
 
