@@ -193,6 +193,15 @@ export const handlePaddleWebhook = async (
       case EventName.TransactionUpdated:
         return await handleTransactionUpdated(event.data);
 
+      // Paddle can report a failed renewal transaction before (or without
+      // this endpoint being subscribed to) the separate subscription.past_due
+      // notification. Use the transaction's subscription ID to update the
+      // entitlement row directly.
+      case "transaction.payment_failed" as EventName:
+        return await handleTransactionPaymentFailed(
+          event.data as TransactionNotification
+        );
+
       case EventName.SubscriptionCreated:
       case EventName.SubscriptionActivated:
         return await handleSubscriptionActivated(event.data);
@@ -366,6 +375,41 @@ const handleTransactionUpdated = async (
     success: true,
     message: "Transaction updated",
     data: { transactionId: data.id },
+  };
+};
+
+const handleTransactionPaymentFailed = async (
+  data: TransactionNotification
+): Promise<ServiceResponse> => {
+  let teamSubscriptionFound = false;
+  if (data.subscriptionId) {
+    const [teamSubscription] = await db
+      .select({ id: teamSubscriptions.id })
+      .from(teamSubscriptions)
+      .where(eq(teamSubscriptions.paddleSubscriptionId, data.subscriptionId));
+    teamSubscriptionFound = !!teamSubscription;
+
+    await db
+      .update(teamSubscriptions)
+      .set({ status: "past_due", updatedAt: new Date() })
+      .where(eq(teamSubscriptions.paddleSubscriptionId, data.subscriptionId));
+  }
+
+  // Legacy personal subscriptions have no teamSubscriptions row. If Paddle
+  // includes the checkout custom data, immediately remove their paid plan;
+  // team subscriptions are gated by the status update above.
+  const userId = userIdFromCustomData(data.customData);
+  if (userId && !teamSubscriptionFound) {
+    await db
+      .update(users)
+      .set({ subscriptionType: "free", plan: "hobby" })
+      .where(eq(users.id, userId));
+  }
+
+  return {
+    success: true,
+    message: "Failed payment processed",
+    data: { transactionId: data.id, subscriptionId: data.subscriptionId },
   };
 };
 
