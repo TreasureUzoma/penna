@@ -4,16 +4,16 @@ import Logo from "@workspace/ui/components/logo";
 
 const navLinks = [
   {
-    title: "log in",
+    title: "Log in",
     url: "/login",
   },
   {
-    title: "docs",
+    title: "Docs",
     url: "/docs",
     external: true,
   },
   {
-    title: "pricing",
+    title: "Pricing",
     url: "/#pricing",
   },
 ];

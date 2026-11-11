@@ -3,51 +3,51 @@ import { Check, X } from "lucide-react";
 export const Comparison = () => {
   const features = [
     {
-      name: "clean, full-featured dashboard",
+      name: "Clean, full-featured dashboard",
       penna: true,
       buttondown: true,
       mailchimp: true,
     },
     {
-      name: "markdown editor",
+      name: "Markdown editor",
       penna: true,
       buttondown: true,
       mailchimp: false,
     },
     {
-      name: "subscriber management",
+      name: "Subscriber management",
       penna: true,
       buttondown: true,
       mailchimp: true,
     },
-    { name: "segmentation", penna: true, buttondown: true, mailchimp: true },
+    { name: "Segmentation", penna: true, buttondown: true, mailchimp: true },
     {
-      name: "custom domain",
+      name: "Custom domain",
       penna: true,
       buttondown: false,
       mailchimp: true,
     },
-    { name: "open source", penna: true, buttondown: false, mailchimp: false },
+    { name: "Open source", penna: true, buttondown: false, mailchimp: false },
     {
-      name: "self-hostable",
+      name: "Self-hostable",
       penna: true,
       buttondown: false,
       mailchimp: false,
     },
     {
-      name: "transparent pricing",
+      name: "Transparent pricing",
       penna: true,
       buttondown: true,
       mailchimp: false,
     },
     {
-      name: "developer-friendly API",
+      name: "Developer-friendly API",
       penna: true,
       buttondown: false,
       mailchimp: false,
     },
     {
-      name: "webhooks / automation triggers",
+      name: "Webhooks / automation triggers",
       penna: true,
       buttondown: true,
       mailchimp: true,
@@ -66,10 +66,10 @@ export const Comparison = () => {
       <div className="max-w-4xl w-full space-y-8">
         <div className="space-y-2">
           <h2 className="text-3xl md:text-4xl font-bold">
-            why switch to penna?
+            Why switch to Penna?
           </h2>
           <p className="text-lg text-muted-foreground">
-            built for developers. by developers.
+            Built for developers, by developers.
           </p>
         </div>
 
@@ -77,13 +77,13 @@ export const Comparison = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 font-semibold">feature</th>
-                <th className="text-center py-3 px-4 font-semibold">penna</th>
+                <th className="text-left py-3 px-4 font-semibold">Feature</th>
+                <th className="text-center py-3 px-4 font-semibold">Penna</th>
                 <th className="text-center py-3 px-4 font-semibold text-muted-foreground">
-                  buttondown
+                  Buttondown
                 </th>
                 <th className="text-center py-3 px-4 font-semibold text-muted-foreground">
-                  mailchimp
+                  Mailchimp
                 </th>
               </tr>
             </thead>
@@ -112,7 +112,7 @@ export const Comparison = () => {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          comparison last updated july 2026. features vary by plan.
+          Comparison last updated July 2026. Features vary by plan.
         </p>
       </div>
     </section>

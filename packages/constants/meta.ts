@@ -1,10 +1,10 @@
 export const meta = {
-  name: "penna",
+  name: "Penna",
   socials: {
     github: "https://github.com/treasureuzoma/penna",
   },
   developer: {
-    name: "treasure uzoma",
+    name: "Treasure Uzoma",
     url: "https://idolo.dev",
     nickname: "idolodev",
   },

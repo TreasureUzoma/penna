@@ -4,26 +4,27 @@ import { ModeToggle } from "./theme-toggle";
 
 const footerSections = [
   {
-    title: "product",
+    title: "Product",
     links: [
-      { name: "overview", url: "/" },
-      { name: "pricing", url: "/#pricing" },
-      { name: "docs", url: "/docs", external: true },
+      { name: "Overview", url: "/" },
+      { name: "Pricing", url: "/#pricing" },
+      { name: "Docs", url: "/docs", external: true },
+      { name: "MCP integration", url: "/docs/integrations/mcp", external: true },
     ],
   },
   {
-    title: "company",
+    title: "Company",
     links: [
-      { name: "about", url: "/about" },
-      { name: "contact", url: "/contact" },
-      { name: "privacy", url: "/privacy" },
-      { name: "terms", url: "/terms" },
-      { name: "refund", url: "/refund" },
+      { name: "About", url: "/about" },
+      { name: "Contact", url: "/contact" },
+      { name: "Privacy", url: "/privacy" },
+      { name: "Terms", url: "/terms" },
+      { name: "Refunds", url: "/refund" },
     ],
   },
   {
-    title: "developers",
-    links: [{ name: "github", url: meta.socials.github }],
+    title: "Developers",
+    links: [{ name: "GitHub", url: meta.socials.github }],
   },
 ];
 
@@ -34,7 +35,7 @@ export const Footer = () => {
         <div className="space-y-3">
           <h3 className="font-bold text-lg">{meta.name}</h3>
           <p className="text-muted-foreground max-w-xs leading-relaxed">
-            built for developers who value speed, openness, and simplicity.
+            Built for developers who value speed, openness, and simplicity.
           </p>
         </div>
 
@@ -70,11 +71,11 @@ export const Footer = () => {
 
       <div className="text-[11px] sm:text-sm py-4 px-4 sm:px-6 flex flex-nowrap items-center justify-between gap-2 max-w-5xl mx-auto">
         <p className="text-muted-foreground whitespace-nowrap truncate">
-          &copy; {new Date().getFullYear()} {meta.name}. mit licensed.
+          &copy; {new Date().getFullYear()} {meta.name}. MIT License.
         </p>
 
         <p>
-          built with ❤️ by{" "}
+          Built with ❤️ by{" "}
           <a
             href={meta.developer.url}
             className="underline hover:text-muted-foreground whitespace-nowrap"

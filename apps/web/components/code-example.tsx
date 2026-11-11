@@ -40,17 +40,17 @@ await fetch(
       <div className="max-w-3xl w-full space-y-8">
         <div className="space-y-4">
           <h2 className="text-3xl md:text-4xl font-bold">
-            or automate it - everything's an API too
+            Or automate it. Everything is an API, too.
           </h2>
           <p className="text-lg text-muted-foreground">
-            whatever you can do in the dashboard, you can do from your code:
-            manage subscribers and send newsletters with a simple REST API.
+            Manage subscribers and send newsletters from your code with the
+            Penna REST API.
           </p>
         </div>
 
         <div className="relative rounded-xl border border-neutral-800 bg-neutral-900 subpixel-antialiased overflow-hidden shadow-sm">
           <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/50 px-4 py-2.5 text-xs font-mono text-zinc-400">
-            <span>javascript</span>
+            <span>JavaScript</span>
           </div>
           <div
             className="overflow-x-auto p-5 font-mono text-sm leading-relaxed [&>pre]:!bg-transparent [&>pre]:p-0"
@@ -59,7 +59,7 @@ await fetch(
         </div>
 
         <p className="text-sm text-muted-foreground">
-          full api reference in the{" "}
+          Full API reference in the{" "}
           <a href="/docs" className="underline hover:text-foreground">
             docs
           </a>

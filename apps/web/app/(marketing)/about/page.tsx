@@ -19,7 +19,7 @@ export default function AboutPage() {
   return (
     <section className="p-4 md:p-5 pt-32 md:pt-40 pb-20 max-w-3xl mx-auto">
       <div className="flex flex-col space-y-8 md:space-y-10">
-        <h1 className="text-3xl md:text-4xl font-bold">about</h1>
+        <h1 className="text-3xl md:text-4xl font-bold">About</h1>
 
         <div className="space-y-4 text-muted-foreground leading-relaxed">
           <p>
@@ -30,13 +30,13 @@ export default function AboutPage() {
             to.
           </p>
           <p>
-            we built it because most newsletter tools are designed for
-            marketers, not engineers. {meta.name} strips out the busywork
-            without stripping out the features: a dashboard that stays out of
-            your way, and infrastructure that scales with you.
+            I built it because most newsletter tools are designed for marketers,
+            not engineers. {meta.name} strips out the busywork without stripping
+            out the features: a dashboard that stays out of your way, and
+            infrastructure that scales with you.
           </p>
           <p>
-            it's{" "}
+            It's{" "}
             <a
               href={meta.socials.github}
               target="_blank"

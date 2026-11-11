@@ -22,6 +22,7 @@ export function Pricings() {
 
   const plan = getPlanForSubscriberCount(subscriberCount);
   const isCustomPricing = plan.price === null;
+  const sentenceCase = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
@@ -45,16 +46,16 @@ export function Pricings() {
     >
       <div className="text-center space-y-4">
         <h3 className="text-3xl md:text-4xl font-bold text-balance">
-          simple, transparent pricing
+          Simple, transparent pricing
         </h3>
         <p className="text-lg text-muted-foreground text-balance">
-          enter your subscriber count to see your pricing
+          Enter your subscriber count to see your pricing.
         </p>
       </div>
 
       <div className="space-y-2">
         <label htmlFor="subscribers" className="text-sm font-medium">
-          about how many subscribers do you have?
+          About how many subscribers do you have?
         </label>
         <Input
           id="subscribers"
@@ -62,7 +63,7 @@ export function Pricings() {
           min={0}
           value={inputValue}
           onChange={handleInputChange}
-          placeholder="enter subscriber count"
+          placeholder="Enter subscriber count"
           className="text-lg h-12"
         />
       </div>
@@ -71,17 +72,17 @@ export function Pricings() {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-3xl">{plan.name}</CardTitle>
+              <CardTitle className="text-3xl">{sentenceCase(plan.name)}</CardTitle>
               <CardDescription className="text-base mt-2">
-                {plan.description}
+                {sentenceCase(plan.description)}
               </CardDescription>
             </div>
             <div className="text-right">
               <div className="text-xl md:text-4xl font-bold">
-                {isCustomPricing ? "custom" : plan.priceLabel}
+                {isCustomPricing ? "Custom" : sentenceCase(plan.priceLabel)}
               </div>
               {!isCustomPricing && (
-                <div className="text-sm text-muted-foreground">per month</div>
+                <div className="text-sm text-muted-foreground">Per month</div>
               )}
             </div>
           </div>
@@ -91,12 +92,12 @@ export function Pricings() {
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm font-medium">
               {plan.subscribers === null
-                ? "unlimited subscribers"
-                : `includes up to ${plan.subscribers.toLocaleString()} subscribers`}
+                ? "Unlimited subscribers"
+                : `Includes up to ${plan.subscribers.toLocaleString()} subscribers`}
             </p>
             {plan.subscribers !== null && (
               <p className="text-sm text-muted-foreground mt-1">
-                pass that and we'll ask you to upgrade — no surprise overage
+                Pass that and we'll ask you to upgrade — no surprise overage
                 charges.
               </p>
             )}
@@ -106,7 +107,7 @@ export function Pricings() {
             {plan.features.map((feature, i) => (
               <div key={i} className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-sm">{feature}</span>
+                <span className="text-sm">{sentenceCase(feature)}</span>
               </div>
             ))}
           </div>
@@ -121,7 +122,7 @@ export function Pricings() {
                   : `settings/billing/subscribe?plan=${plan.slug}`
               }
             >
-              {isCustomPricing ? "contact sales" : "get started"}
+              {isCustomPricing ? "Contact sales" : "Get started"}
             </Link>
           </Button>
         </CardFooter>

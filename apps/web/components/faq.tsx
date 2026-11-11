@@ -15,8 +15,8 @@ export default function Faq() {
         <div className="md:col-span-2 flex flex-col gap-4">
           <h3 className="text-3xl md:text-4xl font-bold text-balance">FAQs</h3>
           <p className="text-lg text-muted-foreground text-balance">
-            we've answered the most frequently asked questions. have another
-            question? ask {meta.name} ai.
+            We've answered the most frequently asked questions. Have another
+            question? Ask {meta.name} AI.
           </p>
         </div>
 
