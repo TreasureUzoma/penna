@@ -25,9 +25,8 @@ export interface TeamBillingInfo {
 
 /**
  * A team's real Paddle subscription (if any) plus its resolved effective
- * plan. A team with no live subscription yet still has an effective plan —
- * the server resolves the Phase-1 fallback (the owner's individual plan)
- * server-side, so `plan` is always populated even when `subscription` isn't.
+ * plan. A team without a live subscription is on Hobby, so `plan` is always
+ * populated even when `subscription` isn't.
  */
 export function useTeamSubscription(teamId: string) {
   return useQuery({

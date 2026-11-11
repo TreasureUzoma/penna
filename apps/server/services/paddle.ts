@@ -5,13 +5,10 @@ import type {
 } from "@paddle/paddle-node-sdk";
 import { envConfig } from "@/config";
 import { db } from "@workspace/db";
-import { payments, teamSubscriptions, users } from "@workspace/db/schema";
+import { payments, teamSubscriptions } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import type { ServiceResponse } from "@workspace/types";
-import { plans, type PlanSlug } from "@workspace/constants/plans";
-
-const isPlanSlug = (slug: string | undefined): slug is PlanSlug =>
-  !!slug && plans.some((plan) => plan.slug === slug);
+import type { PlanSlug } from "@workspace/constants/plans";
 
 // Exported — team-billing.ts's team-scoped checkout/cancel/seat-sync
 // functions call the same Paddle SDK instance rather than constructing
@@ -46,96 +43,6 @@ export const PRICE_ID_TO_PLAN_SLUG: Record<string, PlanSlug> = Object.fromEntrie
     .filter((entry): entry is [string, string] => !!entry[1])
     .map(([slug, priceId]) => [priceId, slug as PlanSlug])
 );
-
-/**
- * Maps billing plan slugs (as used in checkout / Paddle price catalog) to
- * the `users.subscriptionType` enum ("free" | "pro" | "enterprise"), which
- * gates coarse features (e.g. `canRemoveBranding` in `services/newsletters.ts`).
- * These aren't the same vocabulary — "hobby" and "enterprise" line up, but
- * "professional" and "business" both collapse to "pro" since that's all the
- * enum distinguishes. The exact slug is preserved separately in
- * `users.plan` (see `packages/db/schema.ts`), which is what subscriber-cap
- * enforcement (`services/limits.ts`) actually reads.
- */
-const PLAN_SLUG_TO_SUBSCRIPTION_TYPE: Record<
-  string,
-  "free" | "pro" | "enterprise"
-> = {
-  hobby: "free",
-  professional: "pro",
-  business: "pro",
-  enterprise: "enterprise",
-};
-
-export interface CreateCheckoutSessionOptions {
-  userId: string;
-  planSlug: string;
-  /** Where Paddle sends the customer after a successful payment. */
-  successUrl: string;
-}
-
-/**
- * Creates a real Paddle-hosted checkout transaction and returns its URL to
- * redirect the customer to.
- */
-export const createCheckoutSession = async (
-  options: CreateCheckoutSessionOptions
-): Promise<ServiceResponse> => {
-  try {
-    const { userId, planSlug, successUrl } = options;
-
-    const priceId = PLAN_PRICE_IDS[planSlug];
-    if (!priceId) {
-      return {
-        success: false,
-        message: `No Paddle price configured for plan "${planSlug}". Set PADDLE_PRICE_ID_${planSlug.toUpperCase()} in your environment.`,
-        data: null,
-      };
-    }
-
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
-    if (!user) {
-      return {
-        success: false,
-        message: "User not found",
-        data: null,
-      };
-    }
-
-    const transaction = await paddle.transactions.create({
-      items: [{ priceId, quantity: 1 }],
-      customData: { userId, planSlug },
-      checkout: { url: successUrl },
-    });
-
-    if (!transaction.checkout?.url) {
-      return {
-        success: false,
-        message: "Paddle did not return a checkout URL",
-        data: null,
-      };
-    }
-
-    return {
-      success: true,
-      message: "Checkout session created",
-      data: {
-        transactionId: transaction.id,
-        url: transaction.checkout.url,
-      },
-    };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to create checkout";
-    console.error("Paddle checkout error:", errorMessage);
-
-    return {
-      success: false,
-      message: errorMessage,
-      data: null,
-    };
-  }
-};
 
 /**
  * Verifies and processes a Paddle webhook. `rawBody` must be the exact,
@@ -245,14 +152,11 @@ const planSlugFromCustomData = (
   customData: Record<string, any> | null
 ): string | undefined => customData?.planSlug;
 
-// `initiatedByUserId` is what team checkouts set (see
-// createTeamCheckoutSession in team-billing.ts); `userId` is what the
-// older, pre-teams personal checkout still sets. Either way, this is
-// "who to attribute the payments-table audit row to" — falls back to
-// `userId` so legacy transactions keep working unchanged.
+// `initiatedByUserId` is set by workspace checkout and attributes the
+// payments-table audit row to the user who initiated it.
 const userIdFromCustomData = (
   customData: Record<string, any> | null
-): string | undefined => customData?.initiatedByUserId ?? customData?.userId;
+): string | undefined => customData?.initiatedByUserId;
 
 const teamIdFromCustomData = (
   customData: Record<string, any> | null
@@ -340,15 +244,6 @@ const handleTransactionCompleted = async (
     },
   });
 
-  const planSlug = planSlugFromCustomData(data.customData);
-  if (isPlanSlug(planSlug)) {
-    const subscriptionType = PLAN_SLUG_TO_SUBSCRIPTION_TYPE[planSlug];
-    await db
-      .update(users)
-      .set({ subscriptionType, plan: planSlug })
-      .where(eq(users.id, userId));
-  }
-
   return {
     success: true,
     message: "Transaction processed",
@@ -381,29 +276,11 @@ const handleTransactionUpdated = async (
 const handleTransactionPaymentFailed = async (
   data: TransactionNotification
 ): Promise<ServiceResponse> => {
-  let teamSubscriptionFound = false;
   if (data.subscriptionId) {
-    const [teamSubscription] = await db
-      .select({ id: teamSubscriptions.id })
-      .from(teamSubscriptions)
-      .where(eq(teamSubscriptions.paddleSubscriptionId, data.subscriptionId));
-    teamSubscriptionFound = !!teamSubscription;
-
     await db
       .update(teamSubscriptions)
       .set({ status: "past_due", updatedAt: new Date() })
       .where(eq(teamSubscriptions.paddleSubscriptionId, data.subscriptionId));
-  }
-
-  // Legacy personal subscriptions have no teamSubscriptions row. If Paddle
-  // includes the checkout custom data, immediately remove their paid plan;
-  // team subscriptions are gated by the status update above.
-  const userId = userIdFromCustomData(data.customData);
-  if (userId && !teamSubscriptionFound) {
-    await db
-      .update(users)
-      .set({ subscriptionType: "free", plan: "hobby" })
-      .where(eq(users.id, userId));
   }
 
   return {
@@ -426,28 +303,9 @@ const handleSubscriptionActivated = async (
     };
   }
 
-  // Legacy personal (pre-teams) subscription — unchanged.
-  const userId = userIdFromCustomData(data.customData);
-  if (!userId) {
-    return {
-      success: false,
-      message: "Missing teamId or userId in custom data",
-      data: null,
-    };
-  }
-
-  const rawPlanSlug = planSlugFromCustomData(data.customData);
-  const planSlug: PlanSlug = isPlanSlug(rawPlanSlug) ? rawPlanSlug : "professional";
-  const subscriptionType = PLAN_SLUG_TO_SUBSCRIPTION_TYPE[planSlug];
-
-  await db
-    .update(users)
-    .set({ subscriptionType, plan: planSlug })
-    .where(eq(users.id, userId));
-
   return {
     success: true,
-    message: "Subscription activated",
+    message: "Personal subscription event ignored; workspaceId missing",
     data: { subscriptionId: data.id },
   };
 };
@@ -465,33 +323,9 @@ const handleSubscriptionUpdated = async (
     };
   }
 
-  // Legacy personal (pre-teams) subscription — unchanged.
-  const userId = userIdFromCustomData(data.customData);
-  if (!userId) {
-    return {
-      success: false,
-      message: "Missing teamId or userId in custom data",
-      data: null,
-    };
-  }
-
-  const planSlug = planSlugFromCustomData(data.customData);
-  if (data.status === "active" && isPlanSlug(planSlug)) {
-    const subscriptionType = PLAN_SLUG_TO_SUBSCRIPTION_TYPE[planSlug];
-    await db
-      .update(users)
-      .set({ subscriptionType, plan: planSlug })
-      .where(eq(users.id, userId));
-  } else if (["past_due", "paused", "canceled"].includes(data.status)) {
-    await db
-      .update(users)
-      .set({ subscriptionType: "free", plan: "hobby" })
-      .where(eq(users.id, userId));
-  }
-
   return {
     success: true,
-    message: "Subscription updated",
+    message: "Subscription event ignored; workspaceId missing",
     data: { subscriptionId: data.id },
   };
 };
@@ -512,24 +346,9 @@ const handleSubscriptionCanceled = async (
     };
   }
 
-  // Legacy personal (pre-teams) subscription — unchanged.
-  const userId = userIdFromCustomData(data.customData);
-  if (!userId) {
-    return {
-      success: false,
-      message: "Missing teamId or userId in custom data",
-      data: null,
-    };
-  }
-
-  await db
-    .update(users)
-    .set({ subscriptionType: "free", plan: "hobby" })
-    .where(eq(users.id, userId));
-
   return {
     success: true,
-    message: "Subscription canceled",
+    message: "Subscription event ignored; workspaceId missing",
     data: { subscriptionId: data.id },
   };
 };
@@ -609,32 +428,3 @@ export const getUserInvoices = async (
   }
 };
 
-/**
- * Cancel subscription
- */
-export const cancelSubscription = async (
-  userId: string
-): Promise<ServiceResponse> => {
-  try {
-    await db
-      .update(users)
-      .set({ subscriptionType: "free", plan: "hobby" })
-      .where(eq(users.id, userId));
-
-    return {
-      success: true,
-      message: "Subscription canceled",
-      data: null,
-    };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to cancel subscription";
-    console.error("Subscription cancellation error:", errorMessage);
-
-    return {
-      success: false,
-      message: errorMessage,
-      data: null,
-    };
-  }
-};

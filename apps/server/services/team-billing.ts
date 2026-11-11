@@ -2,7 +2,7 @@ import { db } from "@workspace/db";
 import { teamMembers, teamSubscriptions } from "@workspace/db/schema";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import type { ServiceResponse } from "@workspace/types";
-import { paddle, PLAN_PRICE_IDS, cancelSubscription as cancelLegacyUserSubscription } from "./paddle";
+import { paddle, PLAN_PRICE_IDS } from "./paddle";
 
 /**
  * Team-scoped billing — checkout, seat-quantity sync, and cancel for a
@@ -115,8 +115,7 @@ export const createTeamCheckoutSession = async (
  * the subscription-update skill for why these two proration modes match
  * "add a seat" vs "remove a seat" semantics.
  *
- * A no-op (not an error) if the team has no live subscription yet — most
- * teams are still on the Phase-1 fallback plan and have nothing to sync.
+ * A no-op (not an error) if the team has no live subscription yet.
  * Callers (acceptTeamInvite, removeTeamMember) treat failures here as
  * non-fatal to the membership change itself.
  */
@@ -147,31 +146,18 @@ export const syncTeamSeatQuantity = async (teamId: string): Promise<void> => {
  * `teamSubscriptions.status` synchronously — that only happens for real
  * once the corresponding webhook lands at period end.
  *
- * A team with no live `teamSubscriptions` row is still on the Phase-1
- * fallback (the owner's individual `users.plan` — see getTeamPlan). For
- * those teams "cancel" has no Paddle subscription to call, so it falls
- * back to exactly what cancelling did before teams existed: flip the
- * owner's own plan back to hobby. This keeps existing pre-teams customers'
- * cancel button working unchanged.
+ * A team with no live Paddle subscription is already on Hobby and has
+ * nothing to cancel.
  */
 export const cancelTeamSubscription = async (teamId: string): Promise<ServiceResponse> => {
   try {
     const sub = await getLiveTeamSubscription(teamId);
     if (!sub) {
-      const [owner] = await db
-        .select({ userId: teamMembers.userId })
-        .from(teamMembers)
-        .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.role, "owner")));
-
-      if (!owner) {
-        return {
-          success: false,
-          message: "This team has no active subscription to cancel.",
-          data: null,
-        };
-      }
-
-      return cancelLegacyUserSubscription(owner.userId);
+      return {
+        success: false,
+        message: "This team has no active subscription to cancel.",
+        data: null,
+      };
     }
 
     const subscription = await paddle.subscriptions.cancel(sub.paddleSubscriptionId, {

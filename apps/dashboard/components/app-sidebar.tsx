@@ -67,7 +67,7 @@ export default function AppSidebar({
   const { data: teamBilling, isLoading: billingLoading } = useTeamSubscription(
     teams?.[0]?.id ?? "",
   );
-  const displayedPlan = teamBilling?.plan.name ?? profileData?.plan ?? "Free";
+  const displayedPlan = teamBilling?.plan.name ?? "Free";
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   const isNewsletterRoute =

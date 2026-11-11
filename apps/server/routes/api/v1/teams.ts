@@ -276,10 +276,8 @@ teamsRoute.delete(
 
 // current live subscription for a team (backs Settings > Billing) — any
 // member can see the team's plan, same visibility as the team itself.
-// Includes the *resolved* effective plan alongside the raw Paddle
-// subscription row, since a team with no live subscription yet still has
-// an effective plan (the Phase-1 fallback via getTeamPlan) — the dashboard
-// shouldn't have to know about that fallback itself.
+// Includes the resolved effective plan alongside the raw Paddle
+// subscription row; a team without a live subscription is on Hobby.
 teamsRoute.get(
   "/:id/subscription",
   zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {

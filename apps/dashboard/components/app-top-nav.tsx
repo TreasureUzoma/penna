@@ -91,7 +91,7 @@ export default function AppTopNav() {
   const { data: teamBilling, isLoading: billingLoading } = useTeamSubscription(
     teams?.[0]?.id ?? "",
   );
-  const displayedPlan = teamBilling?.plan.name ?? profileData?.plan ?? "Free";
+  const displayedPlan = teamBilling?.plan.name ?? "Free";
   return (
     <>
       <header className="w-full bg-background relative">

@@ -49,17 +49,14 @@ type NewsletterOwnerPlan = {
 };
 
 /**
- * Looks up a newsletter's owner and their exact plan (`users.plan`, not the
- * coarser `subscriptionType`). Returns `null` if the newsletter has no owner
+ * Looks up a newsletter's owner and its workspace plan. Returns `null` if the newsletter has no owner
  * on record, which shouldn't happen for a real newsletter but is handled
  * defensively rather than thrown, since this sits on hot paths (public
  * subscribe forms, external-API sends).
  */
-// Resolves via the newsletter's owning team's real Paddle subscription
-// (getTeamPlan), falling back to the team owner's individual `users.plan`
-// for teams that haven't gone through team-level checkout yet — same
-// resolution every other plan gate uses (see canRemoveBranding in
-// services/newsletters.ts). Owner name/email are still looked up here
+// Resolves via the newsletter's owning team's Paddle subscription
+// (getTeamPlan), which defaults to Hobby without a live subscription.
+// Owner name/email are still looked up here
 // since they're needed for the subscriber-limit-warning email regardless
 // of which plan source won.
 const getNewsletterOwnerPlan = async (

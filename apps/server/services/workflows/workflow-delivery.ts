@@ -34,20 +34,7 @@ export async function canWorkflowRemoveBranding(
     .orderBy(desc(schema.teamSubscriptions.updatedAt))
     .limit(1);
 
-  if (subscription) return subscription.planSlug !== "hobby";
-
-  const [owner] = await dbLite
-    .select({ plan: schema.users.plan })
-    .from(schema.teamMembers)
-    .innerJoin(schema.users, eq(schema.teamMembers.userId, schema.users.id))
-    .where(
-      and(
-        eq(schema.teamMembers.teamId, teamId),
-        eq(schema.teamMembers.role, "owner"),
-      ),
-    );
-
-  return owner?.plan !== undefined && owner.plan !== "hobby";
+  return subscription?.planSlug !== undefined && subscription.planSlug !== "hobby";
 }
 
 async function getWorkflowSendingDomain(

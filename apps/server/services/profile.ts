@@ -10,7 +10,6 @@ export const getProfileDataById = async (id: string) => {
       name: users.name,
       email: users.email,
       avatarUrl: users.avatarUrl,
-      plan: users.plan,
     })
     .from(users)
     .where(eq(users.id, id));

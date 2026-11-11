@@ -96,14 +96,7 @@ export const getUserTeamRole = async (teamId: string, userId: string) => {
   };
 };
 
-/**
- * A team's effective billing plan. Checks for a real, live Paddle
- * subscription first; falls back to the team owner's individual
- * `users.plan` if there isn't one yet — this is the permanent path for
- * every team created before real per-team billing existed (see the schema
- * comment on `teamSubscriptions`), not just a temporary shim. We are not
- * migrating/reassigning existing personal Paddle subscriptions to teams.
- */
+/** The workspace's effective plan. Workspace Paddle billing is authoritative. */
 export const getTeamPlan = async (teamId: string): Promise<Plan> => {
   const [liveSub] = await db
     .select({ planSlug: teamSubscriptions.planSlug })
@@ -117,28 +110,7 @@ export const getTeamPlan = async (teamId: string): Promise<Plan> => {
     .orderBy(q(desc(teamSubscriptions.updatedAt)))
     .limit(1);
 
-  if (liveSub) {
-    return getPlanBySlug(liveSub.planSlug);
-  }
-
-  // Once a team has used team-level Paddle billing, its owner's legacy
-  // personal plan must not become the fallback when that subscription is
-  // canceled, past due, or paused. The owner fallback is only for teams
-  // that have never had a team subscription row.
-  const [hasTeamSubscription] = await db
-    .select({ id: teamSubscriptions.id })
-    .from(teamSubscriptions)
-    .where(q(eq(teamSubscriptions.teamId, teamId)))
-    .limit(1);
-  if (hasTeamSubscription) return getPlanBySlug("hobby");
-
-  const [owner] = await db
-    .select({ plan: users.plan })
-    .from(teamMembers)
-    .innerJoin(users, q(eq(teamMembers.userId, users.id)))
-    .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.role, "owner"))));
-
-  return getPlanBySlug(owner?.plan);
+  return liveSub ? getPlanBySlug(liveSub.planSlug) : getPlanBySlug("hobby");
 };
 
 const getTeamMemberCount = async (teamId: string): Promise<number> => {
@@ -597,7 +569,7 @@ export const acceptTeamInvite = async (
         role: invite.role,
       });
       // Fire-and-forget: a new seat joined. No-ops if this team has no live
-      // Paddle subscription yet (still on the Phase-1 fallback plan), and
+      // Paddle subscription yet, and
       // shouldn't block the invite accepting just because a Paddle call is
       // slow/fails — the membership row is what actually matters here.
       void syncTeamSeatQuantity(invite.teamId).catch((err) =>

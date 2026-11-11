@@ -136,19 +136,18 @@ export const canUseEmailTracking = async (
   return await hasVerifiedSendingDomain(newsletterId);
 };
 
-/**
- * Same "any paid plan" gate as `isNewsletterOwnerOnPaidPlan`, but for a
- * domain that isn't attached to any newsletter yet (see the account-wide
- * Domains page) — there's no newsletter owner to check yet, so this checks
- * the verifying user's own plan instead.
- */
+/** Resolves the default workspace plan for account-level domain actions. */
 export const isUserOnPaidPlan = async (userId: string): Promise<boolean> => {
-  const [user] = await db
-    .select({ subscriptionType: users.subscriptionType })
-    .from(users)
-    .where(eq(users.id, userId));
+  const [membership] = await db
+    .select({ teamId: teamMembers.teamId })
+    .from(teamMembers)
+    .where(eq(teamMembers.userId, userId))
+    .orderBy(teamMembers.joinedAt)
+    .limit(1);
 
-  return !!user && user.subscriptionType !== "free";
+  if (!membership) return false;
+  const plan = await getTeamPlan(membership.teamId);
+  return plan.slug !== "hobby";
 };
 
 export const updateNewsletter = async (

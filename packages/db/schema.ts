@@ -50,14 +50,7 @@ export const userSubscriptionEnum = pgEnum("user_subscription", [
   "pro",
   "enterprise",
 ]);
-/**
- * The exact billing plan slug (matches `packages/constants/plans.ts`).
- * `subscriptionType` above only distinguishes free/pro/enterprise for
- * feature gating (e.g. `canRemoveBranding`), which collapses "professional"
- * and "business" into the same "pro" bucket — too coarse to know which
- * plan's subscriber cap actually applies. `plan` is the precise slug used
- * for that.
- */
+/** Deprecated user-level billing fields; workspace subscriptions are authoritative. */
 export const userPlanEnum = pgEnum("user_plan", [
   "hobby",
   "professional",
@@ -478,11 +471,8 @@ export const payments = pgTable(
  * `teamId` alone: if a team's subscription is ever fully replaced (rare —
  * normally the same subscription is updated in place via
  * `paddle.subscriptions.update`), the old row stays as history and
- * `getTeamPlan` always reads "most recent active/trialing row for this
- * team." A team with no row here yet has never gone through team-level
- * checkout — see `getTeamPlan`'s fallback to the team owner's individual
- * `users.plan`, which is what every team created before this feature
- * still resolves through, permanently, unless it re-subscribes.
+ * `getTeamPlan` always reads the most recent active/trialing row for this
+ * team and resolves to Hobby when there is no live subscription.
  */
 export const teamSubscriptions = pgTable(
   "team_subscriptions",
