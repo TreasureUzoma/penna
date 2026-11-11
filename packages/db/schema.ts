@@ -325,6 +325,33 @@ export const emailRecipients = pgTable(
   }),
 );
 
+// Daily, aggregate views of public newsletter and post pages. No visitor
+// identifiers are stored; this is intentionally a count-only metric.
+export const publicPageViews = pgTable(
+  "public_page_views",
+  {
+    id: serial("id").primaryKey(),
+    newsletterId: uuid("newsletter_id")
+      .notNull()
+      .references(() => newsletters.id, { onDelete: "cascade" }),
+    pageKey: text("page_key").notNull().default(""),
+    postId: uuid("post_id").references(() => emails.id, { onDelete: "cascade" }),
+    day: timestamp("day", { mode: "date" }).notNull(),
+    views: integer("views").notNull().default(0),
+  },
+  (table) => ({
+    newsletterDayIdx: index("public_page_views_newsletter_day_idx").on(
+      table.newsletterId,
+      table.day,
+    ),
+    pageDayUnique: uniqueIndex("public_page_views_page_day_unique").on(
+      table.newsletterId,
+      table.pageKey,
+      table.day,
+    ),
+  }),
+);
+
 export const domains = pgTable(
   "domains",
   {

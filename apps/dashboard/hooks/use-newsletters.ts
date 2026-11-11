@@ -146,6 +146,21 @@ export interface NewsletterAnalytics {
     bounced: number;
     pending: number;
   };
+  publicViews: {
+    total: number;
+    byDay: Array<{ date: string; views: number }>;
+    popularPosts: Array<{ postId: string | null; subject: string; views: number }>;
+  };
+  campaignPerformance: Array<{
+    id: string;
+    subject: string;
+    sentAt: string;
+    recipients: number;
+    opened: number;
+    clicked: number;
+    openRate: number | null;
+    clickRate: number | null;
+  }>;
 }
 
 export function useNewsletterAnalytics(id: string, days: number = 30) {

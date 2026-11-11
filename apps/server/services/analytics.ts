@@ -1,5 +1,5 @@
 import { db } from "@workspace/db";
-import { emailRecipients, emails, subscribers } from "@workspace/db/schema";
+import { emailRecipients, emails, publicPageViews, subscribers } from "@workspace/db/schema";
 import type { ServiceResponse } from "@workspace/types";
 import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 
@@ -176,6 +176,68 @@ export const getNewsletterAnalytics = async (
       statusBreakdown[row.status] = row.count;
     }
 
+    const publicViewRows = await db
+      .select({ day: publicPageViews.day, views: sql<number>`sum(${publicPageViews.views})::int` })
+      .from(publicPageViews)
+      .where(and(
+        eq(publicPageViews.newsletterId, newsletterId),
+        gte(publicPageViews.day, timeframeDate),
+      ))
+      .groupBy(publicPageViews.day)
+      .orderBy(publicPageViews.day);
+    const publicViewsByDay = Array.from({ length: days + 1 }, (_, index) => {
+      const d = new Date(timeframeDate);
+      d.setUTCHours(0, 0, 0, 0);
+      d.setUTCDate(d.getUTCDate() + index);
+      const date = d.toISOString().slice(0, 10);
+      const row = publicViewRows.find((item) =>
+        new Date(item.day).toISOString().slice(0, 10) === date,
+      );
+      return { date, views: row?.views ?? 0 };
+    });
+    const [publicPageViewsTotal] = await db
+      .select({ views: sql<number>`coalesce(sum(${publicPageViews.views}), 0)::int` })
+      .from(publicPageViews)
+      .where(and(
+        eq(publicPageViews.newsletterId, newsletterId),
+        gte(publicPageViews.day, timeframeDate),
+      ));
+    const campaignPerformance = await db
+      .select({
+        id: emails.id,
+        subject: emails.subject,
+        sentAt: emails.sentAt,
+        recipients: count(emailRecipients.id),
+        opened: count(emailRecipients.openedAt),
+        clicked: count(emailRecipients.clickedAt),
+      })
+      .from(emails)
+      .leftJoin(emailRecipients, eq(emailRecipients.emailId, emails.id))
+      .where(and(
+        eq(emails.newsletterId, newsletterId),
+        eq(emails.status, "published"),
+        gte(emails.sentAt, timeframeDate),
+        lte(emails.sentAt, now),
+      ))
+      .groupBy(emails.id, emails.subject, emails.sentAt)
+      .orderBy(desc(emails.sentAt))
+      .limit(20);
+    const popularPublicPosts = await db
+      .select({
+        postId: publicPageViews.postId,
+        subject: emails.subject,
+        views: sql<number>`sum(${publicPageViews.views})::int`,
+      })
+      .from(publicPageViews)
+      .innerJoin(emails, eq(publicPageViews.postId, emails.id))
+      .where(and(
+        eq(publicPageViews.newsletterId, newsletterId),
+        gte(publicPageViews.day, timeframeDate),
+      ))
+      .groupBy(publicPageViews.postId, emails.subject)
+      .orderBy(desc(sql`sum(${publicPageViews.views})`))
+      .limit(5);
+
     return {
       success: true,
       message: "Newsletter analytics fetched successfully",
@@ -190,6 +252,20 @@ export const getNewsletterAnalytics = async (
         chartData: filledData,
         activity,
         statusBreakdown,
+        publicViews: {
+          total: publicPageViewsTotal?.views ?? 0,
+          byDay: publicViewsByDay,
+          popularPosts: popularPublicPosts,
+        },
+        campaignPerformance: campaignPerformance.map((campaign) => ({
+          ...campaign,
+          openRate: campaign.recipients
+            ? Number(((campaign.opened / campaign.recipients) * 100).toFixed(1))
+            : null,
+          clickRate: campaign.recipients
+            ? Number(((campaign.clicked / campaign.recipients) * 100).toFixed(1))
+            : null,
+        })),
         lastPost: lastEmail
           ? {
               id: lastEmail.id,
@@ -212,3 +288,39 @@ export const getNewsletterAnalytics = async (
     };
   }
 };
+
+export async function recordPublicPageView(newsletterId: string, postId?: string) {
+  const day = new Date();
+  day.setUTCHours(0, 0, 0, 0);
+  let validPostId: string | null = null;
+
+  if (postId) {
+    const [post] = await db
+      .select({ id: emails.id })
+      .from(emails)
+      .where(and(
+        eq(emails.id, postId),
+        eq(emails.newsletterId, newsletterId),
+        eq(emails.status, "published"),
+        lte(emails.sentAt, new Date()),
+      ))
+      .limit(1);
+    if (!post) return false;
+    validPostId = post.id;
+  }
+
+  await db
+    .insert(publicPageViews)
+    .values({
+      newsletterId,
+      pageKey: validPostId ?? "",
+      postId: validPostId,
+      day,
+      views: 1,
+    })
+    .onConflictDoUpdate({
+      target: [publicPageViews.newsletterId, publicPageViews.pageKey, publicPageViews.day],
+      set: { views: sql`${publicPageViews.views} + 1` },
+    });
+  return true;
+}

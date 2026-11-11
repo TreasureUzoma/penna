@@ -8,6 +8,29 @@
 // app's own HTTP server).
 const API_BASE = process.env.API_URL || "http://localhost:3005";
 
+export async function recordPublicPageView(
+  slug: string,
+  requestHeaders: Headers,
+  postId?: string,
+) {
+  try {
+    await fetch(`${API_BASE}/api/v1/public/newsletters/${encodeURIComponent(slug)}/view`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "user-agent": requestHeaders.get("user-agent") ?? "",
+        ...(requestHeaders.get("x-forwarded-for")
+          ? { "x-forwarded-for": requestHeaders.get("x-forwarded-for")! }
+          : {}),
+      },
+      body: JSON.stringify({ ...(postId ? { postId } : {}) }),
+      cache: "no-store",
+    });
+  } catch {
+    // Public rendering must not fail just because analytics is unavailable.
+  }
+}
+
 export interface PublicNewsletter {
   id: string;
   slug: string;

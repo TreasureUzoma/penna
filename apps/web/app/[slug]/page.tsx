@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getPublicNewsletter, getPublicPosts } from "@/lib/public-newsletters";
 import { NewsletterView } from "@/components/public-newsletter/newsletter-view";
+import { headers } from "next/headers";
+import { recordPublicPageView } from "@/lib/public-newsletters";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -51,6 +53,7 @@ export default async function PublicNewsletterPage({ params }: Props) {
   if (!newsletter) notFound();
 
   const posts = (await getPublicPosts(slug)) ?? [];
+  await recordPublicPageView(slug, await headers());
 
   return <NewsletterView newsletter={newsletter} posts={posts} />;
 }

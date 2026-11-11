@@ -18,6 +18,7 @@ import { rateLimiter } from "@/middlewares/rate-limiter";
 import { envConfig } from "@/config";
 import { verify } from "hono/jwt";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { recordPublicPageView } from "@/services/analytics";
 
 // Unauthenticated newsletter data for the public newsletter page (apps/web's
 // /u/:username/:slug and, for Pro+ owners, /:slug) — mounted before the
@@ -25,9 +26,34 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 const publicNewslettersRoute = new Hono();
 
 const slugParam = z.object({ slug: z.string().min(1) });
+const publicViewBody = z.object({ postId: z.string().uuid().optional() });
 
 const loadPublicNewsletter = async (slug: string) =>
   getPublicNewsletterBySlug(slug);
+
+publicNewslettersRoute.post(
+  "/:slug/view",
+  zValidator("param", slugParam, (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  zValidator("json", publicViewBody, (result, c) => {
+    if (!result.success) return validationErrorResponse(c, result.error);
+  }),
+  async (c) => {
+    const userAgent = c.req.header("user-agent") ?? "";
+    if (/bot|crawler|spider|slurp|preview|fetcher|facebookexternalhit|twitterbot|linkedinbot|slackbot|whatsapp/i.test(userAgent)) {
+      return c.json({ success: true, message: "View ignored" }, 200);
+    }
+    const { slug } = c.req.valid("param");
+    const newsletter = await loadPublicNewsletter(slug);
+    if (!newsletter.success || !newsletter.data) {
+      return c.json({ success: false, message: "Newsletter not found" }, 404);
+    }
+    const { postId } = c.req.valid("json");
+    const recorded = await recordPublicPageView(newsletter.data.id, postId);
+    return c.json({ success: recorded, message: recorded ? "View recorded" : "Post not found" }, recorded ? 200 : 404);
+  },
+);
 
 const verifySubscriptionToken = async (
   token: string,

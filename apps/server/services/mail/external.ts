@@ -24,6 +24,15 @@ const getNewsletterBrandingPreference = async (newsletterId: string) => {
   return wantsBrandingRemoved && (await canRemoveBranding(newsletterId));
 };
 
+const getNewsletterTrackingPreference = async (newsletterId: string) => {
+  const [newsletter] = await db
+    .select({ config: newsletters.config })
+    .from(newsletters)
+    .where(eq(newsletters.id, newsletterId));
+  return (newsletter?.config as { emailTracking?: boolean } | null)
+    ?.emailTracking === true;
+};
+
 export const sendEmailNewsletter = async (
   newsletter: { id: string; slug: string },
   recipientEmails: string[],
@@ -45,6 +54,10 @@ export const sendEmailNewsletter = async (
   // Falls back to the shared NEWSLETTER_DOMAIN (see ses.ts) whenever the
   // newsletter has no verified custom domain — see services/domains.ts.
   const fromDomain = await getVerifiedSendingDomain(newsletter.id);
+  const trackingEnabled = emailId
+    ? await getNewsletterTrackingPreference(newsletter.id)
+    : false;
+  const trackedEmailId = trackingEnabled ? emailId : undefined;
 
   if (recipientEmails.length === 1 && recipientEmails[0]) {
     const result = await sendNewsletterEmail({
@@ -55,7 +68,7 @@ export const sendEmailNewsletter = async (
       html: brandedHtml,
       replyTo,
       fromDomain,
-      emailId,
+      emailId: trackedEmailId,
     });
 
     if (!result.success) {
@@ -73,7 +86,7 @@ export const sendEmailNewsletter = async (
     html: brandedHtml,
     replyTo,
     fromDomain,
-    emailId,
+    emailId: trackedEmailId,
   });
 
   if (!result.success && result.failed === recipientEmails.length) {

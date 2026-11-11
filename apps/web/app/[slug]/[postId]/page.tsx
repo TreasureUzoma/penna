@@ -6,6 +6,8 @@ import {
   getPublicPosts,
 } from "@/lib/public-newsletters";
 import { PostView } from "@/components/public-newsletter/post-view";
+import { headers } from "next/headers";
+import { recordPublicPageView } from "@/lib/public-newsletters";
 
 interface Props {
   params: Promise<{ slug: string; postId: string }>;
@@ -66,6 +68,8 @@ export default async function PublicPostPage({ params }: Props) {
 
   const post = await getPublicPost(slug, postId);
   if (!post) notFound();
+
+  await recordPublicPageView(slug, await headers(), post.id);
 
   return <PostView newsletter={newsletter} post={post} />;
 }

@@ -16,6 +16,7 @@ import { GrowthChart } from "../components/overview/growth-chart";
 import { GrowthChartSkeleton } from "../components/overview/growth-chart-skeleton";
 import { ActivityFeed } from "../components/overview/activity-feed";
 import { ActivityFeedSkeleton } from "../components/overview/activity-feed-skeleton";
+import { PublicViewsChart } from "../components/public-views-chart";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Clock01Icon,
@@ -91,6 +92,87 @@ export default function NewsletterAnalyticsPage() {
       <p className="text-muted-foreground">
         Subscriber health and send history for this newsletter.
       </p>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold">Public page views</h2>
+        {isAnalyticsLoading ? (
+          <Card>
+            <CardHeader><div className="h-5 w-36 animate-pulse rounded bg-muted" /></CardHeader>
+            <CardContent><div className="h-[230px] w-full animate-pulse rounded-md bg-muted/60" /></CardContent>
+          </Card>
+        ) : analytics?.publicViews?.byDay ? (
+          <PublicViewsChart data={analytics.publicViews.byDay} />
+        ) : null}
+        <div className="grid gap-4 md:grid-cols-2">
+          {isAnalyticsLoading ? (
+            [...Array(2)].map((_, cardIndex) => (
+              <Card key={cardIndex}>
+                <CardHeader><div className="h-4 w-40 animate-pulse rounded bg-muted" /></CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="h-7 w-24 animate-pulse rounded bg-muted/70" />
+                  {cardIndex === 1 && [...Array(3)].map((__, rowIndex) => (
+                    <div key={rowIndex} className="h-4 w-full animate-pulse rounded bg-muted/50" />
+                  ))}
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <>
+              <Card>
+                <CardHeader><CardTitle className="text-sm font-medium text-muted-foreground">Views in selected period</CardTitle></CardHeader>
+                <CardContent><p className="text-2xl font-semibold">{numeral(analytics?.publicViews?.total ?? 0).format("0,0")}</p></CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle className="text-sm font-medium text-muted-foreground">Most viewed public posts</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  {(analytics?.publicViews?.popularPosts ?? []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No public post views in this period yet.</p>
+                  ) : analytics!.publicViews.popularPosts.map((post) => (
+                    <div key={post.postId} className="flex justify-between gap-4 text-sm">
+                      <span className="truncate">{post.subject}</span>
+                      <span className="tabular-nums text-muted-foreground">{numeral(post.views).format("0,0")}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold">Sent campaigns</h2>
+        <Card>
+          <CardContent className="pt-6">
+            {isAnalyticsLoading ? (
+              <div className="space-y-4">
+                {[...Array(4)].map((_, index) => (
+                  <div key={index} className="grid gap-3 border-b pb-4 last:border-0 md:grid-cols-[minmax(0,1fr)_repeat(3,auto)] md:items-center md:gap-6">
+                    <div className="space-y-2"><div className="h-4 w-48 max-w-full animate-pulse rounded bg-muted" /><div className="h-3 w-24 animate-pulse rounded bg-muted/60" /></div>
+                    {[...Array(3)].map((__, metricIndex) => <div key={metricIndex} className="h-4 w-24 animate-pulse rounded bg-muted/60" />)}
+                  </div>
+                ))}
+              </div>
+            ) : (analytics?.campaignPerformance ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No campaigns were sent in this period.</p>
+            ) : (
+              <div className="space-y-4">
+                {analytics!.campaignPerformance.map((campaign) => (
+                  <div key={campaign.id} className="grid gap-2 border-b pb-4 last:border-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_repeat(3,auto)] md:items-center md:gap-6">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{campaign.subject}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(campaign.sentAt).toLocaleDateString()}</p>
+                    </div>
+                    <p className="text-sm"><span className="text-muted-foreground">Recipients </span>{numeral(campaign.recipients).format("0,0")}</p>
+                    <p className="text-sm"><span className="text-muted-foreground">Opens </span>{campaign.openRate === null ? "Not collected" : `${campaign.openRate}%`}</p>
+                    <p className="text-sm"><span className="text-muted-foreground">Clicks </span>{campaign.clickRate === null ? "Not collected" : `${campaign.clickRate}%`}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
       {!newsletter?.canUseEmailTracking && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
