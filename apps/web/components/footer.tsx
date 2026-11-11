@@ -9,7 +9,7 @@ const footerSections = [
       { name: "Overview", url: "/" },
       { name: "Pricing", url: "/#pricing" },
       { name: "Docs", url: "/docs", external: true },
-      { name: "MCP integration", url: "/docs/integrations/mcp", external: true },
+      { name: "AI integrations", url: "/docs/integrations/mcp", external: true },
     ],
   },
   {

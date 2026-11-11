@@ -6,12 +6,12 @@ export const Hero = () => {
       <div className="max-w-3xl space-y-8">
         <div className="space-y-4">
           <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight">
-            Your newsletter, your workflow.
+            A newsletter platform built around your workflow.
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Write, send, and grow from one calm dashboard. Manage subscribers,
-            segments, analytics, and your own domain, then bring Penna into your
-            AI workspace with a secure, sign-in-based MCP connection.
+            segments, analytics, and your own domain, with the tools to shape
+            each part of your publishing workflow.
           </p>
         </div>
 
@@ -23,10 +23,10 @@ export const Hero = () => {
             Start for free <ArrowRight size={16} />
           </a>
           <a
-            href="#mcp"
+            href="/docs"
             className="px-6 py-3 border border-border rounded-lg font-semibold hover:bg-muted transition-colors inline-flex items-center justify-center"
           >
-            Connect your AI tools
+            Read the docs
           </a>
         </div>
       </div>

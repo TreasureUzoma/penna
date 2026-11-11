@@ -3,7 +3,7 @@ import { Check, X } from "lucide-react";
 export const Comparison = () => {
   const features = [
     {
-      name: "Clean, full-featured dashboard",
+      name: "Clean, feature rich dashboard",
       penna: true,
       buttondown: true,
       mailchimp: true,

@@ -138,11 +138,11 @@ const showcases = [
 
 export const ProductShowcase = () => {
   return (
-    <section className="p-4 md:p-5 flex items-center justify-center">
+    <section id="features" className="p-4 md:p-5 flex items-center justify-center">
       <div className="max-w-4xl w-full space-y-8">
         <div className="space-y-2 text-center">
           <h2 className="text-3xl md:text-4xl font-bold">
-            A full platform, not just an API
+            A complete newsletter platform
           </h2>
           <p className="text-lg text-muted-foreground">
             Everything you need to run a newsletter in one clean dashboard,
