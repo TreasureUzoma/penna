@@ -9,7 +9,7 @@ import Faq from "@/components/faq";
 export const metadata: Metadata = {
   title: "Penna - Newsletter platform that gets out of your way",
   description:
-    "Write, send, and grow your newsletter with a platform that doesn't fight you. Subscribers, segments, analytics, custom domains, and a real API. Open source alternative to Buttondown.",
+    "Write, send, and grow your newsletter with a platform that doesn't fight you. Subscribers, segments, analytics, custom domains, a real API, and secure MCP access for AI tools. Open source alternative to Buttondown.",
   alternates: {
     canonical: "/",
   },

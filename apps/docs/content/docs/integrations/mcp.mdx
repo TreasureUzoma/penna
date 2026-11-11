@@ -1,0 +1,32 @@
+---
+title: MCP
+description: Connect an MCP-compatible assistant to your Penna dashboard with Penna sign-in.
+---
+
+# Connect Penna with MCP
+
+Penna's hosted Model Context Protocol (MCP) server lets an MCP-compatible assistant read and manage your dashboard after you sign in and approve access.
+
+## Connect
+
+Add this server URL in your MCP client:
+
+```text
+https://api.penna.dev/api/v1/mcp
+```
+
+Choose **OAuth** or **sign in with Penna** when prompted. The client will open Penna in your browser. Sign in, review the requested dashboard access, and approve the connection. Penna uses OAuth authorization code with PKCE; you do not need to create or paste an API key.
+
+## What you can do
+
+The `penna_read` tool reads data through the same API and account permissions used by the Penna dashboard. The `penna_change` tool creates, edits, and deletes dashboard data, including actions that can send email. The `penna_upload_image` tool uploads supported image files for use in newsletter content. Review changes carefully and make sure the assistant has your confirmation before it performs a consequential action.
+
+Both tools accept a path relative to `/api/v1`, for example `newsletters`, `dashboard/analytics?days=30`, or `emails`. Penna checks the path and applies your existing team and newsletter roles on each request.
+
+## Disconnect
+
+Disconnect Penna from your MCP client's connected servers to stop it from using the stored refresh token. Clients that support OAuth token revocation can revoke that refresh token immediately; otherwise, access tokens expire after one hour. You can also remove the client's stored Penna credentials from the client at any time.
+
+## Compatibility
+
+Penna exposes Streamable HTTP at `/api/v1/mcp` and uses dynamic client registration, OAuth authorization code, PKCE with `S256`, and refresh tokens. The server requires a secure connection; local development clients may use their loopback callback URL.

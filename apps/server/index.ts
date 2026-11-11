@@ -22,6 +22,8 @@ import publicNewslettersRoute from "./routes/api/v1/public/newsletters";
 import faqAiRoute from "./routes/api/v1/public/faq-ai";
 import trackingRoute from "./routes/api/v1/tracking";
 import uploadRoute from "./routes/api/v1/upload";
+import oauthMcpRoute from "./routes/api/v1/oauth-mcp";
+import { envConfig } from "./config";
 import { start } from "workflow/api";
 import { myTestWorkflow } from "./tests/workflow";
 
@@ -67,7 +69,7 @@ v1.use("*", async (c, next) => {
     return;
   }
 
-  const payload = await response.clone().json().catch(() => null);
+  const payload = (await response.clone().json().catch(() => null)) as { message?: unknown } | null;
   const message = payload?.message;
   if (
     typeof message !== "string" ||
@@ -108,6 +110,7 @@ v1.get("/health", rateLimiter(60 * 1000, 5), (c) => {
 
 // Auth routes (15 req per hour for login/signup etc., no auth required)
 v1.route("/auth", authRoute.use(rateLimiter(60 * 60 * 1000, 15)));
+v1.route("/", oauthMcpRoute);
 
 // unsubscribe route, no auth needed too
 v1.route("/unsubscribe", unsubscribeRoutes.use(rateLimiter(60 * 1000, 5)));
@@ -198,5 +201,18 @@ v1.route("/domains", domainsRoute.use(rateLimiter(60 * 60 * 1000, 70)));
 v1.route("/upload", uploadRoute.use(rateLimiter(60 * 60 * 1000, 100)));
 
 app.route("/", v1);
+
+app.get("/.well-known/oauth-authorization-server", (c) => c.json({
+  issuer: new URL(envConfig.API_URL).origin,
+  authorization_endpoint: `${envConfig.DASHBOARD_SITE}/oauth/authorize`,
+  token_endpoint: `${new URL(envConfig.API_URL).origin}/api/v1/oauth/token`,
+  registration_endpoint: `${new URL(envConfig.API_URL).origin}/api/v1/oauth/register`,
+  revocation_endpoint: `${new URL(envConfig.API_URL).origin}/api/v1/oauth/revoke`,
+  response_types_supported: ["code"], grant_types_supported: ["authorization_code", "refresh_token"],
+  code_challenge_methods_supported: ["S256"], token_endpoint_auth_methods_supported: ["none"], scopes_supported: ["penna:dashboard"],
+}));
+app.get("/.well-known/oauth-protected-resource/api/v1/mcp", (c) => c.json({
+  resource: `${new URL(envConfig.API_URL).origin}/api/v1/mcp`, authorization_servers: [new URL(envConfig.API_URL).origin], bearer_methods_supported: ["header"], scopes_supported: ["penna:dashboard"],
+}));
 
 export default app;

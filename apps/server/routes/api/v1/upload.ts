@@ -30,7 +30,7 @@ function getS3Client() {
 uploadRoute.post("/", async (c) => {
   try {
     // Verify user is authenticated
-    const user = c.get("user");
+    const user = (c as unknown as { get: (key: "user") => { id: string } | undefined }).get("user");
     if (!user) {
       return c.json(
         {

@@ -12,7 +12,8 @@ export const Hero = () => {
             write, send, and grow your newsletter from a dashboard that
             doesn't fight you — subscribers, segments, analytics, and your
             own domain, rich Markdown, and per-subscriber templates, all
-            controllable from a real API.
+            controllable from a real API, or through a secure MCP connection to
+            your AI tools.
           </p>
         </div>
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CheckCircle2, Clock3, Globe, ShieldCheck } from "lucide-react";
 
 const chartBars = [35, 52, 40, 68, 58, 82, 74];
@@ -173,6 +174,13 @@ export const ProductShowcase = () => {
               </div>
             </div>
           ))}
+        </div>
+        <div className="rounded-xl border border-border bg-card/50 p-6 text-center space-y-3">
+          <h3 className="text-lg font-semibold">connect your AI tools with MCP</h3>
+          <p className="mx-auto max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            Give an MCP-compatible assistant secure, sign-in-based access to read and manage your Penna dashboard. Your existing account permissions still apply.
+          </p>
+          <Link href="/docs/integrations/mcp" className="inline-block text-sm font-medium underline underline-offset-4">set up the Penna MCP server →</Link>
         </div>
       </div>
     </section>

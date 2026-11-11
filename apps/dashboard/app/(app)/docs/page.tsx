@@ -27,6 +27,12 @@ export default function DocsPage() {
       link: "#",
     },
     {
+      title: "MCP server",
+      description: "Connect an MCP-compatible assistant to your Penna dashboard using secure Penna sign-in.",
+      icon: Terminal,
+      link: "#mcp",
+    },
+    {
       title: "SDKs & Libraries",
       description:
         "Integrate Penna into your app using our official libraries.",
@@ -115,6 +121,16 @@ export default function DocsPage() {
           </div>
         </div>
       </div>
+
+      <section id="mcp" className="scroll-mt-8 rounded-2xl border bg-muted/50 p-8 space-y-4">
+        <h2 className="text-2xl font-bold">Connect an MCP client</h2>
+        <p className="max-w-2xl text-muted-foreground">
+          Penna's hosted MCP server lets compatible AI tools read and manage your dashboard after you sign in and approve access. Your team and newsletter permissions apply to every action.
+        </p>
+        <div className="rounded-lg border bg-background p-4 font-mono text-sm">https://api.penna.dev/api/v1/mcp</div>
+        <p className="text-sm text-muted-foreground">Add this URL to your MCP client, choose OAuth sign-in, then review the access request in your Penna account. The <code>penna_change</code> tool can make lasting edits and send email, so review those actions carefully.</p>
+        <Button asChild variant="outline"><Link href="https://penna.dev/docs/integrations/mcp">Read the MCP setup guide</Link></Button>
+      </section>
     </div>
   );
 }

@@ -39,6 +39,20 @@ async function generateTokens(
 // Middleware
 export const withAuth: MiddlewareHandler = async (c, next) => {
   try {
+    const authorization = c.req.header("authorization");
+    if (authorization?.startsWith("Bearer ")) {
+      const bearer = authorization.slice(7).trim();
+      try {
+        const decoded = (await verify(bearer, envConfig.JWT_ACCESS_SECRET!, "HS256")) as {
+          id: string; email: string; name?: string; aud?: string; scope?: string;
+        };
+        if (decoded.aud === `${new URL(envConfig.API_URL).origin}/api/v1/mcp` && decoded.scope === "penna:dashboard") {
+          c.set("user", decoded);
+          return await next();
+        }
+      } catch { /* Cookie session handling below remains available. */ }
+    }
+
     const accessToken = await getSignedCookie(
       c,
       envConfig.JWT_ACCESS_SECRET!,

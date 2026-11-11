@@ -44,6 +44,7 @@ const nextConfig = {
       "domains/:path+",
       "subscribe/confirm",
       "unsubscribe/confirm",
+      "oauth/authorize",
     ];
 
     const staticRoutes = [
