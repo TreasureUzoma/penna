@@ -38,11 +38,12 @@ export const PLAN_PRICE_IDS: Partial<Record<string, string>> = {
  * event for a subscription's whole lifetime — price ID is what Paddle
  * itself actually tracks.
  */
-export const PRICE_ID_TO_PLAN_SLUG: Record<string, PlanSlug> = Object.fromEntries(
-  Object.entries(PLAN_PRICE_IDS)
-    .filter((entry): entry is [string, string] => !!entry[1])
-    .map(([slug, priceId]) => [priceId, slug as PlanSlug])
-);
+export const PRICE_ID_TO_PLAN_SLUG: Record<string, PlanSlug> =
+  Object.fromEntries(
+    Object.entries(PLAN_PRICE_IDS)
+      .filter((entry): entry is [string, string] => !!entry[1])
+      .map(([slug, priceId]) => [priceId, slug as PlanSlug]),
+  );
 
 /**
  * Verifies and processes a Paddle webhook. `rawBody` must be the exact,
@@ -52,11 +53,11 @@ export const PRICE_ID_TO_PLAN_SLUG: Record<string, PlanSlug> = Object.fromEntrie
  */
 export const handlePaddleWebhook = async (
   rawBody: string,
-  signature: string | undefined
+  signature: string | undefined,
 ): Promise<ServiceResponse> => {
   if (!envConfig.PADDLE_WEBHOOK_SECRET) {
     console.error(
-      "PADDLE_WEBHOOK_SECRET is not set — refusing to process webhook."
+      "PADDLE_WEBHOOK_SECRET is not set — refusing to process webhook.",
     );
     return {
       success: false,
@@ -78,12 +79,12 @@ export const handlePaddleWebhook = async (
     event = await paddle.webhooks.unmarshal(
       rawBody,
       envConfig.PADDLE_WEBHOOK_SECRET,
-      signature
+      signature,
     );
   } catch (error) {
     console.warn(
       "Rejected Paddle webhook with invalid signature:",
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : error,
     );
     return {
       success: false,
@@ -106,7 +107,7 @@ export const handlePaddleWebhook = async (
       // entitlement row directly.
       case "transaction.payment_failed" as EventName:
         return await handleTransactionPaymentFailed(
-          event.data as TransactionNotification
+          event.data as TransactionNotification,
         );
 
       case EventName.SubscriptionCreated:
@@ -122,7 +123,7 @@ export const handlePaddleWebhook = async (
       case "subscription.past_due" as EventName:
       case "subscription.paused" as EventName:
         return await handleSubscriptionUpdated(
-          event.data as SubscriptionNotification
+          event.data as SubscriptionNotification,
         );
 
       case EventName.SubscriptionCanceled:
@@ -149,17 +150,17 @@ export const handlePaddleWebhook = async (
 };
 
 const planSlugFromCustomData = (
-  customData: Record<string, any> | null
+  customData: Record<string, any> | null,
 ): string | undefined => customData?.planSlug;
 
 // `initiatedByUserId` is set by workspace checkout and attributes the
 // payments-table audit row to the user who initiated it.
 const userIdFromCustomData = (
-  customData: Record<string, any> | null
+  customData: Record<string, any> | null,
 ): string | undefined => customData?.initiatedByUserId;
 
 const teamIdFromCustomData = (
-  customData: Record<string, any> | null
+  customData: Record<string, any> | null,
 ): string | undefined => customData?.teamId;
 
 /**
@@ -170,7 +171,7 @@ const teamIdFromCustomData = (
  */
 const upsertTeamSubscription = async (
   teamId: string,
-  data: SubscriptionNotification
+  data: SubscriptionNotification,
 ): Promise<void> => {
   const item = data.items[0];
   const priceId = item?.price?.id;
@@ -178,7 +179,7 @@ const upsertTeamSubscription = async (
 
   if (!priceId || !planSlug) {
     console.error(
-      `Paddle subscription ${data.id} for team ${teamId} has no recognized price ID (got "${priceId}") — skipping teamSubscriptions upsert.`
+      `Paddle subscription ${data.id} for team ${teamId} has no recognized price ID (got "${priceId}") — skipping teamSubscriptions upsert.`,
     );
     return;
   }
@@ -216,13 +217,13 @@ const upsertTeamSubscription = async (
 };
 
 const handleTransactionCompleted = async (
-  data: TransactionNotification
+  data: TransactionNotification,
 ): Promise<ServiceResponse> => {
   const userId = userIdFromCustomData(data.customData);
   if (!userId) {
     return {
-      success: false,
-      message: "Missing userId in custom data",
+      success: true,
+      message: "Transaction received without workspace initiator; ignored",
       data: null,
     };
   }
@@ -252,7 +253,7 @@ const handleTransactionCompleted = async (
 };
 
 const handleTransactionUpdated = async (
-  data: TransactionNotification
+  data: TransactionNotification,
 ): Promise<ServiceResponse> => {
   const [existingPayment] = await db
     .select()
@@ -274,7 +275,7 @@ const handleTransactionUpdated = async (
 };
 
 const handleTransactionPaymentFailed = async (
-  data: TransactionNotification
+  data: TransactionNotification,
 ): Promise<ServiceResponse> => {
   if (data.subscriptionId) {
     await db
@@ -291,7 +292,7 @@ const handleTransactionPaymentFailed = async (
 };
 
 const handleSubscriptionActivated = async (
-  data: SubscriptionNotification
+  data: SubscriptionNotification,
 ): Promise<ServiceResponse> => {
   const teamId = teamIdFromCustomData(data.customData);
   if (teamId) {
@@ -311,7 +312,7 @@ const handleSubscriptionActivated = async (
 };
 
 const handleSubscriptionUpdated = async (
-  data: SubscriptionNotification
+  data: SubscriptionNotification,
 ): Promise<ServiceResponse> => {
   const teamId = teamIdFromCustomData(data.customData);
   if (teamId) {
@@ -331,7 +332,7 @@ const handleSubscriptionUpdated = async (
 };
 
 const handleSubscriptionCanceled = async (
-  data: SubscriptionNotification
+  data: SubscriptionNotification,
 ): Promise<ServiceResponse> => {
   const teamId = teamIdFromCustomData(data.customData);
   if (teamId) {
@@ -357,7 +358,7 @@ const handleSubscriptionCanceled = async (
  * Get invoice from Paddle
  */
 export const getInvoice = async (
-  transactionId: string
+  transactionId: string,
 ): Promise<ServiceResponse> => {
   try {
     const [payment] = await db
@@ -402,7 +403,7 @@ export const getInvoice = async (
  * List user invoices/transactions
  */
 export const getUserInvoices = async (
-  userId: string
+  userId: string,
 ): Promise<ServiceResponse> => {
   try {
     const userPayments = await db
@@ -427,4 +428,3 @@ export const getUserInvoices = async (
     };
   }
 };
-

@@ -25,7 +25,7 @@ const INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export const createTeam = async (
   data: NewTeam,
-  ownerUserId: string
+  ownerUserId: string,
 ): Promise<ServiceResponse> => {
   try {
     const [team] = await db.insert(teams).values(data).returning();
@@ -45,13 +45,18 @@ export const createTeam = async (
       data: null,
       success: false,
       message:
-        err instanceof Error ? err.message : "Something went wrong creating the team.",
+        err instanceof Error
+          ? err.message
+          : "Something went wrong creating the team.",
     };
   }
 };
 
 export const getValidTeam = async (teamId: string) => {
-  const [team] = await db.select().from(teams).where(q(eq(teams.id, teamId)));
+  const [team] = await db
+    .select()
+    .from(teams)
+    .where(q(eq(teams.id, teamId)));
 
   if (!team) {
     return { data: null, success: false, message: "Team not found." };
@@ -61,7 +66,10 @@ export const getValidTeam = async (teamId: string) => {
 };
 
 export const getTeamBySlug = async (slug: string) => {
-  const [team] = await db.select().from(teams).where(q(eq(teams.slug, slug)));
+  const [team] = await db
+    .select()
+    .from(teams)
+    .where(q(eq(teams.slug, slug)));
 
   if (!team) {
     return { data: null, success: false, message: "Team not found." };
@@ -79,7 +87,9 @@ export const getUserTeamRole = async (teamId: string, userId: string) => {
       role: teamMembers.role,
     })
     .from(teamMembers)
-    .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId))));
+    .where(
+      q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId))),
+    );
 
   if (!membership) {
     return {
@@ -101,12 +111,14 @@ export const getTeamPlan = async (teamId: string): Promise<Plan> => {
   const [liveSub] = await db
     .select({ planSlug: teamSubscriptions.planSlug })
     .from(teamSubscriptions)
-    .where(q(
-      and(
-        eq(teamSubscriptions.teamId, teamId),
-        inArray(teamSubscriptions.status, ["active", "trialing"]),
+    .where(
+      q(
+        and(
+          eq(teamSubscriptions.teamId, teamId),
+          inArray(teamSubscriptions.status, ["active", "trialing"]),
+        ),
       ),
-    ))
+    )
     .orderBy(q(desc(teamSubscriptions.updatedAt)))
     .limit(1);
 
@@ -136,7 +148,7 @@ export class TeamSeatLimitError extends Error {
 
   constructor(plan: Plan, currentCount: number) {
     super(
-      `This team is at its ${plan.name} plan limit of ${plan.maxTeamMembers} members. Upgrade to add more.`
+      `This team is at its ${plan.name} plan limit of ${plan.maxTeamMembers} members. Upgrade to add more.`,
     );
     this.name = "TeamSeatLimitError";
     this.plan = plan;
@@ -159,7 +171,7 @@ export class TeamSeatLimitError extends Error {
  */
 export const assertTeamSeatCapacity = async (
   teamId: string,
-  additionalCount = 1
+  additionalCount = 1,
 ): Promise<void> => {
   const plan = await getTeamPlan(teamId);
   if (plan.maxTeamMembers === null) return; // unlimited on this plan
@@ -199,7 +211,7 @@ export const getUserTeams = (userId: string, page = 1, limit = 20) => {
 
 export const updateTeam = async (
   teamId: string,
-  data: Partial<UpdateTeam>
+  data: Partial<UpdateTeam>,
 ): Promise<ServiceResponse> => {
   try {
     const updateValues: Record<string, any> = {};
@@ -217,12 +229,19 @@ export const updateTeam = async (
       .where(q(eq(teams.id, teamId)))
       .returning();
 
-    return { data: updated, success: true, message: "Team updated successfully" };
+    return {
+      data: updated,
+      success: true,
+      message: "Team updated successfully",
+    };
   } catch (err) {
     return {
       data: null,
       success: false,
-      message: err instanceof Error ? err.message : "Something went wrong updating the team.",
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong updating the team.",
     };
   }
 };
@@ -241,12 +260,17 @@ export const deleteTeam = async (teamId: string): Promise<ServiceResponse> => {
     return {
       data: null,
       success: false,
-      message: err instanceof Error ? err.message : "Something went wrong deleting the team.",
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong deleting the team.",
     };
   }
 };
 
-export const getTeamMembers = async (teamId: string): Promise<ServiceResponse> => {
+export const getTeamMembers = async (
+  teamId: string,
+): Promise<ServiceResponse> => {
   try {
     const members = await db
       .select({
@@ -259,18 +283,27 @@ export const getTeamMembers = async (teamId: string): Promise<ServiceResponse> =
       .innerJoin(users, q(eq(teamMembers.userId, users.id)))
       .where(q(eq(teamMembers.teamId, teamId)));
 
-    return { success: true, message: "Fetched team members successfully", data: members };
+    return {
+      success: true,
+      message: "Fetched team members successfully",
+      data: members,
+    };
   } catch (err) {
     return {
       success: false,
-      message: err instanceof Error ? err.message : "Something went wrong fetching team members",
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong fetching team members",
       data: null,
     };
   }
 };
 
 /** Every newsletter a team owns — backs the team switcher and the "move to a team" destination picker. */
-export const getTeamNewsletters = async (teamId: string): Promise<ServiceResponse> => {
+export const getTeamNewsletters = async (
+  teamId: string,
+): Promise<ServiceResponse> => {
   try {
     const rows = await db
       .select({
@@ -282,11 +315,18 @@ export const getTeamNewsletters = async (teamId: string): Promise<ServiceRespons
       .where(q(eq(newsletters.teamId, teamId)))
       .orderBy(q(desc(newsletters.createdAt)));
 
-    return { success: true, message: "Fetched team newsletters successfully", data: rows };
+    return {
+      success: true,
+      message: "Fetched team newsletters successfully",
+      data: rows,
+    };
   } catch (err) {
     return {
       success: false,
-      message: err instanceof Error ? err.message : "Something went wrong fetching team newsletters",
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong fetching team newsletters",
       data: null,
     };
   }
@@ -295,7 +335,7 @@ export const getTeamNewsletters = async (teamId: string): Promise<ServiceRespons
 export const updateTeamMemberRole = async (
   teamId: string,
   targetUserId: string,
-  newRole: TeamRoles
+  newRole: TeamRoles,
 ): Promise<ServiceResponse> => {
   try {
     if (newRole === "owner") {
@@ -310,11 +350,22 @@ export const updateTeamMemberRole = async (
     const [updatedMember] = await db
       .update(teamMembers)
       .set({ role: newRole })
-      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId))))
+      .where(
+        q(
+          and(
+            eq(teamMembers.teamId, teamId),
+            eq(teamMembers.userId, targetUserId),
+          ),
+        ),
+      )
       .returning();
 
     if (!updatedMember) {
-      return { data: null, success: false, message: "User is not a member of this team." };
+      return {
+        data: null,
+        success: false,
+        message: "User is not a member of this team.",
+      };
     }
 
     return {
@@ -337,32 +388,55 @@ export const updateTeamMemberRole = async (
 export const transferTeamOwnership = async (
   teamId: string,
   currentOwnerId: string,
-  newOwnerUserId: string
+  newOwnerUserId: string,
 ): Promise<ServiceResponse> => {
   try {
     if (currentOwnerId === newOwnerUserId) {
-      return { data: null, success: false, message: "You already own this team." };
+      return {
+        data: null,
+        success: false,
+        message: "You already own this team.",
+      };
     }
 
     const [currentOwnerMembership] = await db
       .select()
       .from(teamMembers)
-      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, currentOwnerId))));
+      .where(
+        q(
+          and(
+            eq(teamMembers.teamId, teamId),
+            eq(teamMembers.userId, currentOwnerId),
+          ),
+        ),
+      );
 
     if (!currentOwnerMembership || currentOwnerMembership.role !== "owner") {
-      return { data: null, success: false, message: "Only the current owner can transfer ownership." };
+      return {
+        data: null,
+        success: false,
+        message: "Only the current owner can transfer ownership.",
+      };
     }
 
     const [targetMembership] = await db
       .select()
       .from(teamMembers)
-      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, newOwnerUserId))));
+      .where(
+        q(
+          and(
+            eq(teamMembers.teamId, teamId),
+            eq(teamMembers.userId, newOwnerUserId),
+          ),
+        ),
+      );
 
     if (!targetMembership) {
       return {
         data: null,
         success: false,
-        message: "The new owner must already be a member of this team. Invite them first.",
+        message:
+          "The new owner must already be a member of this team. Invite them first.",
       };
     }
 
@@ -371,25 +445,42 @@ export const transferTeamOwnership = async (
     const [newOwner] = await db
       .update(teamMembers)
       .set({ role: "owner" })
-      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, newOwnerUserId))))
+      .where(
+        q(
+          and(
+            eq(teamMembers.teamId, teamId),
+            eq(teamMembers.userId, newOwnerUserId),
+          ),
+        ),
+      )
       .returning();
 
     await db
       .update(teamMembers)
       .set({ role: "admin" })
-      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, currentOwnerId))));
+      .where(
+        q(
+          and(
+            eq(teamMembers.teamId, teamId),
+            eq(teamMembers.userId, currentOwnerId),
+          ),
+        ),
+      );
 
     return {
       data: newOwner,
       success: true,
-      message: "Team ownership transferred successfully. You are now an admin on this team.",
+      message:
+        "Team ownership transferred successfully. You are now an admin on this team.",
     };
   } catch (err) {
     return {
       data: null,
       success: false,
       message:
-        err instanceof Error ? err.message : "Something went wrong transferring team ownership.",
+        err instanceof Error
+          ? err.message
+          : "Something went wrong transferring team ownership.",
     };
   }
 };
@@ -404,7 +495,7 @@ export const inviteToTeam = async (
   teamId: string,
   invitedByUserId: string,
   email: string,
-  role: TeamRoles
+  role: TeamRoles,
 ): Promise<ServiceResponse> => {
   try {
     // Soft check: blocks sending an invite that would obviously overshoot
@@ -424,27 +515,44 @@ export const inviteToTeam = async (
       const [existingMember] = await db
         .select()
         .from(teamMembers)
-        .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, existingUser.id))));
+        .where(
+          q(
+            and(
+              eq(teamMembers.teamId, teamId),
+              eq(teamMembers.userId, existingUser.id),
+            ),
+          ),
+        );
 
       if (existingMember) {
-        return { data: null, success: false, message: "User is already a member of this team." };
+        return {
+          data: null,
+          success: false,
+          message: "User is already a member of this team.",
+        };
       }
     }
 
     const [existingInvite] = await db
       .select()
       .from(teamInvites)
-      .where(q(
-        and(
-          eq(teamInvites.teamId, teamId),
-          eq(teamInvites.email, normalizedEmail),
-          isNull(teamInvites.acceptedAt),
-          isNull(teamInvites.revokedAt)
-        )
-      ));
+      .where(
+        q(
+          and(
+            eq(teamInvites.teamId, teamId),
+            eq(teamInvites.email, normalizedEmail),
+            isNull(teamInvites.acceptedAt),
+            isNull(teamInvites.revokedAt),
+          ),
+        ),
+      );
 
     if (existingInvite) {
-      return { data: null, success: false, message: "An active invitation for this email already exists." };
+      return {
+        data: null,
+        success: false,
+        message: "An active invitation for this email already exists.",
+      };
     }
 
     const token = crypto.randomBytes(32).toString("hex");
@@ -462,29 +570,44 @@ export const inviteToTeam = async (
       })
       .returning();
 
-    const [team] = await db.select().from(teams).where(q(eq(teams.id, teamId)));
-    const [inviter] = await db.select().from(users).where(q(eq(users.id, invitedByUserId)));
+    const [team] = await db
+      .select()
+      .from(teams)
+      .where(q(eq(teams.id, teamId)));
+    const [inviter] = await db
+      .select()
+      .from(users)
+      .where(q(eq(users.id, invitedByUserId)));
 
     await sendTeamInviteEmail(
       normalizedEmail,
       inviter?.name ?? "Someone",
       team?.name ?? "a team",
       role,
-      token
+      token,
     );
 
-    return { data: newInvite, message: "Invitation sent successfully", success: true };
+    return {
+      data: newInvite,
+      message: "Invitation sent successfully",
+      success: true,
+    };
   } catch (err) {
     return {
       data: null,
       success: false,
-      message: err instanceof Error ? err.message : "Something went wrong sending the invitation.",
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong sending the invitation.",
     };
   }
 };
 
 /** Pending invites addressed to a user's own email — an in-app list, independent of the emailed link. */
-export const getUserTeamInvites = async (userEmail: string): Promise<ServiceResponse> => {
+export const getUserTeamInvites = async (
+  userEmail: string,
+): Promise<ServiceResponse> => {
   try {
     const invites = await db
       .select({
@@ -497,21 +620,30 @@ export const getUserTeamInvites = async (userEmail: string): Promise<ServiceResp
       })
       .from(teamInvites)
       .innerJoin(teams, q(eq(teamInvites.teamId, teams.id)))
-        .where(q(
+      .where(
+        q(
           and(
             eq(teamInvites.email, userEmail.trim().toLowerCase()),
             isNull(teamInvites.acceptedAt),
-            isNull(teamInvites.revokedAt)
-          )
-        ))
+            isNull(teamInvites.revokedAt),
+          ),
+        ),
+      )
       .orderBy(q(desc(teamInvites.createdAt)));
 
-    return { data: invites, message: "Fetched team invites successfully", success: true };
+    return {
+      data: invites,
+      message: "Fetched team invites successfully",
+      success: true,
+    };
   } catch (err) {
     return {
       data: null,
       success: false,
-      message: err instanceof Error ? err.message : "Something went wrong fetching team invites.",
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong fetching team invites.",
     };
   }
 };
@@ -527,22 +659,37 @@ export const getUserTeamInvites = async (userEmail: string): Promise<ServiceResp
 export const acceptTeamInvite = async (
   token: string,
   acceptingUserId: string,
-  acceptingUserEmail: string
+  acceptingUserEmail: string,
 ): Promise<ServiceResponse> => {
   try {
-    const [invite] = await db.select().from(teamInvites).where(q(eq(teamInvites.token, token)));
+    const [invite] = await db
+      .select()
+      .from(teamInvites)
+      .where(q(eq(teamInvites.token, token)));
 
     if (!invite) {
       return { data: null, success: false, message: "Invitation not found." };
     }
     if (invite.revokedAt) {
-      return { data: null, success: false, message: "This invitation has been revoked." };
+      return {
+        data: null,
+        success: false,
+        message: "This invitation has been revoked.",
+      };
     }
     if (invite.acceptedAt) {
-      return { data: null, success: false, message: "This invitation has already been accepted." };
+      return {
+        data: null,
+        success: false,
+        message: "This invitation has already been accepted.",
+      };
     }
     if (invite.expiresAt < new Date()) {
-      return { data: null, success: false, message: "This invitation has expired." };
+      return {
+        data: null,
+        success: false,
+        message: "This invitation has expired.",
+      };
     }
     if (invite.email !== acceptingUserEmail.trim().toLowerCase()) {
       return {
@@ -555,7 +702,14 @@ export const acceptTeamInvite = async (
     const [existingMember] = await db
       .select()
       .from(teamMembers)
-      .where(q(and(eq(teamMembers.teamId, invite.teamId), eq(teamMembers.userId, acceptingUserId))));
+      .where(
+        q(
+          and(
+            eq(teamMembers.teamId, invite.teamId),
+            eq(teamMembers.userId, acceptingUserId),
+          ),
+        ),
+      );
 
     if (!existingMember) {
       // Hard check: the team's plan or size may have changed since this
@@ -595,12 +749,17 @@ export const acceptTeamInvite = async (
     return {
       data: null,
       success: false,
-      message: err instanceof Error ? err.message : "Something went wrong accepting the invitation.",
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong accepting the invitation.",
     };
   }
 };
 
-export const revokeTeamInvite = async (inviteId: string): Promise<ServiceResponse> => {
+export const revokeTeamInvite = async (
+  inviteId: string,
+): Promise<ServiceResponse> => {
   try {
     const [revoked] = await db
       .update(teamInvites)
@@ -612,12 +771,19 @@ export const revokeTeamInvite = async (inviteId: string): Promise<ServiceRespons
       return { data: null, success: false, message: "Invitation not found." };
     }
 
-    return { data: revoked, success: true, message: "Invitation revoked successfully." };
+    return {
+      data: revoked,
+      success: true,
+      message: "Invitation revoked successfully.",
+    };
   } catch (err) {
     return {
       data: null,
       success: false,
-      message: err instanceof Error ? err.message : "Something went wrong revoking the invitation.",
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong revoking the invitation.",
     };
   }
 };
@@ -630,16 +796,27 @@ export const revokeTeamInvite = async (inviteId: string): Promise<ServiceRespons
  */
 export const removeTeamMember = async (
   teamId: string,
-  targetUserId: string
+  targetUserId: string,
 ): Promise<ServiceResponse> => {
   try {
     const [target] = await db
       .select()
       .from(teamMembers)
-      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId))));
+      .where(
+        q(
+          and(
+            eq(teamMembers.teamId, teamId),
+            eq(teamMembers.userId, targetUserId),
+          ),
+        ),
+      );
 
     if (!target) {
-      return { data: null, success: false, message: "User is not a member of this team." };
+      return {
+        data: null,
+        success: false,
+        message: "User is not a member of this team.",
+      };
     }
     if (target.role === "owner") {
       return {
@@ -651,20 +828,37 @@ export const removeTeamMember = async (
 
     await db
       .delete(teamMembers)
-      .where(q(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, targetUserId))));
+      .where(
+        q(
+          and(
+            eq(teamMembers.teamId, teamId),
+            eq(teamMembers.userId, targetUserId),
+          ),
+        ),
+      );
 
     // Same fire-and-forget reasoning as the invite-accept path — a seat
     // was freed, sync it, but don't fail the removal over a Paddle hiccup.
     void syncTeamSeatQuantity(teamId).catch((err) =>
-      console.error(`Failed to sync seat quantity for team ${teamId} after member removal:`, err),
+      console.error(
+        `Failed to sync seat quantity for team ${teamId} after member removal:`,
+        err,
+      ),
     );
 
-    return { data: null, success: true, message: "Member removed successfully." };
+    return {
+      data: null,
+      success: true,
+      message: "Member removed successfully.",
+    };
   } catch (err) {
     return {
       data: null,
       success: false,
-      message: err instanceof Error ? err.message : "Something went wrong removing the member.",
+      message:
+        err instanceof Error
+          ? err.message
+          : "Something went wrong removing the member.",
     };
   }
 };

@@ -10,8 +10,7 @@ const FIFTEEN_MINUTES_SECONDS = 15 * 60;
 export const generateTokens = async (
   userId: string,
   email: string,
-  name: string,
-  plan?: string
+  name: string
 ) => {
   const now = Math.floor(Date.now() / 1000);
 
@@ -20,7 +19,7 @@ export const generateTokens = async (
   const refreshExpDate = new Date(Date.now() + SEVEN_DAYS_SECONDS * 1000);
 
   const accessToken = await sign(
-    { id: userId, email, name, plan, exp: accessExp },
+    { id: userId, email, name, exp: accessExp },
     envConfig.JWT_ACCESS_SECRET
   );
 

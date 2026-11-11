@@ -37,11 +37,15 @@ const getLiveTeamSubscription = async (teamId: string) => {
 };
 
 /** Backs the Settings > Billing page — the team's current live subscription, if any. */
-export const getTeamSubscription = async (teamId: string): Promise<ServiceResponse> => {
+export const getTeamSubscription = async (
+  teamId: string,
+): Promise<ServiceResponse> => {
   const sub = await getLiveTeamSubscription(teamId);
   return {
     success: true,
-    message: sub ? "Fetched team subscription successfully" : "No active subscription",
+    message: sub
+      ? "Fetched team subscription successfully"
+      : "No active subscription",
     data: sub,
   };
 };
@@ -61,7 +65,7 @@ export interface CreateTeamCheckoutOptions {
  * mapping table needed, see the Phase 2 plan doc for why.
  */
 export const createTeamCheckoutSession = async (
-  options: CreateTeamCheckoutOptions
+  options: CreateTeamCheckoutOptions,
 ): Promise<ServiceResponse> => {
   try {
     const { teamId, planSlug, successUrl, initiatedByUserId } = options;
@@ -149,7 +153,9 @@ export const syncTeamSeatQuantity = async (teamId: string): Promise<void> => {
  * A team with no live Paddle subscription is already on Hobby and has
  * nothing to cancel.
  */
-export const cancelTeamSubscription = async (teamId: string): Promise<ServiceResponse> => {
+export const cancelTeamSubscription = async (
+  teamId: string,
+): Promise<ServiceResponse> => {
   try {
     const sub = await getLiveTeamSubscription(teamId);
     if (!sub) {
@@ -160,13 +166,17 @@ export const cancelTeamSubscription = async (teamId: string): Promise<ServiceRes
       };
     }
 
-    const subscription = await paddle.subscriptions.cancel(sub.paddleSubscriptionId, {
-      effectiveFrom: "next_billing_period",
-    });
+    const subscription = await paddle.subscriptions.cancel(
+      sub.paddleSubscriptionId,
+      {
+        effectiveFrom: "next_billing_period",
+      },
+    );
 
     return {
       success: true,
-      message: "Subscription scheduled to cancel at the end of the current billing period",
+      message:
+        "Subscription scheduled to cancel at the end of the current billing period",
       data: {
         status: subscription.status,
         scheduledChange: subscription.scheduledChange?.effectiveAt ?? null,

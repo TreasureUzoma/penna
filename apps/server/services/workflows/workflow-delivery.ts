@@ -2,7 +2,10 @@ import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { envConfig } from "@/config";
 import { buildListUnsubscribeHeaders } from "@/lib/list-unsubscribe";
-import { renderNewsletterMarkdown, renderNewsletterTemplate } from "../../lib/markdown";
+import {
+  renderNewsletterMarkdown,
+  renderNewsletterTemplate,
+} from "../../lib/markdown";
 import { applyBranding, appendUnsubscribeFooter } from "../mail/branding";
 import { dbLite, schema } from "./db-lite";
 
@@ -34,7 +37,9 @@ export async function canWorkflowRemoveBranding(
     .orderBy(desc(schema.teamSubscriptions.updatedAt))
     .limit(1);
 
-  return subscription?.planSlug !== undefined && subscription.planSlug !== "hobby";
+  return (
+    subscription?.planSlug !== undefined && subscription.planSlug !== "hobby"
+  );
 }
 
 async function getWorkflowSendingDomain(

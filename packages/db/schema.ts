@@ -45,18 +45,6 @@ export const userRoleEnum = pgEnum("user_role", [
   "admin",
   "superadmin",
 ]);
-export const userSubscriptionEnum = pgEnum("user_subscription", [
-  "free",
-  "pro",
-  "enterprise",
-]);
-/** Deprecated user-level billing fields; workspace subscriptions are authoritative. */
-export const userPlanEnum = pgEnum("user_plan", [
-  "hobby",
-  "professional",
-  "business",
-  "enterprise",
-]);
 export const emailStatusEnum = pgEnum("email_status", ["published", "draft"]);
 export const subscriberStatusEnum = pgEnum("subscriber_status", [
   "subscribed",
@@ -83,13 +71,10 @@ export const paymentProviderEnum = pgEnum("payment_provider", [
 // invented enum. "canceled" is the terminal state; a subscription that's
 // scheduled to cancel at period end stays "active" with
 // teamSubscriptions.scheduledChange set instead (see that column).
-export const paddleSubscriptionStatusEnum = pgEnum("paddle_subscription_status", [
-  "active",
-  "trialing",
-  "past_due",
-  "paused",
-  "canceled",
-]);
+export const paddleSubscriptionStatusEnum = pgEnum(
+  "paddle_subscription_status",
+  ["active", "trialing", "past_due", "paused", "canceled"],
+);
 export const emailTypeEnum = pgEnum("email_type", ["email", "web", "both"]);
 export const newsletterSendStatusEnum = pgEnum("newsletter_send_status", [
   "sent",
@@ -118,8 +103,6 @@ export const users = pgTable("users", {
   authMethod: userAuthMethodEnum("auth_method").default("email"),
   status: userStatusEnum("status").default("active"),
   role: userRoleEnum("role").default("user"),
-  subscriptionType: userSubscriptionEnum("subscription_type").default("free"),
-  plan: userPlanEnum("plan").default("hobby").notNull(),
 });
 
 // A team owns one or more newsletters. Team membership *is* newsletter
@@ -734,23 +717,20 @@ export const teamInviteRelations = relations(teamInvites, ({ one }) => ({
   }),
 }));
 
-export const newsletterRelations = relations(
-  newsletters,
-  ({ one, many }) => ({
-    team: one(teams, {
-      fields: [newsletters.teamId],
-      references: [teams.id],
-    }),
-    emails: many(emails),
-    subscribers: many(subscribers),
-    payments: many(payments),
-    apiKeys: many(newsletterApiKeys),
-    members: many(newsletterMembers), // deprecated, see schema comment
-    invites: many(newsletterInvites), // deprecated, see schema comment
-    segments: many(segments),
-    newsletterSendLogs: many(newsletterSendLogs),
+export const newsletterRelations = relations(newsletters, ({ one, many }) => ({
+  team: one(teams, {
+    fields: [newsletters.teamId],
+    references: [teams.id],
   }),
-);
+  emails: many(emails),
+  subscribers: many(subscribers),
+  payments: many(payments),
+  apiKeys: many(newsletterApiKeys),
+  members: many(newsletterMembers), // deprecated, see schema comment
+  invites: many(newsletterInvites), // deprecated, see schema comment
+  segments: many(segments),
+  newsletterSendLogs: many(newsletterSendLogs),
+}));
 
 export const newsletterMemberRelations = relations(
   newsletterMembers,

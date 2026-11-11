@@ -52,7 +52,6 @@ const handleAuth = async (
     id: string;
     email: string;
     name?: string;
-    subscriptionType?: string | null;
   }>,
 ) => {
   if (!serviceData.success || !serviceData.data?.id) {
@@ -72,7 +71,6 @@ const handleAuth = async (
     id,
     email,
     name || "-",
-    serviceData.data.subscriptionType ?? undefined,
   );
 
   await storeRefreshToken(id, refreshToken, refreshExpDate, userAgent);
@@ -106,7 +104,6 @@ authRoute.post(
           id: serviceData.data.id,
           email: serviceData.data.email,
           name: serviceData.data.name,
-          subscriptionType: serviceData.data.subscriptionType ?? undefined,
         },
       };
       return handleAuth(c, mappedData);
@@ -135,7 +132,6 @@ authRoute.post(
           id: serviceData.data.id,
           email: serviceData.data.email,
           name: serviceData.data.name,
-          subscriptionType: serviceData.data.subscriptionType ?? undefined,
         },
       };
       return handleAuth(c, mappedData);
@@ -165,7 +161,6 @@ authRoute.get("/google/callback", async (c) => {
       id,
       email,
       name || "-",
-      undefined,
     );
 
     await storeRefreshToken(id, refreshToken, refreshExpDate, userAgent);

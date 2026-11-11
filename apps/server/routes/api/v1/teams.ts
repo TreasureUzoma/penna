@@ -48,7 +48,7 @@ teamsRoute.post(
     const body = c.req.valid("json");
     const serviceData = await createTeam(body, cookieUser.id);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // list my teams
@@ -58,9 +58,12 @@ teamsRoute.get("/", async (c) => {
   const data = await getUserTeams(
     cookieUser.id,
     page ? parseInt(page) : undefined,
-    limit ? parseInt(limit) : undefined
+    limit ? parseInt(limit) : undefined,
   );
-  return c.json({ data, success: true, message: "Fetched teams successfully" }, 200);
+  return c.json(
+    { data, success: true, message: "Fetched teams successfully" },
+    200,
+  );
 });
 
 // my pending invites (across every team) — registered before "/:id" so
@@ -80,9 +83,13 @@ teamsRoute.post(
   async (c) => {
     const cookieUser = c.get("user") as AuthType;
     const { token } = c.req.valid("json");
-    const serviceData = await acceptTeamInvite(token, cookieUser.id, cookieUser.email);
+    const serviceData = await acceptTeamInvite(
+      token,
+      cookieUser.id,
+      cookieUser.email,
+    );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // get one team
@@ -101,7 +108,7 @@ teamsRoute.get(
     ]);
     if (teamOrRes instanceof Response) return teamOrRes;
     return c.json({ team: teamOrRes }, 200);
-  }
+  },
 );
 
 // update a team
@@ -121,7 +128,7 @@ teamsRoute.patch(
 
     const serviceData = await updateTeam(teamOrRes.id, body);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // delete a team — the most destructive action in the app (cascades to
@@ -138,7 +145,7 @@ teamsRoute.delete(
 
     const serviceData = await deleteTeam(teamOrRes.id);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // list team members — any member can see the roster
@@ -159,7 +166,7 @@ teamsRoute.get(
 
     const serviceData = await getTeamMembers(teamOrRes.id);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // update a member's role
@@ -170,11 +177,15 @@ teamsRoute.patch(
     z.object({ id: z.string().min(1), userId: z.string().uuid() }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
-    }
+    },
   ),
-  zValidator("json", updateTeamMemberRoleSchema.pick({ role: true }), (result, c) => {
-    if (!result.success) return validationErrorResponse(c, result.error);
-  }),
+  zValidator(
+    "json",
+    updateTeamMemberRoleSchema.pick({ role: true }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
+    },
+  ),
   async (c) => {
     const { id, userId } = c.req.valid("param");
     const { role } = c.req.valid("json");
@@ -183,7 +194,7 @@ teamsRoute.patch(
 
     const serviceData = await updateTeamMemberRole(teamOrRes.id, userId, role);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // remove a member — owner/admin only, can't remove the owner (transfer first)
@@ -194,7 +205,7 @@ teamsRoute.delete(
     z.object({ id: z.string().min(1), userId: z.string().uuid() }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
-    }
+    },
   ),
   async (c) => {
     const { id, userId } = c.req.valid("param");
@@ -203,7 +214,7 @@ teamsRoute.delete(
 
     const serviceData = await removeTeamMember(teamOrRes.id, userId);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // transfer ownership to another existing member
@@ -226,10 +237,10 @@ teamsRoute.post(
     const serviceData = await transferTeamOwnership(
       teamOrRes.id,
       cookieUser.id,
-      newOwnerUserId
+      newOwnerUserId,
     );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // invite someone by email
@@ -238,9 +249,13 @@ teamsRoute.post(
   zValidator("param", z.object({ id: z.string().min(1) }), (result, c) => {
     if (!result.success) return validationErrorResponse(c, result.error);
   }),
-  zValidator("json", inviteToTeamSchema.pick({ email: true, role: true }), (result, c) => {
-    if (!result.success) return validationErrorResponse(c, result.error);
-  }),
+  zValidator(
+    "json",
+    inviteToTeamSchema.pick({ email: true, role: true }),
+    (result, c) => {
+      if (!result.success) return validationErrorResponse(c, result.error);
+    },
+  ),
   async (c) => {
     const { id } = c.req.valid("param");
     const { email, role } = c.req.valid("json");
@@ -249,9 +264,14 @@ teamsRoute.post(
     const teamOrRes = await getTeamOrFail(c, id, ["owner", "admin"]);
     if (teamOrRes instanceof Response) return teamOrRes;
 
-    const serviceData = await inviteToTeam(teamOrRes.id, cookieUser.id, email, role);
+    const serviceData = await inviteToTeam(
+      teamOrRes.id,
+      cookieUser.id,
+      email,
+      role,
+    );
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // revoke a pending invite
@@ -262,7 +282,7 @@ teamsRoute.delete(
     z.object({ id: z.string().min(1), inviteId: z.string().uuid() }),
     (result, c) => {
       if (!result.success) return validationErrorResponse(c, result.error);
-    }
+    },
   ),
   async (c) => {
     const { id, inviteId } = c.req.valid("param");
@@ -271,7 +291,7 @@ teamsRoute.delete(
 
     const serviceData = await revokeTeamInvite(inviteId);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // current live subscription for a team (backs Settings > Billing) — any
@@ -299,9 +319,9 @@ teamsRoute.get(
     ]);
     return c.json(
       { ...serviceData, data: { subscription: serviceData.data, plan } },
-      routeStatus(serviceData)
+      routeStatus(serviceData),
     );
-  }
+  },
 );
 
 // start a real per-seat Paddle checkout for this team — owner/admin only,
@@ -329,7 +349,7 @@ teamsRoute.post(
       initiatedByUserId: cookieUser.id,
     });
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 // cancel this team's real Paddle subscription — scheduled for end of the
@@ -346,7 +366,7 @@ teamsRoute.post(
 
     const serviceData = await cancelTeamSubscription(teamOrRes.id);
     return c.json(serviceData, routeStatus(serviceData));
-  }
+  },
 );
 
 export default teamsRoute;

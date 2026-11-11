@@ -40,12 +40,6 @@ export const teamRoleEnum = pgEnum("team_role", [
   "editor",
   "viewer",
 ]);
-export const userSubscriptionEnum = pgEnum("user_subscription", [
-  "free",
-  "pro",
-  "enterprise",
-]);
-
 export const newsletters = pgTable("newsletters", {
   serial: serial("serial").primaryKey(),
   id: uuid("id").defaultRandom().notNull().unique(),
@@ -99,8 +93,6 @@ export const users = pgTable("users", {
   id: uuid("id").defaultRandom().notNull().unique(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  subscriptionType: userSubscriptionEnum("subscription_type").default("free"),
-  plan: text("plan").default("hobby").notNull(),
 });
 
 export const teamSubscriptions = pgTable("team_subscriptions", {

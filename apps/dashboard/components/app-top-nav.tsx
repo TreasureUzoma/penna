@@ -115,7 +115,7 @@ export default function AppTopNav() {
             <Separator
               orientation="vertical"
               className={cn(
-                "h-7 w-[2px] rotate-[12deg] origin-center bg-muted-foreground/20 transition-all duration-500"
+                "h-7 w-[2px] rotate-[12deg] origin-center bg-muted-foreground/20 transition-all duration-500",
               )}
             />
             <div className="flex gap-2.5 text-sm leading-tight">
@@ -131,7 +131,7 @@ export default function AppTopNav() {
                   </span>
 
                   <Link
-                    href="/billings"
+                    href="/settings/billing"
                     className="bg-muted text-xs px-2 py-1 rounded-full"
                   >
                     {displayedPlan}
@@ -145,7 +145,7 @@ export default function AppTopNav() {
                 <Separator
                   orientation="vertical"
                   className={cn(
-                    "h-7 w-[2px] rotate-[12deg] origin-center bg-muted-foreground/20 transition-all duration-500"
+                    "h-7 w-[2px] rotate-[12deg] origin-center bg-muted-foreground/20 transition-all duration-500",
                   )}
                 />
                 <NewsletterSwitcher />
