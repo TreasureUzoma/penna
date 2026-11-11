@@ -200,6 +200,15 @@ export const handlePaddleWebhook = async (
       case EventName.SubscriptionUpdated:
         return await handleSubscriptionUpdated(event.data);
 
+      // Paddle emits these lifecycle events separately from
+      // subscription.updated. Persist their status too, so team plan lookup
+      // can remove access while the subscription is delinquent or paused.
+      case "subscription.past_due" as EventName:
+      case "subscription.paused" as EventName:
+        return await handleSubscriptionUpdated(
+          event.data as SubscriptionNotification
+        );
+
       case EventName.SubscriptionCanceled:
         return await handleSubscriptionCanceled(event.data);
 
@@ -428,6 +437,11 @@ const handleSubscriptionUpdated = async (
     await db
       .update(users)
       .set({ subscriptionType, plan: planSlug })
+      .where(eq(users.id, userId));
+  } else if (["past_due", "paused", "canceled"].includes(data.status)) {
+    await db
+      .update(users)
+      .set({ subscriptionType: "free", plan: "hobby" })
       .where(eq(users.id, userId));
   }
 

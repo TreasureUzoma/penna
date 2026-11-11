@@ -121,6 +121,17 @@ export const getTeamPlan = async (teamId: string): Promise<Plan> => {
     return getPlanBySlug(liveSub.planSlug);
   }
 
+  // Once a team has used team-level Paddle billing, its owner's legacy
+  // personal plan must not become the fallback when that subscription is
+  // canceled, past due, or paused. The owner fallback is only for teams
+  // that have never had a team subscription row.
+  const [hasTeamSubscription] = await db
+    .select({ id: teamSubscriptions.id })
+    .from(teamSubscriptions)
+    .where(q(eq(teamSubscriptions.teamId, teamId)))
+    .limit(1);
+  if (hasTeamSubscription) return getPlanBySlug("hobby");
+
   const [owner] = await db
     .select({ plan: users.plan })
     .from(teamMembers)

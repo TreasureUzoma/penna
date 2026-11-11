@@ -81,7 +81,8 @@ ${meta.name} is a modern, open-source newsletter and subscriber management platf
 **Subscriber Management:**
 - Add subscribers manually or via API
 - Organize with powerful segmentation
-- Import from CSV 
+- Import from CSV
+- Track signup source (website, API, manual addition, or CSV import)
 - Track engagement metrics
 - GDPR compliant with easy data export/deletion
 
@@ -90,13 +91,21 @@ ${meta.name} is a modern, open-source newsletter and subscriber management platf
 - Custom domain support with SPF/DKIM/DMARC
 - Automatic unsubscribe handling
 - Content moderation for abuse prevention
-- Markdown support for content
+- Rich Markdown support, safe HTML sanitization, and per-subscriber templates
+- Optional custom welcome email after a subscriber confirms
 
 **Segmentation:**
 - Create unlimited segments (based on plan)
 - Target specific audiences with relevant content
 - Automatic deduplication when sending to multiple segments
 - Add/remove subscribers easily via dashboard or API
+
+**Subscriber Webhooks:**
+- Configure a webhook URL and selected events in newsletter settings
+- Events: subscriber.created, subscriber.confirmed, subscriber.unsubscribed
+- Webhook payloads include a timestamp, newsletter details, and subscriber details
+- An optional shared secret is sent in the X-Penna-Webhook-Secret header
+- See https://penna.dev/docs/integrations/webhooks for setup details
 
 **API-First:**
 - RESTful API for all operations
@@ -114,7 +123,9 @@ ${meta.name} is a modern, open-source newsletter and subscriber management platf
 
 **Adding Subscribers:**
 - Via dashboard: Manual one-by-one addition or CSV import
-- Via API: Integrate signup forms on your website (use public key)
+- Via API: Integrate signup forms on your website (use public key); API signups are tracked as API source
+- Subscriber source is visible in the subscriber list (website, API, manual, or CSV import)
+- Optionally send a custom welcome email after double opt-in confirmation
 
 **Sending Newsletters:**
 - Via dashboard: Compose with markdown, preview, select recipients (all or specific segments), send
@@ -191,7 +202,9 @@ Segments are groups of subscribers sharing common characteristics:
 
 **Send Request Parameters:**
 - subject (required): Email subject line
-- content (required): Markdown content
+- content (required): Rich Markdown content; supports per-subscriber template variables
+- subject and content templates are personalized for each recipient; available variables include subscriber.name, subscriber.first_name, subscriber.email, newsletter.name, newsletter.slug, email.subject, email.publish_date, and unsubscribe_url
+- Template filters include default, upper, lower, capfirst, and urlencode; conditional blocks support if/else/endif
 - recipientEmails (optional): Array of specific emails (must be subscribers)
 - segmentIds (optional): Array of segment IDs
 - At least one of recipientEmails or segmentIds required
@@ -255,7 +268,7 @@ A: New signups are queued until you upgrade or remove inactive subscribers.
 A: Set up custom domain with SPF/DKIM/DMARC, maintain clean list, send valuable content consistently.
 
 **Q: Can I import subscribers from another platform?**
-A: CSV import is coming soon. Currently add via dashboard or API.
+A: Yes. Import subscribers from a CSV in the dashboard. Their source is shown as CSV import.
 
 **Q: What's the difference between recipientEmails and segmentIds?**
 A: recipientEmails targets specific email addresses; segmentIds targets all subscribers in those segments. Both are merged and deduplicated.
@@ -267,7 +280,19 @@ A: Content moderation checks for spam/phishing/abuse. Legitimate newsletters pas
 A: Pass segment IDs in segmentIds array when sending. All subscribers in those segments receive the email (deduplicated if in multiple).
 
 **Q: What markdown is supported?**
-A: Currently: # ## ### headings and blank lines for paragraphs. Rich formatting (lists, links, bold/italic, images) coming soon.
+A: GitHub-style Markdown is supported, including headings, lists and task lists, tables, links, images, fenced code, footnotes, strikethrough, subscript, and superscript. Standalone links from supported media providers become link cards. Raw HTML is sanitized.
+
+**Q: Can I personalize a newsletter for each subscriber?**
+A: Yes. In subject lines and content, use variables such as {{ subscriber.first_name | default: 'there' }}. Filters include default, upper, lower, capfirst, and urlencode; conditional blocks support {% if %}, {% else %}, and {% endif %}. This works for dashboard sends and the external send API.
+
+**Q: Can I receive events when subscribers join or leave?**
+A: Yes. Configure a webhook URL and select subscriber.created, subscriber.confirmed, and/or subscriber.unsubscribed in newsletter settings. See https://penna.dev/docs/integrations/webhooks.
+
+**Q: Can I send a welcome email?**
+A: Yes. Enable it in newsletter settings and customize its subject and message. It is sent after the subscriber confirms their address.
+
+**Q: Can I see where a subscriber came from?**
+A: Yes. The subscriber list shows whether they came from the website, API, a manual addition, or a CSV import. Public newsletter-page signups are labeled website; the source does not identify the specific page or referrer.
 
 **Q: Can I send to more than 5,000 recipients?**
 A: Yes, but you need to batch your sends. Each API call can target max 5,000 unique recipients. Split large lists across multiple calls.
@@ -310,6 +335,7 @@ All pages are served from **penna.dev**. When providing links, always use the fu
 - Get Newsletter Info: https://penna.dev/docs/integrations/get
 - Send Newsletter: https://penna.dev/docs/integrations/send-newsletter
 - Segments API: https://penna.dev/docs/integrations/segments
+- Webhooks: https://penna.dev/docs/integrations/webhooks
 
 **Best Practices (https://penna.dev/docs/best-practices/...):**
 - Email Deliverability: https://penna.dev/docs/best-practices/email-deliverability
