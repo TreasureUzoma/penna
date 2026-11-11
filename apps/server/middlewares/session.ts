@@ -2,7 +2,7 @@ import type { MiddlewareHandler } from "hono";
 import { getSignedCookie, setSignedCookie } from "hono/cookie";
 import { verify, sign } from "hono/jwt";
 import { envConfig } from "@/config";
-import { eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { refreshTokens, users } from "@workspace/db/schema";
 
@@ -113,10 +113,33 @@ export const withAuth: MiddlewareHandler = async (c, next) => {
     );
 
     // Update refresh token in database
-    await db
+    const rotated = await db
       .update(refreshTokens)
-      .set({ token: newRefresh, expiresAt: refreshExpDate })
-      .where(eq(refreshTokens.token, refreshToken));
+      .set({ token: newRefresh, expiresAt: refreshExpDate, updatedAt: new Date() })
+      .where(and(eq(refreshTokens.token, refreshToken), eq(refreshTokens.revoked, false)))
+      .returning({ id: refreshTokens.id });
+
+    // Several API requests can arrive together after the access token expires.
+    // The first request rotates the refresh token; let the others finish using
+    // that same session rather than turning the losing requests into 401s.
+    if (rotated.length === 0) {
+      const recentlyRotated = await db
+        .select({ id: refreshTokens.id })
+        .from(refreshTokens)
+        .where(and(
+          eq(refreshTokens.userId, user.id),
+          eq(refreshTokens.userAgent, tokenRecord.userAgent),
+          eq(refreshTokens.revoked, false),
+          gte(refreshTokens.updatedAt, new Date(Date.now() - 30_000)),
+        ))
+        .limit(1);
+
+      if (recentlyRotated.length === 0)
+        return c.json({ message: "Unauthorized", success: false }, 401);
+
+      c.set("user", { id: user.id, email: user.email, name: user.name });
+      return await next();
+    }
 
     // Set new cookies
     await setSignedCookie(
