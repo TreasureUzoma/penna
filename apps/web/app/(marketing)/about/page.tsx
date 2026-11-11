@@ -1,5 +1,6 @@
 import { meta } from "@workspace/constants/meta";
 import { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "About",
@@ -26,8 +27,15 @@ export default function AboutPage() {
             {meta.name} is a full newsletter platform built for developers:
             write in markdown, manage subscribers and segments, track real
             analytics, and send from your own verified domain — all from one
-            clean dashboard. automate any of it with a real api when you need
-            to.
+            clean dashboard. Automate any of it with a real API or our{" "}
+            <Link
+              href="/docs/integrations/mcp"
+              prefetch={false}
+              className="underline hover:text-foreground"
+            >
+              Our MCP
+            </Link>{" "}
+            when you need to.
           </p>
           <p>
             I built it because most newsletter tools are designed for marketers,
@@ -58,7 +66,7 @@ export default function AboutPage() {
             >
               {meta.developer.name}
             </a>
-            . questions or feedback are always welcome at{" "}
+            . Questions or feedback are always welcome at{" "}
             <a
               href={`mailto:${meta.email}`}
               className="underline hover:text-foreground"
