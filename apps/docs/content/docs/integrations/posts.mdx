@@ -1,0 +1,66 @@
+---
+title: Get Newsletter Posts
+description: "Retrieve your newsletter's posts and their dynamic cover images with the Penna API."
+---
+
+# Get Newsletter Posts
+
+Retrieve posts for the newsletter associated with your API key. This endpoint returns drafts, scheduled posts, and published posts, newest first. Post bodies are decrypted for the API response, so call this endpoint only from trusted server-side code.
+
+## Authentication
+
+The request requires both API key headers and a key created with the **Read posts** scope.
+
+**Endpoint:** `GET /api/v1/external/newsletters/posts`
+
+**Headers:**
+
+- `x-penna-public-key: <YOUR_PUBLIC_KEY>`
+- `x-penna-private-key: <YOUR_PRIVATE_KEY>`
+
+Keep the private key in a server-side secret. Never include it in browser or client-side code.
+
+## Response
+
+Each post includes its ID, subject, decrypted Markdown body, send/schedule time, and status. `coverImage` is the URL for the dynamic Open Graph image when the post is published and publicly available; it is `null` for drafts and posts scheduled for the future.
+
+```json
+{
+  "success": true,
+  "message": "Fetched emails successfully",
+  "data": [
+    {
+      "id": "bdc80124-5787-4002-ba52-78ceddfeaadb",
+      "subject": "Weekly update",
+      "body": "# Hello subscribers\n\nHere is this week's update.",
+      "sentAt": "2026-11-20T09:00:00.000Z",
+      "status": "published",
+      "coverImage": "https://penna.dev/my-newsletter/bdc80124-5787-4002-ba52-78ceddfeaadb/opengraph-image"
+    }
+  ]
+}
+```
+
+## cURL
+
+```bash
+curl "https://api.penna.dev/api/v1/external/newsletters/posts" \
+  -H "x-penna-public-key: penn_your_public_key" \
+  -H "x-penna-private-key: pk_your_private_key"
+```
+
+## JavaScript (server-side)
+
+```javascript
+const response = await fetch(
+  "https://api.penna.dev/api/v1/external/newsletters/posts",
+  {
+    headers: {
+      "x-penna-public-key": process.env.PENNA_PUBLIC_KEY,
+      "x-penna-private-key": process.env.PENNA_PRIVATE_KEY,
+    },
+  }
+);
+
+const result = await response.json();
+```

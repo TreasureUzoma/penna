@@ -143,10 +143,11 @@ export type NewNewsletter = z.infer<typeof createNewsletterSchema>;
 // capabilities it actually needs — e.g. a key embedded in a public signup
 // form only ever needs `subscribers:write`, and should never also be able
 // to read the subscriber list or send to it. Matches the 3 endpoints the
-// external API actually exposes today (routes/api/v1/external/newsletters.ts).
+// external API exposes today (routes/api/v1/external/newsletters.ts).
 export const API_KEY_SCOPES = [
   "subscribers:write",
   "subscribers:read",
+  "posts:read",
   "newsletter:send",
 ] as const;
 

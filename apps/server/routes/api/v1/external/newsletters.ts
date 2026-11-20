@@ -11,7 +11,8 @@ import {
   NewsletterSendLimitError,
 } from "@/services/limits";
 import { logNewsletterSend } from "@/services/newsletter-send-log";
-import { recordSentNewsletterPost } from "@/services/emails";
+import { getEmails, recordSentNewsletterPost } from "@/services/emails";
+import { envConfig } from "@/config";
 import { moderateNewsletterContent } from "@/services/moderation";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
@@ -108,6 +109,48 @@ externalNewslettersRoute.get("/subscribers", async (c) => {
     limitNumber,
   );
   return c.json(serviceData, routeStatus(serviceData));
+});
+
+externalNewslettersRoute.get("/posts", async (c) => {
+  const newsletterData = c.get("newsletter");
+
+  if (newsletterData.keyType !== "private") {
+    return c.json(
+      { success: false, message: "Unauthorized: Private key required" },
+      401,
+    );
+  }
+
+  const scopeError = requireScope(newsletterData, "posts:read");
+  if (scopeError) return c.json(scopeError, 403);
+
+  const serviceData = await getEmails(newsletterData.id);
+  if (!serviceData.success || !Array.isArray(serviceData.data)) {
+    return c.json(serviceData, routeStatus(serviceData));
+  }
+
+  const posts = serviceData.data.map((post: {
+    id: string;
+    subject: string;
+    body: string;
+    sentAt: Date | string;
+    status: string;
+  }) => ({
+    id: post.id,
+    subject: post.subject,
+    body: post.body,
+    sentAt: post.sentAt,
+    status: post.status,
+    coverImage:
+      post.status === "published" && new Date(post.sentAt).getTime() <= Date.now()
+        ? new URL(
+            `/${newsletterData.slug}/${post.id}/opengraph-image`,
+            envConfig.WEB_URL,
+          ).toString()
+        : null,
+  }));
+
+  return c.json({ ...serviceData, data: posts }, routeStatus(serviceData));
 });
 
 // Max recipients a single call can resolve to (recipientEmails + segments

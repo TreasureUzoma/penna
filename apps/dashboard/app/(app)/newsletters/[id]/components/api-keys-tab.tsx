@@ -61,6 +61,11 @@ const SCOPE_INFO: Record<ApiKeyScope, { label: string; description: string }> =
       description:
         "List this newsletter's subscribers. Requires the private key half of the pair.",
     },
+    "posts:read": {
+      label: "Read posts",
+      description:
+        "List this newsletter's posts and content. Requires the private key half of the pair.",
+    },
     "newsletter:send": {
       label: "Send newsletters",
       description:

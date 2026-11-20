@@ -1,4 +1,4 @@
 {
   "title": "API Reference",
-  "pages": ["create", "get", "send-newsletter", "segments", "webhooks", "mcp"]
+  "pages": ["create", "get", "posts", "send-newsletter", "segments", "webhooks", "mcp"]
 }
