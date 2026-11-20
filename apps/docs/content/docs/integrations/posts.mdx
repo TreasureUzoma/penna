@@ -5,7 +5,7 @@ description: "Retrieve your newsletter's posts and their dynamic cover images wi
 
 # Get Newsletter Posts
 
-Retrieve posts for the newsletter associated with your API key. This endpoint returns drafts, scheduled posts, and published posts, newest first. Post bodies are decrypted for the API response, so call this endpoint only from trusted server-side code.
+Retrieve posts for the newsletter associated with your API key. This endpoint returns drafts and published posts, newest first. A published post with a future `sentAt` is scheduled for later. Post bodies are decrypted for the API response, so call this endpoint only from trusted server-side code.
 
 ## Authentication
 
@@ -22,7 +22,16 @@ Keep the private key in a server-side secret. Never include it in browser or cli
 
 ## Response
 
-Each post includes its ID, subject, decrypted Markdown body, send/schedule time, and status. `coverImage` is the URL for the dynamic Open Graph image when the post is published and publicly available; it is `null` for drafts and posts scheduled for the future.
+Each post includes its ID, subject, decrypted Markdown body, send/schedule time, status, and cover image URL.
+
+| Field | Type | Values / meaning |
+| --- | --- | --- |
+| `id` | `string` | Post UUID. |
+| `subject` | `string` | Post subject. |
+| `body` | `string` | Decrypted Markdown content. |
+| `sentAt` | `string` | ISO 8601 timestamp; for a published post in the future, this is its scheduled send time. |
+| `status` | `string` | `draft` or `published`. Scheduling is represented by `status: "published"` with a future `sentAt`; there is no separate `scheduled` status. |
+| `coverImage` | `string \| null` | Dynamic Open Graph image URL for a published post whose `sentAt` is now or earlier. `null` for drafts and future scheduled posts. |
 
 ```json
 {
